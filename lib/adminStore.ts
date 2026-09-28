@@ -312,3 +312,37 @@ export async function toggleVehicleInStore(
     console.warn('[adminStore] Could not toggle vehicle status:', error);
   }
 }
+
+export async function getBookingById(bookingId: string): Promise<Booking | null> {
+  try {
+    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
+      const { adminDb } = await import('@/lib/firebaseAdmin');
+      const doc = await adminDb.collection('bookings').doc(bookingId).get();
+      if (doc.exists) {
+        return doc.data() as Booking;
+      }
+    }
+  } catch (error) {
+    console.warn('[adminStore] Could not fetch Firestore booking by id:', error);
+  }
+  return memoryBookings.find((b) => b.bookingId.toLowerCase() === bookingId.toLowerCase()) || null;
+}
+
+/**
+ * Generates unique booking ID like ICB-10482 with collision checking
+ */
+export async function generateUniqueBookingId(): Promise<string> {
+  let attempts = 0;
+  while (attempts < 50) {
+    const randomNum = Math.floor(10000 + Math.random() * 90000); // 5 digits
+    const candidateId = `ICB-${randomNum}`;
+    const existing = await getBookingById(candidateId);
+    if (!existing) {
+      return candidateId;
+    }
+    attempts++;
+  }
+  // Fallback with timestamp in extreme collision cases
+  return `ICB-${Date.now().toString().slice(-5)}`;
+}
+

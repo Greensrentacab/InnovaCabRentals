@@ -233,33 +233,47 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
         throw new Error('Incomplete booking information. Please review your trip details.');
       }
 
-      const result = await createBookingRequest({
-        customerName: state.customerName,
-        customerPhone: state.customerPhone,
-        pickupName: state.pickupLocation.name,
-        pickupAddress: state.pickupLocation.address,
-        pickupLat: state.pickupLocation.lat,
-        pickupLng: state.pickupLocation.lng,
-        dropName: state.dropLocation.name,
-        dropAddress: state.dropLocation.address,
-        dropLat: state.dropLocation.lat,
-        dropLng: state.dropLocation.lng,
-        tripType: state.tripType,
-        serviceType: state.serviceType,
-        pickupDate: state.pickupDate,
-        pickupTime: state.pickupTime,
-        vehicleId: state.selectedVehicle.id,
-        vehicleName: state.selectedVehicle.name,
-        routeSlug: state.routeSlug,
-        distanceKm: state.distanceKm,
+      // Submit to POST /api/bookings with Zod validation, rate limiting, and email dispatch
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: state.customerName,
+          phone: state.customerPhone,
+          pickupName: state.pickupLocation.name,
+          pickupAddress: state.pickupLocation.address,
+          pickupLat: state.pickupLocation.lat,
+          pickupLng: state.pickupLocation.lng,
+          dropName: state.dropLocation.name,
+          dropAddress: state.dropLocation.address,
+          dropLat: state.dropLocation.lat,
+          dropLng: state.dropLocation.lng,
+          tripType: state.tripType,
+          serviceType: state.serviceType,
+          pickupDate: state.pickupDate,
+          pickupTime: state.pickupTime,
+          vehicleId: state.selectedVehicle.id,
+          vehicleName: state.selectedVehicle.name,
+          routeSlug: state.routeSlug,
+          distanceKm: state.distanceKm,
+        }),
       });
 
+      const result = await res.json();
+
       if (result.success && result.booking) {
+        const bk = result.booking;
+        const cleanPhone = bk.customerPhone.replace(/\D/g, '');
+        const waNumber = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+        const whatsAppUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
+          `Hello ${bk.customerName},\n\nThis is Innova Cabs Bangalore. We have received your booking request #${bk.bookingId}:\n• Route: ${bk.pickupName} ➔ ${bk.dropName}\n• Date & Time: ${bk.pickupDate} at ${bk.pickupTime}\n• Vehicle: ${bk.vehicleName}\n\nOur operations desk will confirm your vehicle shortly!`
+        )}`;
+
         setState((prev) => ({
           ...prev,
           step: 'success',
-          confirmedBooking: result.booking || null,
-          adminWhatsAppUrl: result.adminWhatsAppUrl || null,
+          confirmedBooking: bk,
+          adminWhatsAppUrl: whatsAppUrl,
         }));
       } else {
         setState((prev) => ({

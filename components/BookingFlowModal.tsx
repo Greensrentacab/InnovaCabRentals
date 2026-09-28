@@ -36,7 +36,9 @@ import {
   ArrowRight,
   ArrowLeft,
   Edit2,
+  FileText,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useBookingFlow } from '@/context/BookingFlowContext';
 import { siteConfig } from '@/lib/siteConfig';
 
@@ -645,9 +647,20 @@ export default function BookingFlowModal() {
                 </p>
               </div>
 
-              {/* Direct WhatsApp Confirmation Button */}
-              {state.adminWhatsAppUrl && (
-                <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+              {/* Action Buttons: WhatsApp & View My Booking */}
+              <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+                {state.confirmedBooking?.bookingId && (
+                  <Link
+                    href={`/booking/confirmed?id=${state.confirmedBooking.bookingId}`}
+                    onClick={closeBookingFlow}
+                    className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-orange hover:bg-brand-orange-hover text-white font-bold text-sm shadow-md transition-all"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>View My Booking</span>
+                  </Link>
+                )}
+
+                {state.adminWhatsAppUrl && (
                   <a
                     href={state.adminWhatsAppUrl}
                     target="_blank"
@@ -655,18 +668,18 @@ export default function BookingFlowModal() {
                     className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md transition-all"
                   >
                     <MessageCircle className="w-5 h-5" />
-                    <span>Confirm Directly on WhatsApp</span>
+                    <span>Chat on WhatsApp</span>
                   </a>
+                )}
 
-                  <button
-                    type="button"
-                    onClick={closeBookingFlow}
-                    className="min-h-[48px] w-full sm:w-auto px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition-colors"
-                  >
-                    Close Window
-                  </button>
-                </div>
-              )}
+                <button
+                  type="button"
+                  onClick={closeBookingFlow}
+                  className="min-h-[48px] w-full sm:w-auto px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition-colors"
+                >
+                  Close Window
+                </button>
+              </div>
             </div>
           )}
 

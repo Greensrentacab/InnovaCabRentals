@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-brand-navy: #0B1B33;
+  --color-brand-offwhite: #F7F5F0;
+  --color-brand-orange: #F0562B;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: #0B1B33;
+  background-color: #F7F5F0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure mobile interactive elements meet 44px minimum touch target */
+@media (max-width: 768px) {
+  a, button, input, select, textarea {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}

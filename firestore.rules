@@ -1,0 +1,53 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: Check if requesting user has verified admin privileges
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.admin == true ||
+        request.auth.token.email == 'greensrentacab@gmail.com'
+      );
+    }
+
+    // 1. Vehicles: Public can read all vehicles (Innova, Crysta, Hycross); no client writes
+    match /vehicles/{vehicleId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 2. Routes: Public can read all outstation & airport routes; no client writes
+    match /routes/{routeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 3. Pricing Display: Public can read non-sensitive pricing/tariffs; no client writes
+    match /pricing/{pricingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 4. Bookings: Strictly server-side (Admin SDK) or authenticated admin only
+    // NO public client reads or writes. Bookings are submitted via Server Actions/API routes.
+    match /bookings/{bookingId} {
+      allow read, write: if isAdmin();
+    }
+
+    // 5. Enquiries: Server-side or authenticated admin only
+    match /enquiries/{enquiryId} {
+      allow read, write: if isAdmin();
+    }
+
+    // 6. Drivers: Admin only (for trip assignments and driver contacts)
+    match /drivers/{driverId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Default deny for any unspecified collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Phone, Mail, MapPin, Clock, MessageCircle, ShieldCheck } from 'lucide-react';
 import { siteConfig } from '@/lib/siteConfig';
+import Logo from '@/components/Logo';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -13,12 +14,7 @@ export default function Footer() {
           {/* Column 1: Brand & Identity */}
           <div className="space-y-4">
             <Link href="/" className="inline-block">
-              <span className="text-2xl font-bold tracking-tight text-white">
-                INNOVA <span className="text-brand-orange font-extrabold">CABS</span>
-              </span>
-              <span className="block text-xs uppercase tracking-wider text-gray-400 font-medium">
-                Bangalore
-              </span>
+              <Logo variant="mark" className="h-12 w-auto" />
             </Link>
             
             <p className="text-sm text-gray-300 leading-relaxed">

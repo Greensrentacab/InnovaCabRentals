@@ -27,3 +27,13 @@ body {
     align-items: center;
   }
 }
+
+::selection {
+  background-color: #F0562B;
+  color: #FFFFFF;
+}
+
+:focus-visible {
+  outline: 2px solid #F0562B;
+  outline-offset: 2px;
+}

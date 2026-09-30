@@ -15,6 +15,8 @@ import { NextRequest, NextResponse } from 'next/server';
  * Format: comma-separated paths. "/" always means the homepage only.
  * A trailing "/*" releases a path and everything nested under it, e.g.
  * "/routes/*" releases /routes and /routes/mysore, /routes/coorg, etc.
+ * Set RELEASED_ROUTES="*" to release everything (gate effectively off) —
+ * use this while testing a fresh deployment end-to-end.
  *
  * Leaving RELEASED_ROUTES unset releases only the homepage.
  */
@@ -46,7 +48,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const { exact, prefixes } = parseReleased(process.env.RELEASED_ROUTES || DEFAULT_RELEASED);
+  const releasedRaw = (process.env.RELEASED_ROUTES || DEFAULT_RELEASED).trim();
+  if (releasedRaw === '*') {
+    return NextResponse.next();
+  }
+
+  const { exact, prefixes } = parseReleased(releasedRaw);
 
   const isReleased =
     exact.has(pathname) ||

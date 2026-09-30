@@ -3,25 +3,23 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * middleware.ts
  *
- * Client-reveal gate: lets the whole site be deployed to Vercel while only
- * showing the client the pages we've explicitly signed off on. Anything not
- * in RELEASED_ROUTES renders the "Coming Soon" page instead — the real page
- * still exists and ships in the build, it's just not shown yet.
+ * Client-reveal gate: lets specific pages be hidden behind a branded "Coming
+ * Soon" page while the rest of the site stays fully public. Off by default —
+ * everything is visible unless RELEASED_ROUTES is explicitly set to a
+ * restricted list.
  *
- * To reveal a page: add its path to RELEASED_ROUTES in Vercel
- * (Project Settings -> Environment Variables) and hit "Redeploy" (no code
+ * To hide pages again later: set RELEASED_ROUTES in Netlify/Vercel
+ * (Site/Project Settings -> Environment Variables) to a comma-separated list
+ * of the paths that SHOULD be public, e.g. "/,/about,/contact". Everything
+ * else will then show "Coming Soon" instead. A trailing "/*" releases a path
+ * and everything nested under it, e.g. "/routes/*" releases /routes and
+ * /routes/mysore, /routes/coorg, etc. Redeploy after changing it (no code
  * push needed, reuses the existing build).
  *
- * Format: comma-separated paths. "/" always means the homepage only.
- * A trailing "/*" releases a path and everything nested under it, e.g.
- * "/routes/*" releases /routes and /routes/mysore, /routes/coorg, etc.
- * Set RELEASED_ROUTES="*" to release everything (gate effectively off) —
- * use this while testing a fresh deployment end-to-end.
- *
- * Leaving RELEASED_ROUTES unset releases only the homepage.
+ * Leaving RELEASED_ROUTES unset, or setting it to "*", releases everything.
  */
 
-const DEFAULT_RELEASED = '/';
+const DEFAULT_RELEASED = '*';
 
 function parseReleased(raw: string): { exact: Set<string>; prefixes: string[] } {
   const exact = new Set<string>();

@@ -1,17 +1,33 @@
 /**
  * Firestore Database Seeder for Innova Cabs Bangalore
- * 
+ *
  * Sourced from PROJECT_CONTEXT.md.
  * Populates Firestore with:
- *  - 3 Vehicles: Toyota Innova, Toyota Innova Crysta, Toyota Innova Hycross (confirmed: false)
- *  - 8 Outstation/Airport Routes: Airport to City, Mysore, Coorg, Ooty, Wayanad, Chikmagalur, Kodaikanal, Pondicherry
- * 
+ *  - Vehicles: Toyota Innova, Toyota Innova Crysta, Maruti Suzuki Ertiga,
+ *    Toyota Innova Hycross (confirmed: false)
+ *  - Routes: Bangalore Airport ↔ City + 30 outstation routes from Bangalore
+ *
  * PRICING NOTICE:
- * Pricing is NOT final yet. All per-vehicle fares are set to null.
- * Never invent prices. REPLACE WITH CLIENT PRICING once verified.
+ * Prices are admin-editable per car (Vehicle.rates) and start as null.
+ * Never invent prices — null renders as "Price on request".
+ * Route distances/durations are approximate road figures from central
+ * Bangalore and can be corrected later.
  */
 
-import { Vehicle, Route } from '../lib/types';
+import { Vehicle, Route, VehicleRates } from '../lib/types';
+import { catalogRoutes } from '../lib/routeCatalog';
+
+/** Empty tariff — every price null until set in Admin → Pricing. */
+export const emptyRates = (): VehicleRates => ({
+  outstationPerKm: null,
+  outstationMinKmPerDay: 300,
+  driverAllowancePerDay: null,
+  airportFare: null,
+  local8h: null,
+  local12h: null,
+  extraKmRate: null,
+  extraHourRate: null,
+});
 
 /**
  * Vehicle Seed Data
@@ -33,6 +49,7 @@ export const seedVehicles: Vehicle[] = [
     ], // PLACEHOLDER
     confirmed: true,
     baseFare: null, // REPLACE WITH CLIENT PRICING
+    rates: emptyRates(),
   },
   {
     id: 'innova-crysta',
@@ -48,6 +65,23 @@ export const seedVehicles: Vehicle[] = [
     ], // PLACEHOLDER
     confirmed: true,
     baseFare: null, // REPLACE WITH CLIENT PRICING
+    rates: emptyRates(),
+  },
+  {
+    id: 'ertiga',
+    name: 'Maruti Suzuki Ertiga',
+    type: 'Compact 7 Seater MPV',
+    seats: 6, // PLACEHOLDER (6 passengers + driver)
+    luggage: 2, // PLACEHOLDER
+    features: [
+      'Dual AC with Rear Roof Vents',
+      'Comfortable 3-Row Seating',
+      'Economical for Small Groups',
+      'Experienced Chauffeur',
+    ], // PLACEHOLDER
+    confirmed: true,
+    baseFare: null, // REPLACE WITH CLIENT PRICING
+    rates: emptyRates(),
   },
   {
     id: 'innova-hycross',
@@ -63,139 +97,14 @@ export const seedVehicles: Vehicle[] = [
     ], // PLACEHOLDER
     confirmed: false, // Hycross is UNCONFIRMED per PROJECT_CONTEXT.md
     baseFare: null, // REPLACE WITH CLIENT PRICING
+    rates: emptyRates(),
   },
 ];
 
 /**
- * 8 Core Travel Routes
- * Each route contains:
- *  - slug
- *  - distanceKm
- *  - durationText
- *  - per-vehicle fares set to null (REPLACE WITH CLIENT PRICING)
+ * Travel routes: Airport ↔ City plus 30 outstation routes (lib/routeCatalog.ts).
  */
-export const seedRoutes: Route[] = [
-  {
-    id: 'airport-to-city',
-    name: 'Bangalore Airport to City',
-    slug: 'bangalore-airport-to-city',
-    origin: 'Kempegowda International Airport (BLR)',
-    destination: 'Bangalore City Hubs',
-    distanceKm: 35,
-    durationText: '1 hr 15 mins',
-    fares: {
-      innova: null, // REPLACE WITH CLIENT PRICING
-      'innova-crysta': null, // REPLACE WITH CLIENT PRICING
-      'innova-hycross': null, // REPLACE WITH CLIENT PRICING
-    },
-    description: 'Direct, on-time pickup and drop between BLR airport and major Bangalore city locations.',
-  },
-  {
-    id: 'bangalore-to-mysore',
-    name: 'Bangalore to Mysore',
-    slug: 'bangalore-to-mysore',
-    origin: 'Bangalore',
-    destination: 'Mysore',
-    distanceKm: 145,
-    durationText: '3 hrs',
-    fares: {
-      innova: null, // REPLACE WITH CLIENT PRICING
-      'innova-crysta': null, // REPLACE WITH CLIENT PRICING
-      'innova-hycross': null, // REPLACE WITH CLIENT PRICING
-    },
-    description: 'Smooth highway journey via Bangalore-Mysore Expressway for heritage tours and palace visits.',
-  },
-  {
-    id: 'bangalore-to-coorg',
-    name: 'Bangalore to Coorg',
-    slug: 'bangalore-to-coorg',
-    origin: 'Bangalore',
-    destination: 'Coorg (Madikeri)',
-    distanceKm: 250,
-    durationText: '5 hrs 30 mins',
-    fares: {
-      innova: null, // REPLACE WITH CLIENT PRICING
-      'innova-crysta': null, // REPLACE WITH CLIENT PRICING
-      'innova-hycross': null, // REPLACE WITH CLIENT PRICING
-    },
-    description: 'Popular coffee plantation getaway with experienced hill station chauffeurs.',
-  },
-  {
-    id: 'bangalore-to-ooty',
-    name: 'Bangalore to Ooty',
-    slug: 'bangalore-to-ooty',
-    origin: 'Bangalore',
-    destination: 'Ooty',
-    distanceKm: 275,
-    durationText: '6 hrs 30 mins',
-    fares: {
-      innova: null, // REPLACE WITH CLIENT PRICING
-      'innova-crysta': null, // REPLACE WITH CLIENT PRICING
-      'innova-hycross': null, // REPLACE WITH CLIENT PRICING
-    },
-    description: 'Scenic journey through Bandipur tiger reserve and 36 hairpin bends to the Queen of Hill Stations.',
-  },
-  {
-    id: 'bangalore-to-wayanad',
-    name: 'Bangalore to Wayanad',
-    slug: 'bangalore-to-wayanad',
-    origin: 'Bangalore',
-    destination: 'Wayanad',
-    distanceKm: 280,
-    durationText: '6 hrs',
-    fares: {
-      innova: null, // REPLACE WITH CLIENT PRICING
-      'innova-crysta': null, // REPLACE WITH CLIENT PRICING
-      'innova-hycross': null, // REPLACE WITH CLIENT PRICING
-    },
-    description: 'Lush green rainforest and wildlife sanctuary road trip with spacious Innova luggage room.',
-  },
-  {
-    id: 'bangalore-to-chikmagalur',
-    name: 'Bangalore to Chikmagalur',
-    slug: 'bangalore-to-chikmagalur',
-    origin: 'Bangalore',
-    destination: 'Chikmagalur',
-    distanceKm: 245,
-    durationText: '4 hrs 30 mins',
-    fares: {
-      innova: null, // REPLACE WITH CLIENT PRICING
-      'innova-crysta': null, // REPLACE WITH CLIENT PRICING
-      'innova-hycross': null, // REPLACE WITH CLIENT PRICING
-    },
-    description: 'Fast expressway drive through Hassan reaching the peaks of Mullayanagiri and coffee estates.',
-  },
-  {
-    id: 'bangalore-to-kodaikanal',
-    name: 'Bangalore to Kodaikanal',
-    slug: 'bangalore-to-kodaikanal',
-    origin: 'Bangalore',
-    destination: 'Kodaikanal',
-    distanceKm: 465,
-    durationText: '9 hrs',
-    fares: {
-      innova: null, // REPLACE WITH CLIENT PRICING
-      'innova-crysta': null, // REPLACE WITH CLIENT PRICING
-      'innova-hycross': null, // REPLACE WITH CLIENT PRICING
-    },
-    description: 'Long-distance comfort and smooth ghat suspension for families heading to the Princess of Hill Stations.',
-  },
-  {
-    id: 'bangalore-to-pondicherry',
-    name: 'Bangalore to Pondicherry',
-    slug: 'bangalore-to-pondicherry',
-    origin: 'Bangalore',
-    destination: 'Pondicherry',
-    distanceKm: 310,
-    durationText: '6 hrs',
-    fares: {
-      innova: null, // REPLACE WITH CLIENT PRICING
-      'innova-crysta': null, // REPLACE WITH CLIENT PRICING
-      'innova-hycross': null, // REPLACE WITH CLIENT PRICING
-    },
-    description: 'East coast beach retreat travel via Krishnagiri and Tiruvannamalai with relaxed highway cruising.',
-  },
-];
+export const seedRoutes: Route[] = catalogRoutes;
 
 /**
  * Seed Function: writes to Firestore if Firebase Admin is configured

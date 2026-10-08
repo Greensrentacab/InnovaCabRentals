@@ -12,6 +12,7 @@
 import { Booking, BookingStatus, ServiceType, TripType } from '@/lib/types';
 import { calculateServerFare } from '@/lib/fareCalculator';
 import { siteConfig } from '@/lib/siteConfig';
+import { formatTime12 } from '@/lib/time';
 
 export interface CreateBookingInput {
   customerName: string;
@@ -104,7 +105,7 @@ export async function createBookingRequest(
     // 4. Generate admin WhatsApp confirmation link (Admin clicks wa.me to confirm with customer)
     const fareText = calculatedFare !== null ? `₹${calculatedFare}` : 'Price on request';
     const adminMessage = encodeURIComponent(
-      `Hello ${booking.customerName},\n\nThis is ${siteConfig.brand.name}. We have received your booking request #${bookingId}:\n• Route: ${booking.pickupName} ➔ ${booking.dropName}\n• Service: ${booking.serviceType.toUpperCase()} (${booking.tripType === 'round' ? 'Round Trip' : 'One Way'})\n• Date & Time: ${booking.pickupDate} at ${booking.pickupTime}\n• Vehicle: ${booking.vehicleName}\n• Tariff: ${fareText}\n\nWe are pleased to confirm your vehicle. Please let us know if your schedule is finalized!`
+      `Hello ${booking.customerName},\n\nThis is ${siteConfig.brand.name}. We have received your booking request #${bookingId}:\n• Route: ${booking.pickupName} ➔ ${booking.dropName}\n• Service: ${booking.serviceType.toUpperCase()} (${booking.tripType === 'round' ? 'Round Trip' : 'One Way'})\n• Date & Time: ${booking.pickupDate} at ${formatTime12(booking.pickupTime)}\n• Vehicle: ${booking.vehicleName}\n• Tariff: ${fareText}\n\nWe are pleased to confirm your vehicle. Please let us know if your schedule is finalized!`
     );
 
     // Format customer phone for international WhatsApp link

@@ -1,6 +1,9 @@
-import { HelpCircle, Phone, MessageCircle, ShieldCheck, CheckCircle2, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { ArrowRight, MessageCircle, Phone } from 'lucide-react';
 import { siteConfig } from '@/lib/siteConfig';
+import PageHero from '@/components/ds/PageHero';
+import CtaBand from '@/components/ds/CtaBand';
+import FaqAccordion from '@/components/home/FaqAccordion';
 
 export const metadata = {
   title: `Frequently Asked Questions | Innova Cabs Bangalore | ${siteConfig.brand.name}`,
@@ -16,6 +19,7 @@ export const metadata = {
 
 const categorizedFaqs = [
   {
+    id: 'booking',
     category: 'Booking & Confirmation (Core FAQs)',
     items: [
       {
@@ -24,7 +28,7 @@ const categorizedFaqs = [
       },
       {
         q: 'Are tolls, driver allowance, and parking charges included?',
-        a: 'Toll fees, state entry taxes, and parking charges are billed transparently at actuals, or can be bundled into custom all-inclusive outstation tour quotes upon request with zero hidden surprises.',
+        a: 'Driver allowance is included in your fare estimate. Toll fees, parking charges and state entry permits are paid by the customer at actuals.',
       },
       {
         q: 'Can I choose between a 7-seater and 8-seater Innova?',
@@ -41,6 +45,7 @@ const categorizedFaqs = [
     ],
   },
   {
+    id: 'luggage',
     category: 'Luggage & Cabin Comfort',
     items: [
       {
@@ -58,6 +63,7 @@ const categorizedFaqs = [
     ],
   },
   {
+    id: 'billing',
     category: 'Billing & Commercial Terms',
     items: [
       {
@@ -75,6 +81,7 @@ const categorizedFaqs = [
     ],
   },
   {
+    id: 'safety',
     category: 'Chauffeurs & Safety',
     items: [
       {
@@ -91,119 +98,92 @@ const categorizedFaqs = [
 
 export default function FaqPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-brand-offwhite">
-      {/* Header Banner */}
-      <section className="bg-brand-navy text-white py-14 sm:py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-xs font-semibold text-brand-orange border border-white/10">
-            <HelpCircle className="w-3.5 h-3.5" />
-            <span>Customer Knowledge Base</span>
-          </div>
+    <div className="bg-porcelain">
+      <PageHero
+        breadcrumbs={[{ label: 'FAQ' }]}
+        eyebrow="Customer Knowledge Base"
+        title="Frequently Asked Questions"
+        lead={
+          <>
+            <p className="font-bold text-brand-700">Clear, Honest &amp; Transparent Answers</p>
+            <p className="mt-3">
+              Everything you need to know about our Toyota Innova car rentals in Bangalore — from booking procedures and
+              luggage limits to toll policies and outstation terms.
+            </p>
+          </>
+        }
+      >
+        <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <a href={siteConfig.contact.phone.tel} className="btn-primary">
+            <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}
+          </a>
+          <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+          </a>
+        </div>
+      </PageHero>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white">
-            Frequently Asked Questions
-          </h1>
+      <section className="section py-12 sm:py-16">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+          {/* Category index */}
+          <aside className="lg:sticky lg:top-28 lg:self-start">
+            <nav aria-label="FAQ categories" className="card-float p-4">
+              <p className="px-2 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Categories</p>
+              <ul className="mt-1">
+                {categorizedFaqs.map((cat) => (
+                  <li key={cat.id}>
+                    <a
+                      href={`#${cat.id}`}
+                      className="flex items-center justify-between gap-3 rounded-2xl px-2 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-brand-700"
+                    >
+                      {cat.category}
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-500">
+                        {cat.items.length}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
 
-          <p className="text-lg text-brand-orange font-medium">
-            Clear, Honest &amp; Transparent Answers
-          </p>
+            <div className="relative mt-5 overflow-hidden rounded-3xl bg-ink p-6 text-white shadow-float-lg">
+              <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-brand-600/40 blur-3xl" />
+              <span className="chip-live relative bg-live-500/15 text-live-400">24/7 Live Assistance</span>
+              <h2 className="relative mt-3 text-xl font-extrabold tracking-tight">Still Have Questions?</h2>
+              <p className="relative mt-1.5 text-sm leading-relaxed text-slate-300">
+                Our team is available round the clock to calculate custom itineraries, explain driver allowances, and confirm
+                vehicle availability.
+              </p>
+              <div className="relative mt-5 grid gap-2">
+                <a href={siteConfig.contact.phone.tel} className="btn bg-white text-ink hover:-translate-y-0.5">
+                  <Phone className="h-4 w-4" /> Call Us Now
+                </a>
+                <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+                  <MessageCircle className="h-4 w-4" /> Message on WhatsApp
+                </a>
+                <Link href="/contact" className="btn border border-white/20 bg-white/10 text-white hover:bg-white/15">
+                  Submit Request <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </aside>
 
-          <p className="text-sm sm:text-base text-gray-300 max-w-2xl mx-auto leading-relaxed">
-            Everything you need to know about our Toyota Innova car rentals in Bangalore — from booking procedures and luggage limits to toll policies and outstation terms.
-          </p>
-
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={siteConfig.contact.phone.tel}
-              className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-orange hover:bg-brand-orange-hover text-white font-bold text-sm shadow-md transition-all"
-            >
-              <Phone className="w-4 h-4" />
-              <span>Call {siteConfig.contact.phone.display}</span>
-            </a>
-
-            <a
-              href={siteConfig.contact.phone.whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md transition-all"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>Chat on WhatsApp</span>
-            </a>
+          {/* Categorized accordions */}
+          <div className="space-y-10">
+            {categorizedFaqs.map((cat, i) => (
+              <div key={cat.id} id={cat.id} className="scroll-mt-28">
+                <h2 className="mb-4 flex items-center gap-2 text-xl font-extrabold tracking-tight">
+                  <span className="h-2 w-2 rounded-full bg-brand-600" />
+                  {cat.category}
+                </h2>
+                <FaqAccordion faqs={cat.items} defaultOpen={i === 0 ? 0 : null} />
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Categorized FAQs Section */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full space-y-12">
-        {categorizedFaqs.map((cat, catIdx) => (
-          <div key={catIdx} className="space-y-4">
-            <div className="border-b border-gray-200 pb-2">
-              <h2 className="text-lg sm:text-xl font-extrabold text-brand-navy flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-brand-orange" />
-                <span>{cat.category}</span>
-              </h2>
-            </div>
-
-            <div className="space-y-3.5">
-              {cat.items.map((item, itemIdx) => (
-                <div
-                  key={itemIdx}
-                  className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm hover:shadow-md transition-all"
-                >
-                  <h3 className="text-base font-bold text-brand-navy mb-2 flex items-start gap-2.5">
-                    <HelpCircle className="w-5 h-5 text-brand-orange shrink-0 mt-0.5" />
-                    <span>{item.q}</span>
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed pl-7.5">
-                    {item.a}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        {/* Still have questions CTA card */}
-        <div className="bg-brand-navy text-white rounded-3xl p-8 sm:p-12 text-center space-y-4 shadow-xl">
-          <span className="text-xs font-bold uppercase tracking-wider text-brand-orange bg-white/10 px-3.5 py-1 rounded-full inline-block">
-            24/7 Live Assistance
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Still Have Questions?
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-300 max-w-md mx-auto leading-relaxed">
-            Our team is available round the clock to calculate custom itineraries, explain driver allowances, and confirm vehicle availability.
-          </p>
-
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={siteConfig.contact.phone.tel}
-              className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-orange hover:bg-brand-orange-hover text-white font-bold text-sm shadow-md transition-all"
-            >
-              <Phone className="w-4 h-4" />
-              <span>Call Us Now</span>
-            </a>
-
-            <a
-              href={siteConfig.contact.phone.whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md transition-all"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>Message on WhatsApp</span>
-            </a>
-
-            <Link
-              href="/contact"
-              className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-all"
-            >
-              <span>Submit Request</span>
-            </Link>
-          </div>
-        </div>
-      </section>
+      <CtaBand />
     </div>
   );
 }

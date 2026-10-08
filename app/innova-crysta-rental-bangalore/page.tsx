@@ -27,25 +27,6 @@ export default async function InnovaCrystaRentalBangalorePage() {
     notFound();
   }
 
-  const galleryPlaceholders = [
-    {
-      title: 'Toyota Innova Crysta Exterior Front Fascia',
-      caption: 'Sophisticated chrome-accented executive MPV styling',
-    },
-    {
-      title: 'Plush Captain Seats Lounge Row',
-      caption: 'Executive middle-row captain recliners with armrests & tray tables',
-    },
-    {
-      title: 'Spacious Luggage Boot Space',
-      caption: 'Expanded cargo capacity accommodating 4-5 full-size suitcases',
-    },
-    {
-      title: 'Automatic Climate Control Cockpit',
-      caption: 'Premium dashboard with multi-zone cooling and USB charging',
-    },
-  ];
-
   const idealFor = [
     'Executive Corporate Delegations & Tech Summits',
     'VIP Kempegowda Airport (BLR) Chauffeur Transfers',
@@ -70,7 +51,6 @@ export default async function InnovaCrystaRentalBangalorePage() {
       tagline="Comfortable Cars. Experienced Drivers. Reliable Journeys."
       overview="Step into executive comfort with the Toyota Innova Crysta. Designed for travelers who demand the highest tier of ride smoothness, privacy, and refinement, the Crysta features plush middle-row captain recliners, independent digital AC zones, superior noise isolation, and a commanding road presence. It is the premier choice for corporate executives, VIP airport transfers, and luxury family vacations."
       idealFor={idealFor}
-      galleryPlaceholders={galleryPlaceholders}
       detailedSpecs={detailedSpecs}
     />
   );

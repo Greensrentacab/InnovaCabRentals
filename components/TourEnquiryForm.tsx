@@ -1,7 +1,12 @@
 'use client';
 
+/**
+ * TourEnquiryForm.tsx — custom tour enquiry (design.md §3.0 .field/.label).
+ * Submission logic unchanged: submitTourEnquiry server action.
+ */
+
 import { useState } from 'react';
-import { Send, CheckCircle2, MessageCircle, Phone, Loader2, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Loader2, MessageCircle, ShieldCheck } from 'lucide-react';
 import { submitTourEnquiry } from '@/app/actions/enquiry';
 import { siteConfig } from '@/lib/siteConfig';
 
@@ -60,51 +65,35 @@ export default function TourEnquiryForm() {
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 sm:p-10 border border-gray-200 shadow-xl text-brand-navy">
-      <div className="border-b border-gray-100 pb-5 mb-6">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-orange mb-1">
-          <Sparkles className="w-4 h-4" />
-          <span>Customized South India Tours</span>
+    <div className="glass-strong rounded-4xl p-4 shadow-float-lg sm:p-8">
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-extrabold tracking-tight text-ink">Request a Custom Tour Itinerary</h2>
+          <p className="mt-0.5 text-xs font-medium text-slate-500">
+            Share your holiday dates and preferences. Our travel team will design a tailor-made plan with zero booking fees.
+          </p>
         </div>
-        <h2 className="text-2xl font-bold tracking-tight text-brand-navy">
-          Request a Custom Tour Itinerary
-        </h2>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1">
-          Share your holiday dates and preferences. Our travel team will design a tailor-made plan with zero booking fees.
-        </p>
+        <span className="chip-live shrink-0">
+          <span className="h-1.5 w-1.5 rounded-full bg-live-500" /> Free
+        </span>
       </div>
 
       {submitted ? (
-        <div className="py-8 px-4 text-center space-y-4 animate-in fade-in">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-8 h-8" />
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xl font-bold text-brand-navy">
-              Tour Enquiry Successfully Submitted!
-            </h3>
-            <p className="text-sm text-gray-600 max-w-md mx-auto">
-              Your tour request has been recorded (Status: <span className="font-bold text-brand-navy">PENDING</span>). Our tour coordinator will review your itinerary and get in touch via WhatsApp or phone call.
-            </p>
-          </div>
-
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={getWhatsAppEnquiryUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md transition-all"
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span>Connect on WhatsApp for Instant Quote</span>
+        <div className="animate-fade-up px-2 py-8 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-live-500 text-white shadow-glow-live">
+            <Check className="h-7 w-7" strokeWidth={3} />
+          </span>
+          <h3 className="mt-5 text-xl font-extrabold tracking-tight">Tour Enquiry Successfully Submitted!</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600">
+            Your tour request has been recorded (Status:{' '}
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">PENDING</span>). Our tour
+            coordinator will review your itinerary and get in touch via WhatsApp or phone call.
+          </p>
+          <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
+            <a href={getWhatsAppEnquiryUrl()} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+              <MessageCircle className="h-4 w-4" /> Connect on WhatsApp for Instant Quote
             </a>
-
-            <button
-              type="button"
-              onClick={() => setSubmitted(false)}
-              className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs transition-colors"
-            >
+            <button type="button" onClick={() => setSubmitted(false)} className="btn-ghost">
               Submit Another Enquiry
             </button>
           </div>
@@ -112,50 +101,52 @@ export default function TourEnquiryForm() {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           {errorMessage && (
-            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">
+            <p role="alert" className="rounded-2xl border border-rose-300 bg-rose-50/50 px-4 py-3 text-xs font-medium text-rose-600">
               {errorMessage}
-            </div>
+            </p>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
+              <label htmlFor="te-name" className="label">
                 Your Full Name *
               </label>
               <input
+                id="te-name"
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g. Ramesh Kumar"
-                className="min-h-[44px] w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 bg-white"
+                className="field"
                 required
               />
             </div>
-
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
+              <label htmlFor="te-phone" className="label">
                 WhatsApp Phone Number *
               </label>
               <input
+                id="te-phone"
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="10-digit mobile number"
-                className="min-h-[44px] w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 bg-white"
+                className="field"
                 required
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
+              <label htmlFor="te-dest" className="label">
                 Preferred Destination / Tour *
               </label>
               <select
+                id="te-dest"
                 value={formData.destination}
                 onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-                className="min-h-[44px] w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-orange/40"
+                className="field"
               >
                 <option value="Coorg (Madikeri)">Coorg / Madikeri (Coffee Hills)</option>
                 <option value="Ooty">Ooty &amp; Nilgiris (Queen of Hills)</option>
@@ -167,30 +158,31 @@ export default function TourEnquiryForm() {
                 <option value="Custom Multi-City Tour">Custom Multi-City Tour</option>
               </select>
             </div>
-
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
+              <label htmlFor="te-date" className="label">
                 Approximate Travel Date *
               </label>
               <input
+                id="te-date"
                 type="date"
                 value={formData.travelDate}
                 onChange={(e) => setFormData({ ...formData, travelDate: e.target.value })}
-                className="min-h-[44px] w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 bg-white"
+                className="field"
                 required
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
+              <label htmlFor="te-duration" className="label">
                 Tour Duration
               </label>
               <select
+                id="te-duration"
                 value={formData.duration}
                 onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                className="min-h-[44px] w-full px-3 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-orange/40"
+                className="field"
               >
                 <option>1 Night / 2 Days</option>
                 <option>2 Nights / 3 Days</option>
@@ -199,30 +191,30 @@ export default function TourEnquiryForm() {
                 <option>5+ Days Custom</option>
               </select>
             </div>
-
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
+              <label htmlFor="te-pax" className="label">
                 Number of Passengers
               </label>
               <input
+                id="te-pax"
                 type="number"
                 min={1}
                 max={8}
                 value={formData.passengers}
                 onChange={(e) => setFormData({ ...formData, passengers: Number(e.target.value) })}
-                className="min-h-[44px] w-full px-3 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 bg-white"
+                className="field tabular-nums"
                 required
               />
             </div>
-
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
+              <label htmlFor="te-vehicle" className="label">
                 Vehicle Model
               </label>
               <select
+                id="te-vehicle"
                 value={formData.vehicleModel}
                 onChange={(e) => setFormData({ ...formData, vehicleModel: e.target.value })}
-                className="min-h-[44px] w-full px-3 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-orange/40"
+                className="field"
               >
                 <option>Toyota Innova (7/8 Seater)</option>
                 <option>Toyota Innova Crysta</option>
@@ -232,49 +224,39 @@ export default function TourEnquiryForm() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
+            <label htmlFor="te-notes" className="label">
               Special Requirements or Sightseeing Notes (Optional)
             </label>
             <textarea
+              id="te-notes"
               rows={3}
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="e.g. Need child booster seat, senior citizens traveling, specific hotel drop, or luggage rack..."
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 bg-white"
+              className="field resize-y"
             />
           </div>
 
-          <div className="pt-2 flex flex-col sm:flex-row gap-3">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="min-h-[48px] flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-orange hover:bg-brand-orange-hover active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-brand-orange/25 transition-all"
-            >
+          <div className="flex flex-col gap-2 pt-1 sm:flex-row">
+            <button type="submit" disabled={isSubmitting} className="btn-primary group flex-1 py-3.5 text-[15px]">
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Submitting to Dispatch...</span>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Submitting to Dispatch...
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
-                  <span>Submit Tour Enquiry</span>
+                  Submit Tour Enquiry
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </>
               )}
             </button>
-
-            <a
-              href={getWhatsAppEnquiryUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="min-h-[48px] sm:w-auto inline-flex items-center justify-center gap-2 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-semibold text-sm shadow-md transition-all"
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span>WhatsApp Us for Quick Quote</span>
+            <a href={getWhatsAppEnquiryUrl()} target="_blank" rel="noopener noreferrer" className="btn-whatsapp py-3.5">
+              <MessageCircle className="h-4 w-4" /> WhatsApp Us for Quick Quote
             </a>
           </div>
 
-          <p className="text-[11px] text-gray-400 text-center pt-2">
+          <p className="flex items-center justify-center gap-1.5 text-center text-xs font-medium text-slate-500">
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-live-600" />
             No upfront payment required. Enquiries are saved securely to our dispatch team for custom quote preparation.
           </p>
         </form>

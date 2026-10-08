@@ -52,7 +52,7 @@ export default function BookingWidget({
   serviceType = 'outstation',
   routeSlug,
 }: BookingWidgetProps) {
-  const { openBookingFlow } = useBookingFlow();
+  const { searchFares: openBookingFlow } = useBookingFlow(); // legacy widget (unused)
   const [tripType, setTripType] = useState<'oneway' | 'round'>('oneway');
   
   // Stored location data: { name, address, lat, lng }

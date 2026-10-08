@@ -6,7 +6,7 @@ import { siteConfig } from '@/lib/siteConfig';
 export const metadata = {
   title: `Local Innova Car Rental Bangalore | Hourly & Full Day Packages | ${siteConfig.brand.name}`,
   description:
-    'Rent Toyota Innova and Innova Crysta in Bangalore for local city travel. Flexible 4hr/40km, 8hr/80km full-day rental packages and point-to-point city transfers.',
+    'Rent Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga in Bangalore for local city travel. 8hr/80km full-day and 12hr/120km extended rental packages, custom durations on request, and point-to-point city transfers.',
 };
 
 export default async function LocalRidesPage() {
@@ -44,7 +44,7 @@ export default async function LocalRidesPage() {
     },
     {
       q: 'Can I use the local rental package for Bangalore Airport drops or pickups?',
-      a: 'Yes, local packages can include an airport trip as long as the travel fits within the purchased hours and kilometer limit. Toll charges at airport trumpet are billed at actuals.',
+      a: 'Yes, local packages can include an airport trip as long as the travel fits within the purchased hours and kilometer limit. Toll charges at the airport trumpet are paid by the customer.',
     },
     {
       q: 'Do you offer point-to-point one-way city transfers within Bangalore?',
@@ -52,27 +52,30 @@ export default async function LocalRidesPage() {
     },
     {
       q: 'Are parking fees and toll charges included in local packages?',
-      a: 'Mall parking fees, tech park entry charges, and tollway charges (like Electronic City flyover or Airport expressway) are billed at actuals.',
+      a: 'Mall parking fees, tech park entry charges, and tollway charges (like Electronic City flyover or Airport expressway) are paid by the customer at actuals.',
     },
   ];
 
   return (
     <LandingTemplate
-      badge="Local City Hire &amp; Hourly Packages"
+      breadcrumb="Local Rides"
+      badge="Local City Hire & Hourly Packages"
       title="Local Innova Car Rental in Bangalore"
-      subtitle="Chauffeur-driven Toyota Innova, Crysta, and Hycross rentals for point-to-point city transfers, half-day business meetings, and full-day family shopping."
-      heroNotice="Flexible 4Hr / 8Hr / 12Hr Packages • Zero Surge Multipliers"
+      subtitle="Chauffeur-driven Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga rentals for point-to-point city transfers, full-day business meetings, and extended family outings."
+      heroNotice="8 Hr & 12 Hr Packages • Custom Durations On Request • Zero Surge"
       benefitsTitle="Why Book a Full-Day Local Innova Rental"
       benefitsSubtitle="Enjoy the convenience of a dedicated chauffeur and spacious MPV at your disposal."
       benefits={benefits}
-      routesTitle="Popular City Transit &amp; Peripheral Routes"
+      routesTitle="Popular City Transit & Peripheral Routes"
       routesSubtitle="Door-to-door transit between major Bangalore technology parks and tourist spots."
       routes={allRoutes.slice(0, 4)}
+      allRoutes={allRoutes}
       vehicles={vehicles}
       faqs={faqs}
       showLocalAreas={true}
       localAreasTitle="Bangalore Local Chauffeur Service Coverage"
       localPackages={localPackages}
+      showPackages={true}
       customCtaTitle="Reserve Your Local Innova Rental"
       serviceType="local"
     />

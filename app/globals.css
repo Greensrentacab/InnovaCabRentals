@@ -2,38 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --color-brand-navy: #0B1B33;
-  --color-brand-offwhite: #F7F5F0;
-  --color-brand-orange: #F0562B;
-}
+/* ------------------------------------------------------------------------ */
+/* Design system base (design.md §5 Step 4)                                  */
+/* ------------------------------------------------------------------------ */
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; scroll-behavior: auto; }
+  body {
+    @apply bg-porcelain font-sans text-ink antialiased;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+  ::selection { @apply bg-brand-600 text-white; }
+  :focus-visible { @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white; }
 
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  color: #0B1B33;
-  background-color: #F7F5F0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Ensure mobile interactive elements meet 44px minimum touch target */
-@media (max-width: 768px) {
-  a, button, input, select, textarea {
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
+  .ds-scope {
+    @apply font-jakarta text-ink antialiased;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+  .ds-scope ::selection {
+    @apply bg-brand-600 text-white;
+  }
+  .ds-scope :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white;
   }
 }
 
-::selection {
-  background-color: #F0562B;
-  color: #FFFFFF;
+@layer components {
+  /* Glass */
+  .glass        { @apply border border-white/60 bg-white/70 backdrop-blur-md backdrop-saturate-150; }
+  .glass-strong { @apply border border-slate-200/80 bg-white/85 shadow-float backdrop-blur-xl backdrop-saturate-150; }
+  .glass-dark   { @apply border border-white/10 bg-slate-900/60 text-white backdrop-blur-md; }
+
+  /* Cards & chips */
+  .card-float       { @apply rounded-3xl border border-slate-200/80 bg-white shadow-float transition-all duration-300 ease-premium; }
+  .card-float-hover { @apply hover:-translate-y-1 hover:border-slate-300/80 hover:shadow-float-lg; }
+  .pill      { @apply inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm; }
+  .chip-live { @apply inline-flex items-center gap-1.5 rounded-full bg-live-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-live-600; }
+
+  /* Buttons */
+  .btn          { @apply inline-flex select-none items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-all duration-200 ease-premium active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50; }
+  .btn-primary  { @apply btn bg-brand-600 text-white shadow-glow hover:-translate-y-0.5 hover:bg-brand-700; }
+  .btn-ghost    { @apply btn border border-slate-200/80 bg-white text-slate-800 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-float; }
+  .btn-whatsapp { @apply btn bg-whatsapp text-white hover:-translate-y-0.5 hover:brightness-95; }
+
+  /* Fields */
+  .field       { @apply w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-ink placeholder:text-slate-400 transition-colors duration-200 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10; }
+  .field-error { @apply border-rose-300 bg-rose-50/50 focus:border-rose-400 focus:ring-rose-500/10; }
+  .label       { @apply mb-1.5 block text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500; }
+
+  /* Skeleton */
+  .shimmer { @apply relative overflow-hidden bg-slate-200/60; }
+  .shimmer::after { content: ''; @apply absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent; }
+
+  /* Layout */
+  .section { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
+  .eyebrow { @apply inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-brand-700; }
 }
 
-:focus-visible {
-  outline: 2px solid #F0562B;
-  outline-offset: 2px;
+@layer utilities {
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .mask-fade-x { mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent); }
+  .text-balance { text-wrap: balance; }
+  .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

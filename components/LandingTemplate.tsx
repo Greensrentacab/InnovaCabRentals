@@ -1,22 +1,33 @@
+/**
+ * LandingTemplate.tsx — service landing pages (/airport-taxi, /local-rides,
+ * /outstation-cabs), built to design.md:
+ *  - Inner page hero with aside (§2.3, §3.6) + Quick Fare Estimate widget (§3.2)
+ *  - Local packages (§3.2.4 / §3.3), benefits cards, route grid (§3.3)
+ *  - Local coverage grid, fleet cards (§3.3), FAQ accordion + dark CTA band (§3.6)
+ */
+
 import React from 'react';
 import Link from 'next/link';
-import {
-  Phone,
-  MessageCircle,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-  Car,
-  ChevronRight,
-  HelpCircle,
-  MapPin,
-  Clock,
-  Sparkles,
-} from 'lucide-react';
-import BookingWidget from '@/components/BookingWidget';
+import { ArrowRight, ChevronRight, MapPin, MessageCircle, Phone, ShieldCheck, Star, Users } from 'lucide-react';
 import PackageSelector from '@/components/PackageSelector';
+import QuickBookingWidget from '@/components/home/QuickBookingWidget';
+import FleetSection from '@/components/home/FleetSection';
+import FaqAccordion from '@/components/home/FaqAccordion';
+import RouteCard from '@/components/home/RouteCard';
+import FareResults from '@/components/FareResults';
+import BookButton from '@/components/home/BookButton';
+import Reveal from '@/components/home/Reveal';
+import type { HomeService } from '@/components/home/scrollToBook';
 import { siteConfig } from '@/lib/siteConfig';
-import { Vehicle, Route, LocalPackage, ServiceType } from '@/lib/types';
+import { cn } from '@/lib/cn';
+import { LocalPackage, Route, Vehicle } from '@/lib/types';
+import {
+  buildFleetCards,
+  buildRouteCards,
+  buildWidgetData,
+  confirmedFleet,
+  sortPackages,
+} from '@/lib/storefrontData';
 
 export interface LandingBenefit {
   icon: React.ComponentType<{ className?: string }>;
@@ -30,6 +41,8 @@ export interface LandingFaq {
 }
 
 export interface LandingTemplateProps {
+  /** Breadcrumb label for the current page */
+  breadcrumb: string;
   badge: string;
   title: string;
   subtitle: string;
@@ -39,17 +52,48 @@ export interface LandingTemplateProps {
   benefits: LandingBenefit[];
   routesTitle?: string;
   routesSubtitle?: string;
+  /** Routes shown in the route grid */
   routes: Route[];
+  /** Every route (feeds the booking widget's destinations + fleet fares) */
+  allRoutes: Route[];
   vehicles: Vehicle[];
+  /** Local packages (feed the widget + fleet fares) */
+  localPackages: LocalPackage[];
+  /** Show the local package selector section */
+  showPackages?: boolean;
   faqs: LandingFaq[];
   showLocalAreas?: boolean;
   localAreasTitle?: string;
-  localPackages?: LocalPackage[];
   customCtaTitle?: string;
-  serviceType?: ServiceType;
+  serviceType: HomeService;
 }
 
+function SectionHeading({
+  eyebrow,
+  title,
+  subtitle,
+  centered = true,
+}: {
+  eyebrow: string;
+  title: string;
+  subtitle?: string;
+  centered?: boolean;
+}) {
+  return (
+    <div className={cn('max-w-2xl', centered && 'mx-auto text-center')}>
+      <span className="eyebrow">{eyebrow}</span>
+      <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h2>
+      {subtitle && <p className="mt-3 text-slate-600">{subtitle}</p>}
+    </div>
+  );
+}
+
+const hairline = (
+  <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+);
+
 export default function LandingTemplate({
+  breadcrumb,
   badge,
   title,
   subtitle,
@@ -60,404 +104,248 @@ export default function LandingTemplate({
   routesTitle = 'Popular Travel Routes',
   routesSubtitle = 'Top destinations with fixed transparent rates and reliable highway chauffeurs.',
   routes,
+  allRoutes,
   vehicles,
+  localPackages,
+  showPackages = false,
   faqs,
   showLocalAreas = false,
   localAreasTitle = 'Bangalore Local Pickup & Drop Coverage',
-  localPackages,
   customCtaTitle = 'Reserve Your Innova in Advance',
   serviceType,
 }: LandingTemplateProps) {
+  const fleet = confirmedFleet(vehicles);
+  const widgetData = buildWidgetData(allRoutes, localPackages, fleet);
+  const routeCards = buildRouteCards(routes, fleet);
+  const fleetCards = buildFleetCards(fleet);
+
   return (
-    <div className="flex flex-col min-h-screen bg-brand-offwhite">
-      {/* ==================================================================== */}
-      {/* 1. HERO + BOOKING WIDGET                                             */}
-      {/* ==================================================================== */}
-      <section className="relative bg-brand-navy text-white py-12 md:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#F0562B_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
+    <div className="ds-scope bg-porcelain">
+      {/* ================================================================ */}
+      {/* 1. INNER PAGE HERO + QUICK FARE ESTIMATE                         */}
+      {/*    No overflow-hidden on the section: the calendar pop-up must   */}
+      {/*    extend past it (design.md §3.2.1).                            */}
+      {/* ================================================================ */}
+      <section className="relative isolate z-10 pb-12 pt-28 sm:pt-32">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+          <div className="absolute inset-0 bg-grid-slate [background-size:44px_44px] [mask-image:radial-gradient(ellipse_at_top,#000_30%,transparent_70%)]" />
+          <div className="absolute -top-40 left-1/2 h-[480px] w-[860px] -translate-x-1/2 rounded-full bg-brand-400/20 blur-[120px]" />
+        </div>
 
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* Left Hero Content */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-xs font-semibold text-brand-orange border border-white/10">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{badge}</span>
-              </div>
+        <div className="section grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-10">
+          <div className="lg:pt-6">
+            <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-1 text-xs font-semibold text-slate-500">
+              <Link href="/" className="hover:text-brand-700">
+                Home
+              </Link>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-slate-700" aria-current="page">
+                {breadcrumb}
+              </span>
+            </nav>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight text-white">
-                {title}
-              </h1>
+            <span className="eyebrow animate-fade-up">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-600" />
+              {badge}
+            </span>
 
-              <p className="text-lg sm:text-xl font-medium text-brand-orange">
-                {siteConfig.brand.closingLine}
+            <h1 className="text-balance mt-5 animate-fade-up text-[2.2rem] font-extrabold leading-[1.06] tracking-tight text-ink [animation-delay:80ms] sm:text-5xl">
+              {title}
+            </h1>
+
+            <p className="mt-3 animate-fade-up text-base font-bold text-brand-700 [animation-delay:120ms]">
+              {siteConfig.brand.closingLine}
+            </p>
+
+            <p className="mt-4 max-w-xl animate-fade-up text-base leading-relaxed text-slate-600 [animation-delay:160ms] sm:text-lg">
+              {subtitle}
+            </p>
+
+            {heroNotice && (
+              <p className="pill mt-6 animate-fade-up py-2 text-live-600 [animation-delay:200ms]">
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                {heroNotice}
               </p>
+            )}
 
-              <p className="text-sm sm:text-base text-gray-300 max-w-2xl leading-relaxed">
-                {subtitle}
-              </p>
-
-              {heroNotice && (
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-emerald-300 inline-flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 shrink-0" />
-                  <span>{heroNotice}</span>
-                </div>
-              )}
-
-              {/* Quick Primary Actions */}
-              <div className="flex flex-col sm:flex-row items-center lg:justify-start justify-center gap-3.5 pt-2">
-                <a
-                  href={siteConfig.contact.phone.tel}
-                  className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-brand-orange hover:bg-brand-orange-hover active:scale-[0.99] text-white text-base font-bold shadow-lg shadow-brand-orange/25 transition-all"
-                >
-                  <Phone className="w-5 h-5" />
-                  <span>{siteConfig.cta.instantBooking}</span>
-                </a>
-
-                <a
-                  href={siteConfig.contact.phone.whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-base font-semibold shadow-lg transition-all"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  <span>{siteConfig.cta.quickQuote}</span>
-                </a>
-              </div>
+            <div className="mt-7 flex animate-fade-up flex-col gap-2 [animation-delay:240ms] sm:flex-row sm:flex-wrap">
+              <a href={siteConfig.contact.phone.tel} className="btn-primary">
+                <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
+              </a>
+              <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+                <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
+              </a>
             </div>
 
-            {/* Right Hero: Reusable BookingWidget */}
-            <div className="lg:col-span-5 w-full mt-6 lg:mt-0">
-              <BookingWidget serviceType={serviceType} />
-            </div>
+            <ul className="mt-6 flex animate-fade-up flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-slate-600 [animation-delay:320ms]">
+              <li className="flex items-center gap-1.5">
+                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                {siteConfig.trustClaims.googleRating.value}-Star Rated · {siteConfig.trustClaims.happyCustomers.value} customers
+              </li>
+              <li className="flex items-center gap-1.5">
+                <Users className="h-4 w-4 text-brand-600" /> Verified chauffeurs
+              </li>
+              <li className="flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-live-600" /> {siteConfig.contact.hours}
+              </li>
+            </ul>
+          </div>
+
+          <div className="min-w-0">
+            <QuickBookingWidget {...widgetData} initialService={serviceType} />
           </div>
         </div>
       </section>
 
-      {/* ==================================================================== */}
-      {/* 2. LOCAL RIDES PACKAGE SELECTOR (Point-to-point & Full-day)         */}
-      {/* ==================================================================== */}
-      {localPackages && localPackages.length > 0 && (
-        <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-              Flexible Hourly &amp; Daily Tariffs
-            </span>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-brand-navy mt-1">
-              Local Rental Packages
-            </h2>
-            <p className="text-sm sm:text-base text-gray-600 mt-2">
-              Choose between flexible point-to-point rides or hourly full-day rental packages for city travel.
-            </p>
-          </div>
+      {/* Available cars, prices & T&Cs (after "See Fares") */}
+      <FareResults />
 
-          <PackageSelector packages={localPackages} vehicles={vehicles} />
+      {/* ================================================================ */}
+      {/* 2. LOCAL RENTAL PACKAGES                                         */}
+      {/* ================================================================ */}
+      {showPackages && localPackages.length > 0 && (
+        <section id="packages" className="relative scroll-mt-24 bg-white py-16 sm:py-20">
+          {hairline}
+          <div className="section">
+            <SectionHeading
+              eyebrow="Flexible hourly & daily tariffs"
+              title="Local Rental Packages"
+              subtitle="Choose between flexible point-to-point rides or hourly full-day rental packages for city travel."
+            />
+            <div className="mt-10">
+              <PackageSelector packages={sortPackages(localPackages)} vehicles={fleet} />
+            </div>
+          </div>
         </section>
       )}
 
-      {/* ==================================================================== */}
-      {/* 3. BENEFITS                                                          */}
-      {/* ==================================================================== */}
-      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-            Service Highlights
-          </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-brand-navy mt-1">
-            {benefitsTitle}
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600 mt-2">
-            {benefitsSubtitle}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {benefits.map((item, idx) => {
+      {/* ================================================================ */}
+      {/* 3. BENEFITS                                                      */}
+      {/* ================================================================ */}
+      <section className="section py-16 sm:py-20">
+        <SectionHeading eyebrow="Service highlights" title={benefitsTitle} subtitle={benefitsSubtitle} />
+        <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          {benefits.map((item, i) => {
             const Icon = item.icon;
             return (
-              <div
-                key={idx}
-                className="bg-white rounded-3xl p-7 border border-gray-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="w-12 h-12 rounded-2xl bg-brand-orange-light text-brand-orange flex items-center justify-center mb-5">
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-lg font-bold text-brand-navy mb-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
+              <Reveal key={item.title} delay={i * 0.1} className="h-full">
+                <article className="card-float card-float-hover h-full p-6">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <h3 className="mt-5 text-lg font-extrabold tracking-tight">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.description}</p>
+                </article>
+              </Reveal>
             );
           })}
         </div>
       </section>
 
-      {/* ==================================================================== */}
-      {/* 4. RELEVANT ROUTES                                                   */}
-      {/* ==================================================================== */}
-      {routes && routes.length > 0 && (
-        <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-white border-y border-gray-200/60">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center max-w-3xl mx-auto mb-12">
-              <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-                Popular Corridors
-              </span>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-brand-navy mt-1">
-                {routesTitle}
-              </h2>
-              <p className="text-sm sm:text-base text-gray-600 mt-2">
-                {routesSubtitle}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {routes.map((route) => (
-                <Link
-                  key={route.id}
-                  href={`/routes/${route.slug}`}
-                  className="group bg-brand-offwhite rounded-3xl p-6 border border-gray-200 hover:border-brand-orange/50 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                      <span className="font-semibold text-brand-orange">{route.distanceKm} km</span>
-                      <span>{route.durationText}</span>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-brand-navy group-hover:text-brand-orange transition-colors mb-2">
-                      {route.name}
-                    </h3>
-
-                    <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed mb-4">
-                      {route.description || `Chauffeur-driven Innova cab service from ${route.origin} to ${route.destination}.`}
-                    </p>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-200/80 flex items-center justify-between text-xs">
-                    <span className="font-medium text-gray-500">Price on request</span>
-                    <span className="font-bold text-brand-orange flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                      Details <ChevronRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ==================================================================== */}
-      {/* 5. LOCAL SEO SECTION (Local Areas List)                              */}
-      {/* Included on Airport and Local pages per requirement                  */}
-      {/* ==================================================================== */}
-      {showLocalAreas && (
-        <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-brand-navy-light text-white">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center max-w-3xl mx-auto mb-10">
-              <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-                Doorstep Pickup Across Bangalore
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
-                {localAreasTitle}
-              </h2>
-              <p className="text-sm text-gray-300 mt-2">
-                We operate 24/7 across every major Bangalore hub, IT park, residential layout, and transit terminal.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {siteConfig.localAreas.map((area) => (
-                <div
-                  key={area}
-                  className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-3"
-                >
-                  <MapPin className="w-4 h-4 text-brand-orange shrink-0" />
-                  <div>
-                    <p className="text-sm font-bold text-white">{area}</p>
-                    <p className="text-[11px] text-gray-300">24/7 Innova Dispatch</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ==================================================================== */}
-      {/* 6. VEHICLES FROM FIRESTORE                                           */}
-      {/* ==================================================================== */}
-      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-            Our Toyota Fleet
-          </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-brand-navy mt-1">
-            Available Vehicle Models
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600 mt-2">
-            Spacious, air-conditioned MPVs maintained for peak highway reliability and family comfort.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {vehicles.filter((v) => v.confirmed !== false).map((vehicle) => (
-            <div
-              key={vehicle.id}
-              className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col justify-between"
-            >
-              <div>
-                {/* Vehicle Placeholder */}
-                <div className="bg-brand-navy/5 h-48 flex flex-col items-center justify-center p-6 border-b border-gray-100 text-center relative">
-                  <Car className="w-12 h-12 text-brand-navy/40 mb-2" />
-                  <span className="text-xs uppercase tracking-wider font-bold text-gray-600">
-                    {vehicle.name}
-                  </span>
-                  <span className="text-[11px] text-gray-400 mt-0.5">
-                    (Client vehicle photo placeholder)
-                  </span>
-
-                  {!vehicle.confirmed && (
-                    <span className="absolute top-4 right-4 bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200">
-                      Unconfirmed / Enquiry
-                    </span>
-                  )}
-                </div>
-
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-brand-orange-light text-brand-orange">
-                      {vehicle.type}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {vehicle.seats} Seater
-                    </span>
-                  </div>
-
-                  <h3 className="text-xl font-bold text-brand-navy mb-4">
-                    {vehicle.name}
-                  </h3>
-
-                  <ul className="space-y-2 mb-6">
-                    {vehicle.features.map((feature, idx) => (
-                      <li key={idx} className="text-xs text-gray-600 flex items-center gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-brand-orange shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="p-6 pt-0 border-t border-gray-100 mt-auto">
-                <div className="flex items-center justify-between py-3 mb-4">
-                  <span className="text-xs text-gray-500 font-medium">Rental Tariff</span>
-                  <span className="text-sm font-bold text-brand-navy">
-                    {vehicle.baseFare !== null && vehicle.baseFare !== undefined
-                      ? `₹${vehicle.baseFare}`
-                      : 'Price on request'}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    href={`/${vehicle.id}-rental-bangalore`}
-                    className="min-h-[44px] flex items-center justify-center px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-brand-navy text-xs font-semibold transition-colors"
-                  >
-                    Vehicle Info
-                  </Link>
-                  <a
-                    href={siteConfig.contact.phone.whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="min-h-[44px] flex items-center justify-center px-3 py-2 rounded-xl bg-brand-orange hover:bg-brand-orange-hover text-white text-xs font-bold transition-colors shadow-sm"
-                  >
-                    Quick Quote
-                  </a>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 7. FAQ                                                               */}
-      {/* ==================================================================== */}
-      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
-        <div className="text-center mb-12">
-          <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-            Got Questions?
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-brand-navy mt-1">
-            Frequently Asked Questions
-          </h2>
-        </div>
-
-        <div className="space-y-4">
-          {faqs.map((faq, idx) => (
-            <div
-              key={idx}
-              className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm"
-            >
-              <h3 className="text-base sm:text-lg font-bold text-brand-navy mb-2 flex items-start gap-2.5">
-                <HelpCircle className="w-5 h-5 text-brand-orange shrink-0 mt-0.5" />
-                <span>{faq.q}</span>
-              </h3>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed pl-7.5">
-                {faq.a}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 8. CALL TO ACTION                                                    */}
-      {/* ==================================================================== */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
-        <div className="bg-brand-navy text-white rounded-3xl p-8 sm:p-14 shadow-2xl relative overflow-hidden text-center">
-          <div className="max-w-2xl mx-auto space-y-4">
-            <span className="text-xs uppercase font-bold tracking-wider text-brand-orange bg-white/10 px-3.5 py-1.5 rounded-full inline-block">
-              24/7 Chauffeur Dispatch
-            </span>
-
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-              {customCtaTitle}
-            </h2>
-
-            <p className="text-base sm:text-lg text-gray-200 leading-relaxed pt-1">
-              &ldquo;{siteConfig.brand.closingLine}&rdquo;
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-6">
-              <a
-                href={siteConfig.contact.phone.tel}
-                className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-brand-orange hover:bg-brand-orange-hover active:scale-[0.99] text-white text-base font-bold shadow-lg transition-all"
-              >
-                <Phone className="w-5 h-5" />
-                <span>{siteConfig.cta.instantBooking}</span>
-              </a>
-
-              <a
-                href={siteConfig.contact.phone.whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-base font-semibold shadow-lg transition-all"
-              >
-                <MessageCircle className="w-5 h-5" />
-                <span>{siteConfig.cta.quickQuote}</span>
-              </a>
-
-              <Link
-                href="/contact"
-                className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold border border-white/15 transition-all"
-              >
-                <span>Online Request</span>
-                <ArrowRight className="w-4 h-4" />
+      {/* ================================================================ */}
+      {/* 4. RELEVANT ROUTES                                               */}
+      {/* ================================================================ */}
+      {routeCards.length > 0 && (
+        <section id="routes" className="relative scroll-mt-24 bg-white py-16 sm:py-20">
+          {hairline}
+          <div className="section">
+            <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+              <SectionHeading eyebrow="Popular corridors" title={routesTitle} subtitle={routesSubtitle} centered={false} />
+              <Link href="/routes" className="btn-ghost group shrink-0">
+                All routes
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
+            </div>
+            <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {routeCards.map((route, i) => (
+                <Reveal key={route.slug} delay={(i % 4) * 0.06} y={16} className="h-full">
+                  <RouteCard route={route} />
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ================================================================ */}
+      {/* 5. LOCAL COVERAGE (airport + local pages)                        */}
+      {/* ================================================================ */}
+      {showLocalAreas && (
+        <section className="section py-16 sm:py-20">
+          <SectionHeading
+            eyebrow="Doorstep pickup across Bangalore"
+            title={localAreasTitle}
+            subtitle="We operate 24/7 across every major Bangalore hub, IT park, residential layout, and transit terminal."
+          />
+          <ul className="mt-10 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+            {siteConfig.localAreas.map((area) => (
+              <li key={area} className="card-float flex items-center gap-3 rounded-2xl p-4">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
+                  <MapPin className="h-4 w-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold text-ink">{area}</span>
+                  <span className="block text-[11px] font-medium text-slate-500">24/7 Innova Dispatch</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ================================================================ */}
+      {/* 6. FLEET (confirmed models only)                                 */}
+      {/* ================================================================ */}
+      <div className="relative bg-white">
+        {hairline}
+        <FleetSection vehicles={fleetCards} />
+      </div>
+
+      {/* ================================================================ */}
+      {/* 7. FAQ                                                           */}
+      {/* ================================================================ */}
+      <section id="faq" className="section scroll-mt-24 py-16 sm:py-20">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="max-w-2xl">
+            <span className="eyebrow">Got questions?</span>
+            <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Frequently Asked Questions</h2>
+            <div className="mt-6 flex flex-wrap gap-2">
+              <Link href="/faq" className="btn-ghost group">
+                Read full FAQ
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+                <MessageCircle className="h-4 w-4" /> Ask on WhatsApp
+              </a>
+            </div>
+          </div>
+          <FaqAccordion faqs={faqs} />
+        </div>
+      </section>
+
+      {/* ================================================================ */}
+      {/* 8. CTA BAND                                                      */}
+      {/* ================================================================ */}
+      <section className="section pb-20">
+        <div className="relative overflow-hidden rounded-4xl bg-ink p-8 text-white shadow-float-lg sm:p-12">
+          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-600/40 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 left-10 h-60 w-60 rounded-full bg-amber-400/20 blur-3xl" />
+          <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-balance text-2xl font-extrabold tracking-tight sm:text-3xl">{customCtaTitle}</h2>
+              <p className="mt-2 text-slate-300">&ldquo;{siteConfig.brand.closingLine}&rdquo;</p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <BookButton service={serviceType} className="btn group bg-white text-ink hover:-translate-y-0.5">
+                Get instant fare
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </BookButton>
+              <a href={siteConfig.contact.phone.tel} className="btn border border-white/20 bg-white/10 text-white hover:bg-white/15">
+                <Phone className="h-4 w-4" /> Call 24/7
+              </a>
+              <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+                <MessageCircle className="h-4 w-4" /> WhatsApp
+              </a>
             </div>
           </div>
         </div>

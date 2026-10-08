@@ -1,159 +1,118 @@
 'use client';
 
+/**
+ * PackageSelector.tsx — local rental packages (design.md §3.2.4 segmented
+ * controls + §3.3 cards). Null fares show "Price on request" with a direct
+ * WhatsApp quick-quote button (PROJECT_CONTEXT.md §8.3).
+ */
+
 import { useState } from 'react';
-import { Clock, Navigation, CheckCircle, MessageCircle, Phone, ArrowRight } from 'lucide-react';
+import { Check, Clock, MessageCircle, Navigation, Phone } from 'lucide-react';
 import { LocalPackage, Vehicle } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
+import SegmentedControl from '@/components/home/SegmentedControl';
 
 interface PackageSelectorProps {
   packages: LocalPackage[];
   vehicles: Vehicle[];
 }
 
+const pointToPointPoints = [
+  'Doorstep pickup across all Bangalore localities',
+  'Sanitized, air-conditioned Toyota Innova MPV',
+  'Transparent distance-based fare confirmed before dispatch',
+];
+
 export default function PackageSelector({ packages, vehicles }: PackageSelectorProps) {
   const [activeTab, setActiveTab] = useState<'packages' | 'point-to-point'>('packages');
   const [selectedVehicle, setSelectedVehicle] = useState<string>(vehicles[0]?.id || 'innova');
+  const currentVehicle = vehicles.find((v) => v.id === selectedVehicle);
 
   return (
-    <div className="w-full bg-white rounded-3xl p-6 sm:p-10 border border-gray-200 shadow-sm">
-      {/* Tab Switcher: Packages vs Point-to-Point */}
-      <div className="flex justify-center mb-8">
-        <div className="grid grid-cols-2 gap-2 p-1.5 bg-gray-100 rounded-2xl max-w-md w-full">
-          <button
-            type="button"
-            onClick={() => setActiveTab('packages')}
-            className={`min-h-[44px] text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
-              activeTab === 'packages'
-                ? 'bg-brand-navy text-white shadow-sm'
-                : 'text-gray-600 hover:text-brand-navy'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>Hourly &amp; Full Day</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('point-to-point')}
-            className={`min-h-[44px] text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
-              activeTab === 'point-to-point'
-                ? 'bg-brand-navy text-white shadow-sm'
-                : 'text-gray-600 hover:text-brand-navy'
-            }`}
-          >
-            <Navigation className="w-4 h-4" />
-            <span>Point-to-Point City</span>
-          </button>
-        </div>
+    <div>
+      <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+        <SegmentedControl
+          ariaLabel="Rental type"
+          className="w-full max-w-sm"
+          value={activeTab}
+          onChange={setActiveTab}
+          options={[
+            { value: 'packages', label: 'Hourly & Full Day', icon: Clock },
+            { value: 'point-to-point', label: 'Point-to-Point', icon: Navigation },
+          ]}
+        />
+        {activeTab === 'packages' && vehicles.length > 1 && (
+          <SegmentedControl
+            ariaLabel="Vehicle"
+            className="w-full max-w-sm"
+            value={selectedVehicle}
+            onChange={setSelectedVehicle}
+            options={vehicles.map((v) => ({ value: v.id, label: v.name.replace('Toyota ', '') }))}
+          />
+        )}
       </div>
 
-      {/* Vehicle Model Selector Filter */}
-      <div className="flex items-center justify-center gap-2 mb-8 flex-wrap">
-        <span className="text-xs font-semibold text-gray-500 mr-2">Select Vehicle:</span>
-        {vehicles.map((v) => (
-          <button
-            key={v.id}
-            type="button"
-            onClick={() => setSelectedVehicle(v.id)}
-            className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-              selectedVehicle === v.id
-                ? 'bg-brand-orange text-white border-brand-orange shadow-md'
-                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-            }`}
-          >
-            {v.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Content based on Active Tab */}
       {activeTab === 'packages' ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div key="packages" className="mt-10 grid animate-panel-in gap-5 md:grid-cols-3">
           {packages.map((pkg) => {
             const rawPrice = pkg.fares?.[selectedVehicle] ?? null;
-            const currentVehicle = vehicles.find((v) => v.id === selectedVehicle);
-
+            const priceLabel =
+              typeof rawPrice === 'number' && rawPrice > 0 ? `₹${rawPrice.toLocaleString('en-IN')}` : 'Price on request';
             return (
-              <div
-                key={pkg.id}
-                className="rounded-2xl p-6 border border-gray-200 bg-brand-offwhite/50 hover:border-brand-orange/50 transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between text-xs font-bold text-brand-orange mb-2">
-                    <span>{pkg.durationHours} Hours</span>
-                    <span>{pkg.distanceKm} Km Included</span>
-                  </div>
+              <article key={pkg.id} className="card-float card-float-hover flex flex-col p-6">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-brand-700">
+                  {pkg.durationHours ? `${pkg.durationHours} hr · ${pkg.distanceKm} km included` : "Any duration · quoted on request"}
+                </p>
+                <h3 className="mt-2 text-lg font-extrabold tracking-tight">{pkg.name}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{pkg.description}</p>
 
-                  <h3 className="text-lg font-bold text-brand-navy mb-2">
-                    {pkg.name}
-                  </h3>
-
-                  <p className="text-xs text-gray-600 leading-relaxed mb-4">
-                    {pkg.description}
-                  </p>
-
-                  <div className="p-3 rounded-xl bg-white border border-gray-100 mb-4 space-y-1">
-                    <p className="text-[11px] font-semibold text-gray-500 uppercase">
-                      Vehicle: {currentVehicle?.name || 'Innova'}
+                <div className="mt-auto pt-6">
+                  <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                      {currentVehicle?.name || 'Toyota Innova'}
                     </p>
-                    <p className="text-sm font-extrabold text-brand-navy">
-                      {rawPrice !== null ? `₹${rawPrice}` : 'Price on request'}
+                    <p className="mt-0.5 text-xl font-extrabold tabular-nums text-ink">
+                      {priceLabel}
                     </p>
                   </div>
-                </div>
-
-                <div className="pt-4 border-t border-gray-200/60 mt-auto">
                   <a
                     href={`${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
                       `Hello, I would like to get a quote for "${pkg.name}" with ${currentVehicle?.name || 'Innova'}.`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="min-h-[44px] w-full flex items-center justify-center gap-2 rounded-xl bg-brand-orange hover:bg-brand-orange-hover text-white text-xs font-bold transition-all shadow-sm"
+                    className="btn-whatsapp mt-4 w-full"
                   >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>WhatsApp Quick Quote</span>
+                    <MessageCircle className="h-4 w-4" /> WhatsApp Quick Quote
                   </a>
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>
       ) : (
-        /* Point to Point Info */
-        <div className="max-w-2xl mx-auto text-center py-6 px-4 space-y-4">
-          <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
-            <Navigation className="w-6 h-6" />
-          </div>
-          <h3 className="text-xl font-bold text-brand-navy">
-            Point-to-Point Bangalore City Transfers
-          </h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            Need a one-way trip from Whitefield to Electronic City, or Indiranagar to Kengeri? We offer door-to-door direct transfers with zero surge pricing.
+        <div key="p2p" className="card-float mx-auto mt-10 max-w-2xl animate-panel-in p-6 text-center sm:p-10">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-live-500/10 text-live-600">
+            <Navigation className="h-6 w-6" />
+          </span>
+          <h3 className="mt-4 text-xl font-extrabold tracking-tight">Point-to-Point Bangalore City Transfers</h3>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            Need a one-way trip from Whitefield to Electronic City, or Indiranagar to Kengeri? We offer door-to-door
+            direct transfers with zero surge pricing.
           </p>
-
-          <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 inline-block text-left text-xs text-gray-700 space-y-1.5 max-w-md mx-auto">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Doorstep pickup across all Bangalore localities</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Sanitized, air-conditioned Toyota Innova MPV</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>Transparent distance-based fare confirmed before dispatch</span>
-            </div>
-          </div>
-
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={siteConfig.contact.phone.tel}
-              className="min-h-[44px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-brand-navy hover:bg-brand-navy-light text-white text-xs font-bold transition-all"
-            >
-              <Phone className="w-4 h-4 text-brand-orange" />
-              <span>Call {siteConfig.contact.phone.display}</span>
+          <ul className="mx-auto mt-6 max-w-md space-y-2.5 text-left">
+            {pointToPointPoints.map((point) => (
+              <li key={point} className="flex items-start gap-2.5 text-sm font-medium text-slate-700">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-live-500/10 text-live-600">
+                  <Check className="h-3 w-3" strokeWidth={3} />
+                </span>
+                {point}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-8 flex flex-col justify-center gap-2 sm:flex-row">
+            <a href={siteConfig.contact.phone.tel} className="btn-primary">
+              <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}
             </a>
             <a
               href={`${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
@@ -161,10 +120,9 @@ export default function PackageSelector({ packages, vehicles }: PackageSelectorP
               )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="min-h-[44px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md"
+              className="btn-whatsapp"
             >
-              <MessageCircle className="w-4 h-4" />
-              <span>WhatsApp Instant Booking</span>
+              <MessageCircle className="h-4 w-4" /> WhatsApp Instant Booking
             </a>
           </div>
         </div>

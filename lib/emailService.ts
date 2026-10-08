@@ -9,6 +9,7 @@
 import { Resend } from 'resend';
 import { Booking } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
+import { formatTime12 } from '@/lib/time';
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const adminEmail = process.env.ADMIN_EMAIL || 'greensrentacab@gmail.com';
@@ -66,7 +67,7 @@ export async function sendNewBookingEmail(booking: Booking): Promise<{ success: 
               <div class="row"><span class="label">Service Type:</span><span class="value" style="text-transform: uppercase;">${booking.serviceType} (${booking.tripType === 'round' ? 'Round Trip' : 'One Way'})</span></div>
               <div class="row"><span class="label">Pickup Location:</span><span class="value">${booking.pickupName}</span></div>
               <div class="row"><span class="label">Drop Location:</span><span class="value">${booking.dropName}</span></div>
-              <div class="row"><span class="label">Date & Time:</span><span class="value">${booking.pickupDate} at ${booking.pickupTime}</span></div>
+              <div class="row"><span class="label">Date & Time:</span><span class="value">${booking.pickupDate} at ${formatTime12(booking.pickupTime)}</span></div>
               <div class="row"><span class="label">Vehicle:</span><span class="value">${booking.vehicleName}</span></div>
               <div class="row"><span class="label">Tariff:</span><span class="value" style="color: #f0562b; font-size: 16px;">${fareDisplay}</span></div>
               ${booking.notes ? `<div class="row"><span class="label">Special Notes:</span><span class="value">${booking.notes}</span></div>` : ''}

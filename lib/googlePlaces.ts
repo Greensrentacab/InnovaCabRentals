@@ -279,12 +279,13 @@ export async function searchPlaces(
 }
 
 /**
- * Fetches coordinates for a selected place using Place Details
+ * Fetches coordinates and the full formatted address (incl. pincode) for a
+ * selected place using Place Details.
  */
 export async function getPlaceCoordinates(
   placeId: string,
   sessionToken?: any
-): Promise<{ lat: number; lng: number } | null> {
+): Promise<{ lat: number; lng: number; address?: string } | null> {
   if (typeof window === 'undefined' || !window.google?.maps?.places?.PlacesService) {
     return null;
   }
@@ -296,7 +297,7 @@ export async function getPlaceCoordinates(
       service.getDetails(
         {
           placeId,
-          fields: ['geometry'],
+          fields: ['geometry', 'formatted_address'],
           sessionToken,
         },
         (place: any, status: any) => {
@@ -304,6 +305,7 @@ export async function getPlaceCoordinates(
             resolve({
               lat: place.geometry.location.lat(),
               lng: place.geometry.location.lng(),
+              address: place.formatted_address || undefined,
             });
           } else {
             resolve(null);
@@ -316,9 +318,15 @@ export async function getPlaceCoordinates(
   });
 }
 
+/** Indian pincode, e.g. "560066" or "560 066" */
+export const isPincode = (q: string) => /^\d{3}\s?\d{3}$/.test(q.trim());
+
 function fallbackSearch(query: string): LocationData[] {
-  const lower = query.toLowerCase();
+  const lower = query.toLowerCase().replace(/\s+(?=\d)/g, '');
   return MOCK_PLACES.filter(
-    (p) => p.name.toLowerCase().includes(lower) || p.address.toLowerCase().includes(lower)
+    (p) =>
+      p.name.toLowerCase().includes(lower) ||
+      p.address.toLowerCase().includes(lower) ||
+      p.address.replace(/\s/g, '').includes(lower)
   );
 }

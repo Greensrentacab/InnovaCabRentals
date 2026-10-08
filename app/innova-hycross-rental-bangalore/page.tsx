@@ -26,25 +26,6 @@ export default async function InnovaHycrossRentalBangalorePage() {
     notFound();
   }
 
-  const galleryPlaceholders = [
-    {
-      title: 'Toyota Innova Hycross Front Silhouette',
-      caption: 'Futuristic aerodynamic hybrid MPV exterior styling',
-    },
-    {
-      title: 'Ottoman Lounge Recliners',
-      caption: 'Powered leg-rest ottoman seating with ventilated leather upholstery',
-    },
-    {
-      title: 'Panoramic Glass Sunroof',
-      caption: 'Full-length panoramic glass roof creating an airy, light-filled cabin',
-    },
-    {
-      title: 'Cockpit & Hybrid Digital Instrument Cluster',
-      caption: 'Next-gen touchscreen console with multi-device wireless charging',
-    },
-  ];
-
   const idealFor = [
     'VIP Diplomats & International Corporate Delegates',
     'Green & Eco-Friendly Corporate Travel Policy',
@@ -68,7 +49,6 @@ export default async function InnovaHycrossRentalBangalorePage() {
       tagline="Comfortable Cars. Experienced Drivers. Reliable Journeys."
       overview="Experience the pinnacle of modern luxury with the Toyota Innova Hycross. Built on Toyota's state-of-the-art TNGA monocoque platform with self-charging hybrid technology, the Hycross delivers an eerily quiet cabin, powered ottoman calf-support recliners, a grand panoramic glass roof, and cloud-like suspension. It represents the ultimate chauffeur-driven executive experience in Bangalore."
       idealFor={idealFor}
-      galleryPlaceholders={galleryPlaceholders}
       detailedSpecs={detailedSpecs}
     />
   );

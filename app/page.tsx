@@ -1,665 +1,384 @@
 import Link from 'next/link';
 import {
-  Phone,
-  MessageCircle,
   ArrowRight,
+  CalendarCheck,
+  Hourglass,
+  Luggage,
+  MessageCircle,
+  Mountain,
+  Phone,
+  Plane,
+  Radar,
   ShieldCheck,
-  Award,
-  Clock,
   Star,
   Users,
-  Car,
-  CheckCircle2,
-  Luggage,
-  CalendarCheck,
-  ChevronRight,
-  HelpCircle,
-  Sparkles,
 } from 'lucide-react';
-import BookingWidget from '@/components/BookingWidget';
+import QuickBookingWidget from '@/components/home/QuickBookingWidget';
+import ServicesSection from '@/components/home/ServicesSection';
+import BookingTimeline from '@/components/home/BookingTimeline';
+import RouteSlider from '@/components/home/RouteSlider';
+import FleetSection from '@/components/home/FleetSection';
+import FaqAccordion from '@/components/home/FaqAccordion';
+import BookButton from '@/components/home/BookButton';
+import Reveal from '@/components/home/Reveal';
+import FareResults from '@/components/FareResults';
 import { siteConfig } from '@/lib/siteConfig';
-import { getVehicles, getRoutes } from '@/lib/dataService';
+import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
+import {
+  buildFleetCards,
+  buildRouteCards,
+  buildWidgetData,
+  confirmedFleet,
+  findAirportRoute,
+  formatINR,
+  minFare,
+  routeFromFare,
+} from '@/lib/storefrontData';
+import { fleetPhotos, photoCredit } from '@/lib/fleetPhotos';
 
 export const revalidate = 60; // Revalidate dynamic Firestore data every minute
 
+const whyChooseUs = [
+  {
+    icon: Users,
+    title: 'Experienced Chauffeurs',
+    desc: 'Courteous, background-verified drivers who know South Indian highways, ghat roads and Bangalore traffic.',
+  },
+  {
+    icon: Luggage,
+    title: 'Spacious Luggage Capacity',
+    desc: 'Ample boot space for family suitcases, strollers and backpacks, with optional roof carriers.',
+  },
+  {
+    icon: CalendarCheck,
+    title: 'Flexible Rental Options',
+    desc: 'Hourly city packages, airport transfers and multi-day outstation round trips.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Transparent Pricing',
+    desc: 'Driver allowance and night charges shared upfront; tolls paid by the customer. No surge pricing, ever.',
+  },
+  {
+    icon: MessageCircle,
+    title: 'Easy Booking by Call or WhatsApp',
+    desc: 'No apps or logins. Reach our dispatch desk directly for instant reservations.',
+  },
+];
+
+const homeFaqs = [
+  {
+    q: 'How do I book a cab with Innova Cabs Bangalore?',
+    a: 'Enter your trip in the booking widget above and tap "See Fares & Available Innovas". Pick a car and send the details to us on WhatsApp, or submit a booking request — our dispatch team confirms with driver details. You can also call us directly.',
+  },
+  {
+    q: 'Are tolls, driver allowance, and parking charges included?',
+    a: 'Driver allowance is shown in your fare estimate. Toll fees, parking charges and state entry permits are paid by the customer at actuals.',
+  },
+  {
+    q: 'Which cars can I choose from?',
+    a: 'Toyota Innova (7/8 seater), Toyota Innova Crysta (luxury 7 seater with captain seats) and Maruti Suzuki Ertiga (compact 7 seater). Let us know your seating preference when booking.',
+  },
+  {
+    q: 'Is advance payment required to book a cab?',
+    a: 'No upfront payment or card details are required. Your booking is placed as a request (Status: PENDING) and confirmed directly with our team via a WhatsApp link or phone call.',
+  },
+  {
+    q: 'Are your vehicles and drivers available 24/7 for late-night airport drops?',
+    a: 'Yes, our fleet operates around the clock 24/7. We recommend booking a few hours in advance for early morning or late-night airport transfers to ensure priority vehicle dispatch.',
+  },
+];
+
+// Hero background photo (silver Innova Crysta), tinted light sky-blue
+const heroCar = fleetPhotos['innova-crysta'][3];
+
 export default async function HomePage() {
-  const vehicles = await getVehicles();
-  const routes = await getRoutes();
+  const [vehicles, routes, localPackages] = await Promise.all([getVehicles(), getRoutes(), getLocalPackages()]);
 
-  // Exactly 5 points for "Why Choose Us"
-  const whyChooseUsPoints = [
-    {
-      icon: Users,
-      title: 'Experienced Chauffeurs',
-      desc: 'Courteous, background-verified drivers seasoned with South Indian highways, ghat roads, and Bangalore city traffic.',
-    },
-    {
-      icon: Luggage,
-      title: 'Spacious Luggage Capacity',
-      desc: 'Ample boot space accommodating large family suitcases, strollers, and backpacks with optional roof carriers.',
-    },
-    {
-      icon: CalendarCheck,
-      title: 'Flexible Rental Options',
-      desc: 'Hourly city packages (4hr/40km, 8hr/80km), one-way outstation drops, and custom multi-day holiday packages.',
-    },
-    {
-      icon: ShieldCheck,
-      title: 'Transparent Pricing',
-      desc: 'Zero hidden fees. Clear driver allowance, night charges, and toll policies shared upfront with no surge pricing.',
-    },
-    {
-      icon: MessageCircle,
-      title: 'Easy Booking by Call or WhatsApp',
-      desc: 'No complicated apps or logins. Connect directly with our dispatch manager in seconds for instant cab reservation.',
-    },
+  // Fleet: confirmed models only (Toyota Innova, Innova Crysta, Maruti Suzuki Ertiga)
+  const fleet = confirmedFleet(vehicles);
+
+  const airportRoute = findAirportRoute(routes);
+  const outstationRoutes = routes.filter((r) => r !== airportRoute);
+
+  // All prices come from the cars' admin-editable rates
+  const airportFrom = minFare(fleet.map((v) => v.rates?.airportFare));
+  const outstationFrom = minFare(outstationRoutes.map((r) => routeFromFare(r, fleet)));
+  const localFrom = minFare(fleet.map((v) => v.rates?.local8h));
+
+  const widgetData = buildWidgetData(routes, localPackages, fleet);
+  const sliderRoutes = buildRouteCards(airportRoute ? [airportRoute, ...outstationRoutes] : outstationRoutes, fleet);
+  const fleetCards = buildFleetCards(fleet);
+
+  const stats = [
+    { value: `${siteConfig.trustClaims.yearsExperience.value} yrs`, label: 'Of premium Innova rentals' },
+    { value: String(siteConfig.trustClaims.happyCustomers.value), label: 'Happy customers' },
+    { value: `${siteConfig.trustClaims.googleRating.value}★`, label: 'Google rating' },
+    { value: '24/7', label: 'Booking & dispatch' },
   ];
+  const testimonials = siteConfig.testimonials;
 
-  // Exactly 6 steps for "Booking Process"
-  const bookingSteps = [
-    {
-      step: '01',
-      title: 'Choose Service & Route',
-      desc: 'Select whether you need an Airport transfer, Local city rental, or an Outstation road trip.',
-    },
-    {
-      step: '02',
-      title: 'Pick Your Innova',
-      desc: 'Choose between the reliable Toyota Innova, premium Innova Crysta, or hybrid Innova Hycross.',
-    },
-    {
-      step: '03',
-      title: 'Share Trip Details',
-      desc: 'Submit your pickup point, destination, date, and preferred departure time via Call or WhatsApp.',
-    },
-    {
-      step: '04',
-      title: 'Get Instant Quote',
-      desc: 'Receive a clear, all-inclusive fare estimate directly on WhatsApp with zero hidden costs.',
-    },
-    {
-      step: '05',
-      title: 'Cab & Driver Assigned',
-      desc: 'Vehicle number and chauffeur contact details are shared well in advance of your scheduled departure.',
-    },
-    {
-      step: '06',
-      title: 'Enjoy Your Journey',
-      desc: 'Travel comfortably in a clean, air-conditioned vehicle with a courteous, experienced driver.',
-    },
-  ];
-
-  // Exactly 5 FAQs
-  const homeFaqs = [
-    {
-      q: 'How do I book an Innova cab with Innova Cabs Bangalore?',
-      a: 'You can call us directly or message us on WhatsApp for instant confirmation. You can also submit the booking request widget above, and our dispatch team will reach out with transparent quotes and driver details.',
-    },
-    {
-      q: 'Are tolls, driver allowance, and parking charges included?',
-      a: 'Toll fees, state entry taxes, and parking are billed at actuals with full transparency, or can be bundled into custom all-inclusive outstation packages upon request.',
-    },
-    {
-      q: 'Can I choose between a 7-seater and 8-seater Innova?',
-      a: 'Yes, both 7-seater (with executive captain chairs in the middle row) and 8-seater bench options are available. Let us know your seating preference when requesting a quote.',
-    },
-    {
-      q: 'Is advance payment required to book a cab?',
-      a: 'No upfront payment or card details are required. Your booking is placed as a request (Status: PENDING) and confirmed directly with our team via a WhatsApp link or phone call.',
-    },
-    {
-      q: 'Are your vehicles and drivers available 24/7 for late-night airport drops?',
-      a: 'Yes, our fleet operates around the clock 24/7. We recommend booking a few hours in advance for early morning or late-night airport transfers to ensure priority vehicle dispatch.',
-    },
+  const heroPills = [
+    { label: 'Airport', icon: Plane, service: 'airport' as const },
+    { label: 'Outstation', icon: Mountain, service: 'outstation' as const },
+    { label: 'Local & hourly', icon: Hourglass, service: 'local' as const },
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-brand-offwhite">
-      {/* ==================================================================== */}
-      {/* 1. HERO SECTION                                                     */}
-      {/* ==================================================================== */}
-      <section className="relative bg-brand-navy text-white py-12 md:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#F0562B_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
-
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* Left: Client H1, short supporting line, primary CTA buttons */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-xs font-semibold text-brand-orange border border-white/10">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Premier Chauffeur Car Rental in Bengaluru</span>
-              </div>
-
-              {/* Exact Client H1 */}
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight text-white">
-                {siteConfig.seo.h1}
-              </h1>
-
-              {/* Short Supporting Line */}
-              <p className="text-lg sm:text-xl font-medium text-brand-orange">
-                {siteConfig.brand.closingLine}
-              </p>
-
-              <p className="text-sm sm:text-base text-gray-300 max-w-2xl leading-relaxed">
-                Premium 7 &amp; 8 seater Toyota Innova, Crysta, and Hycross car rentals for airport transfers, Bangalore city local use, and South Indian outstation holiday trips.
-              </p>
-
-              {/* Primary Buttons */}
-              <div className="flex flex-col sm:flex-row items-center lg:justify-start justify-center gap-3.5 pt-2">
-                <a
-                  href={siteConfig.contact.phone.tel}
-                  className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-brand-orange hover:bg-brand-orange-hover active:scale-[0.99] text-white text-base font-bold shadow-lg shadow-brand-orange/25 transition-all"
-                >
-                  <Phone className="w-5 h-5" />
-                  <span>{siteConfig.cta.instantBooking}</span>
-                </a>
-
-                <a
-                  href={siteConfig.contact.phone.whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-base font-semibold shadow-lg transition-all"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  <span>{siteConfig.cta.quickQuote}</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Right: BookingWidget (Stacked below on mobile) */}
-            <div className="lg:col-span-5 w-full mt-6 lg:mt-0">
-              <BookingWidget />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 2. TRUST BAR FROM SITECONFIG                                         */}
-      {/* (15 years, 24/7, 5000+ happy customers, 5 Star Google rating)        */}
-      {/* ==================================================================== */}
-      <section className="bg-brand-navy-light text-white py-6 border-y border-white/10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          {/* 15 Years */}
-          <div className="flex flex-col items-center justify-center p-2">
-            <Award className="w-6 h-6 text-brand-orange mb-1.5" />
-            <p className="text-xl sm:text-2xl font-black text-white">
-              {String(siteConfig.trustClaims.yearsExperience.value)} Years
-            </p>
-            <p className="text-xs text-gray-300 font-medium">Industry Experience</p>
-          </div>
-
-          {/* 24/7 */}
-          <div className="flex flex-col items-center justify-center p-2">
-            <Clock className="w-6 h-6 text-emerald-400 mb-1.5" />
-            <p className="text-xl sm:text-2xl font-black text-white">
-              {siteConfig.contact.hours}
-            </p>
-            <p className="text-xs text-gray-300 font-medium">Always Open &amp; Dispatched</p>
-          </div>
-
-          {/* 5000+ Happy Customers */}
-          <div className="flex flex-col items-center justify-center p-2">
-            <Users className="w-6 h-6 text-brand-orange mb-1.5" />
-            <p className="text-xl sm:text-2xl font-black text-white">
-              {String(siteConfig.trustClaims.happyCustomers.value)}
-            </p>
-            <p className="text-xs text-gray-300 font-medium">Satisfied Travelers</p>
-          </div>
-
-          {/* 5 Star Google Rating */}
-          <div className="flex flex-col items-center justify-center p-2">
-            <Star className="w-6 h-6 text-yellow-400 fill-yellow-400 mb-1.5" />
-            <p className="text-xl sm:text-2xl font-black text-white">
-              {String(siteConfig.trustClaims.googleRating.value)} Star
-            </p>
-            <p className="text-xs text-gray-300 font-medium">Google Rating</p>
-          </div>
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 3. WHY CHOOSE US                                                     */}
-      {/* (5 specific features)                                                */}
-      {/* ==================================================================== */}
-      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-            The Innova Cabs Difference
-          </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-brand-navy mt-1">
-            Why Choose Us for Your Innova Rental
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600 mt-2">
-            We prioritize passenger safety, luxury comfort, and transparent dealings on every single kilometer.
-          </p>
+    <div className="ds-scope bg-porcelain">
+      {/* ================================================================ */}
+      {/* 1. HERO + QUICK BOOKING WIDGET — light sky-blue & white theme    */}
+      {/*    (no overflow-hidden: the calendar pop-up must extend past it) */}
+      {/* ================================================================ */}
+      <section className="relative isolate z-10 pb-12 pt-28 sm:pt-32 lg:pb-16">
+        {/* Full-bleed car photo, tinted light sky-blue (was dark slate before) */}
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-porcelain" aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={heroCar.src}
+            alt=""
+            width={heroCar.width}
+            height={heroCar.height}
+            fetchPriority="high"
+            decoding="async"
+            className="absolute inset-x-0 top-0 h-[560px] w-full object-cover object-[70%_center] opacity-90 saturate-[0.85] lg:inset-0 lg:h-full lg:object-[68%_center]"
+          />
+          {/* Sky-blue colour wash over the photo */}
+          <div className="absolute inset-x-0 top-0 h-[560px] bg-sky-300/45 mix-blend-color lg:inset-0 lg:h-full" />
+          <div className="absolute inset-x-0 top-0 h-[560px] bg-sky-200/25 lg:inset-0 lg:h-full" />
+          {/* Light scrims keep the copy readable: white on the left, photo visible on the right */}
+          <div className="absolute inset-x-0 top-0 h-[560px] bg-gradient-to-r from-white/90 via-sky-50/70 to-sky-100/20 lg:inset-0 lg:h-full lg:from-white/95 lg:via-sky-50/45 lg:via-40% lg:to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-[560px] bg-gradient-to-b from-sky-100/40 via-transparent to-porcelain lg:inset-0 lg:h-full lg:via-transparent lg:to-porcelain/80" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {whyChooseUsPoints.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={index}
-                className="bg-white rounded-3xl p-7 border border-gray-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="w-12 h-12 rounded-2xl bg-brand-orange-light text-brand-orange flex items-center justify-center mb-5">
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-lg font-bold text-brand-navy mb-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {item.desc}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 4. SERVICES (Airport, Local, Outstation, Tour Packages)              */}
-      {/* ==================================================================== */}
-      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-white border-y border-gray-200/60">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-              Tailored Travel Solutions
-            </span>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-brand-navy mt-1">
-              Our Core Services
-            </h2>
-            <p className="text-sm sm:text-base text-gray-600 mt-2">
-              Select the service that fits your journey and book with zero advance payment.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Airport Taxi */}
-            <Link
-              href="/airport-taxi"
-              className="group p-6 rounded-3xl bg-brand-offwhite border border-gray-200 hover:border-brand-orange transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
-            >
-              <div>
-                <span className="text-xs uppercase tracking-wider text-brand-orange font-bold">
-                  24/7 BLR Transfers
-                </span>
-                <h3 className="text-xl font-bold text-brand-navy group-hover:text-brand-orange transition-colors mt-2 mb-2">
-                  Airport Pickup &amp; Drop
-                </h3>
-                <p className="text-xs text-gray-600 leading-relaxed mb-6">
-                  On-time Kempegowda Airport pickup and drop with flight tracking and ample luggage space.
-                </p>
-              </div>
-              <div className="flex items-center text-xs font-bold text-brand-orange gap-1 group-hover:translate-x-1 transition-transform">
-                <span>View Airport Taxi</span>
-                <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
-
-            {/* Local Rides */}
-            <Link
-              href="/local-rides"
-              className="group p-6 rounded-3xl bg-brand-offwhite border border-gray-200 hover:border-brand-orange transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
-            >
-              <div>
-                <span className="text-xs uppercase tracking-wider text-brand-orange font-bold">
-                  Hourly City Rental
-                </span>
-                <h3 className="text-xl font-bold text-brand-navy group-hover:text-brand-orange transition-colors mt-2 mb-2">
-                  Local City Rental
-                </h3>
-                <p className="text-xs text-gray-600 leading-relaxed mb-6">
-                  Half-day (4hr/40km) and full-day (8hr/80km) city packages for shopping, meetings, and family visits.
-                </p>
-              </div>
-              <div className="flex items-center text-xs font-bold text-brand-orange gap-1 group-hover:translate-x-1 transition-transform">
-                <span>View Local Rides</span>
-                <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
-
-            {/* Outstation Cabs */}
-            <Link
-              href="/outstation-cabs"
-              className="group p-6 rounded-3xl bg-brand-offwhite border border-gray-200 hover:border-brand-orange transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
-            >
-              <div>
-                <span className="text-xs uppercase tracking-wider text-brand-orange font-bold">
-                  One-Way &amp; Round-Trip
-                </span>
-                <h3 className="text-xl font-bold text-brand-navy group-hover:text-brand-orange transition-colors mt-2 mb-2">
-                  Outstation Trips
-                </h3>
-                <p className="text-xs text-gray-600 leading-relaxed mb-6">
-                  Intercity highway travel to Mysore, Coorg, Ooty, Wayanad, and across South India with seasoned drivers.
-                </p>
-              </div>
-              <div className="flex items-center text-xs font-bold text-brand-orange gap-1 group-hover:translate-x-1 transition-transform">
-                <span>View Outstation</span>
-                <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
-
-            {/* Tour Packages */}
-            <Link
-              href="/tour-packages"
-              className="group p-6 rounded-3xl bg-brand-offwhite border border-gray-200 hover:border-brand-orange transition-all shadow-sm hover:shadow-md flex flex-col justify-between"
-            >
-              <div>
-                <span className="text-xs uppercase tracking-wider text-brand-orange font-bold">
-                  Custom Itineraries
-                </span>
-                <h3 className="text-xl font-bold text-brand-navy group-hover:text-brand-orange transition-colors mt-2 mb-2">
-                  Tour Packages
-                </h3>
-                <p className="text-xs text-gray-600 leading-relaxed mb-6">
-                  Enquiry-based vacation itineraries curated for family holidays, corporate retreats, and hill station getaways.
-                </p>
-              </div>
-              <div className="flex items-center text-xs font-bold text-brand-orange gap-1 group-hover:translate-x-1 transition-transform">
-                <span>View Packages</span>
-                <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 5. POPULAR ROUTES AS CARDS LINKING TO /routes/[slug]                 */}
-      {/* ==================================================================== */}
-      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-              South India Highway Network
-            </span>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-brand-navy mt-1">
-              Popular Outstation Cab Routes
-            </h2>
-            <p className="text-sm sm:text-base text-gray-600 mt-2 max-w-xl">
-              Reliable chauffeur-driven round trips and one-way drops connecting Bangalore to prime hill stations and tourist centers.
-            </p>
-          </div>
-
-          <Link
-            href="/routes"
-            className="mt-4 md:mt-0 text-sm font-bold text-brand-orange hover:text-brand-orange-hover inline-flex items-center gap-1.5"
-          >
-            <span>View All Routes</span>
-            <ChevronRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {routes.map((route) => (
-            <Link
-              key={route.id}
-              href={`/routes/${route.slug}`}
-              className="group bg-white rounded-3xl p-6 border border-gray-200/80 shadow-sm hover:shadow-lg hover:border-brand-orange/40 transition-all flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                  <span className="font-semibold text-brand-orange">{route.distanceKm} km</span>
-                  <span>{route.durationText}</span>
-                </div>
-
-                <h3 className="text-lg font-bold text-brand-navy group-hover:text-brand-orange transition-colors mb-2">
-                  {route.name}
-                </h3>
-
-                <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed mb-4">
-                  {route.description || `Direct chauffeur-driven Innova cab service from ${route.origin} to ${route.destination}.`}
-                </p>
-              </div>
-
-              <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-xs">
-                <span className="font-medium text-gray-500">Price on request</span>
-                <span className="font-bold text-brand-orange flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  Details <ChevronRight className="w-3.5 h-3.5" />
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 6. VEHICLES FROM FIRESTORE                                           */}
-      {/* ==================================================================== */}
-      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-brand-navy text-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-            <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-              Our Premium Fleet
-            </span>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mt-1">
-              Toyota Innova Rental Fleet in Bangalore
-            </h2>
-            <p className="text-sm sm:text-base text-gray-300 mt-2">
-              All vehicles are thoroughly sanitized, GPS-enabled, and maintained to the highest safety standards.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {vehicles.filter((v) => v.confirmed !== false).map((vehicle) => (
-              <div
-                key={vehicle.id}
-                className="bg-brand-navy-light rounded-3xl border border-white/10 overflow-hidden shadow-xl flex flex-col justify-between"
-              >
-                <div>
-                  {/* Vehicle Image Placeholder */}
-                  <div className="bg-brand-navy/80 h-52 flex flex-col items-center justify-center p-6 border-b border-white/10 text-center relative">
-                    <Car className="w-14 h-14 text-white/40 mb-2" />
-                    <span className="text-xs uppercase tracking-wider font-bold text-gray-300">
-                      {vehicle.name}
-                    </span>
-                    <span className="text-[11px] text-gray-400 mt-0.5">
-                      (Client fleet photo placeholder)
-                    </span>
-
-                    {!vehicle.confirmed && (
-                      <span className="absolute top-4 right-4 bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-400/30">
-                        Unconfirmed / Enquiry
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="p-6 sm:p-7">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs text-brand-orange font-bold">
-                        {vehicle.type}
-                      </span>
-                      <span className="text-xs text-gray-300">
-                        {vehicle.seats} Seater
-                      </span>
-                    </div>
-
-                    <h3 className="text-xl font-bold text-white mb-4">
-                      {vehicle.name}
-                    </h3>
-
-                    <ul className="space-y-2 mb-6">
-                      {vehicle.features.map((feature, idx) => (
-                        <li key={idx} className="text-xs text-gray-300 flex items-center gap-2">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-brand-orange shrink-0" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="p-6 sm:p-7 pt-0 border-t border-white/10 mt-auto">
-                  <div className="flex items-center justify-between py-3 mb-4">
-                    <span className="text-xs text-gray-400">Tariff</span>
-                    <span className="text-sm font-bold text-brand-orange">
-                      {vehicle.baseFare !== null && vehicle.baseFare !== undefined
-                        ? `₹${vehicle.baseFare}`
-                        : 'Price on request'}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <Link
-                      href={`/${vehicle.id}-rental-bangalore`}
-                      className="min-h-[44px] flex items-center justify-center px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all border border-white/10"
-                    >
-                      Vehicle Info
-                    </Link>
-                    <a
-                      href={siteConfig.contact.phone.whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="min-h-[44px] flex items-center justify-center px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md"
-                    >
-                      Quick Quote
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 7. BOOKING PROCESS IN EXACTLY 6 STEPS                                */}
-      {/* ==================================================================== */}
-      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-            Simple &amp; Hassle-Free
-          </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-brand-navy mt-1">
-            Our 6-Step Booking Process
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600 mt-2">
-            From enquiry to departure, enjoy a seamless booking experience without complex signups or payment gates.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {bookingSteps.map((stepItem, idx) => (
-            <div
-              key={idx}
-              className="bg-white rounded-3xl p-7 border border-gray-200/80 shadow-sm relative overflow-hidden"
-            >
-              <span className="text-3xl font-black text-brand-orange/20 absolute top-5 right-6 select-none">
-                {stepItem.step}
+        <div className="section grid items-start gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <div className="pt-2 lg:pt-6">
+            <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-live-500/20 bg-white/80 px-3 py-1.5 text-xs font-bold text-live-600 shadow-sm backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-live-500" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-live-500" />
               </span>
-              <div className="w-10 h-10 rounded-xl bg-brand-navy text-white text-sm font-bold flex items-center justify-center mb-4">
-                {stepItem.step}
-              </div>
-              <h3 className="text-lg font-bold text-brand-navy mb-2">
-                {stepItem.title}
-              </h3>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                {stepItem.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 8. CALL TO ACTION WITH "Reserve Your Innova in Advance"              */}
-      {/* ==================================================================== */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
-        <div className="bg-brand-navy text-white rounded-3xl p-8 sm:p-14 shadow-2xl relative overflow-hidden text-center">
-          <div className="max-w-2xl mx-auto space-y-4">
-            <span className="text-xs uppercase font-bold tracking-wider text-brand-orange bg-white/10 px-3.5 py-1.5 rounded-full inline-block">
-              Priority Vehicle Dispatch
+              Booking open now · 24 hours
             </span>
 
-            {/* Required exact CTA line */}
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-              {siteConfig.cta.advanceBooking}
-            </h2>
+            <h1 className="text-balance mt-6 animate-fade-up text-[2.35rem] font-extrabold leading-[1.05] tracking-tight text-ink [animation-delay:80ms] sm:text-5xl lg:text-[3.5rem]">
+              {siteConfig.seo.h1}
+            </h1>
 
-            <p className="text-base sm:text-lg text-gray-200 leading-relaxed pt-1">
-              &ldquo;{siteConfig.brand.closingLine}&rdquo;
-            </p>
-            <p className="text-xs sm:text-sm text-gray-400">
-              Enjoy verified drivers, sanitized premium vehicles, and transparent billing. Connect with us on Call or WhatsApp now.
+            <p className="mt-5 max-w-xl animate-fade-up text-base font-medium leading-relaxed text-slate-600 [animation-delay:160ms] sm:text-lg">
+              Chauffeur-driven Innova, Crysta &amp; Ertiga cabs — no advance payment.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-6">
-              <a
-                href={siteConfig.contact.phone.tel}
-                className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-brand-orange hover:bg-brand-orange-hover active:scale-[0.99] text-white text-base font-bold shadow-lg transition-all"
-              >
-                <Phone className="w-5 h-5" />
-                <span>{siteConfig.cta.instantBooking}</span>
-              </a>
+            <ul className="mt-7 flex animate-fade-up flex-wrap gap-2 [animation-delay:240ms]">
+              {heroPills.map(({ label, icon: Icon, service }) => (
+                <li key={label}>
+                  <BookButton
+                    service={service}
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-bold text-ink shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:text-brand-700"
+                  >
+                    <Icon className="h-4 w-4 text-brand-600" /> {label}
+                  </BookButton>
+                </li>
+              ))}
+            </ul>
 
-              <a
-                href={siteConfig.contact.phone.whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-base font-semibold shadow-lg transition-all"
-              >
-                <MessageCircle className="w-5 h-5" />
-                <span>{siteConfig.cta.quickQuote}</span>
-              </a>
+            <p className="mt-8 flex animate-fade-up flex-wrap items-baseline gap-x-3 gap-y-1 [animation-delay:320ms]">
+              <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+                {airportFrom ? 'Airport transfers from' : 'Airport transfers'}
+              </span>
+              {airportFrom ? (
+                <>
+                  <span className="text-4xl font-extrabold tracking-tight text-ink">{formatINR(airportFrom)}</span>
+                  <span className="text-sm text-slate-500">fixed, not metered</span>
+                </>
+              ) : (
+                <span className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">Fare quoted upfront · no meter</span>
+              )}
+            </p>
 
-              <Link
-                href="/contact"
-                className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold border border-white/15 transition-all"
-              >
-                <span>Online Request</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
+            <ul className="mt-6 flex animate-fade-up flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-slate-600 [animation-delay:400ms]">
+              <li className="flex items-center gap-1.5">
+                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                {siteConfig.trustClaims.googleRating.value}-Star Rated · {siteConfig.trustClaims.happyCustomers.value} customers
+              </li>
+              <li className="flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-live-600" /> Verified chauffeurs
+              </li>
+              <li className="flex items-center gap-1.5">
+                <Radar className="h-4 w-4 text-brand-600" /> Flight tracked
+              </li>
+            </ul>
           </div>
+
+          <div className="min-w-0">
+            <QuickBookingWidget {...widgetData} />
+          </div>
+        </div>
+        <a
+          href={heroCar.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer license"
+          className="absolute bottom-2 right-3 text-[10px] leading-snug text-slate-500/70 transition-colors hover:text-slate-700"
+        >
+          {photoCredit(heroCar)}
+        </a>
+      </section>
+
+      {/* Available cars, prices & T&Cs (after "See Fares") */}
+      <FareResults />
+
+      {/* ================================================================ */}
+      {/* 2. OUR SERVICES (design.md §3.3)                                 */}
+      {/* ================================================================ */}
+      <ServicesSection
+        fares={{
+          airport: airportFrom ? formatINR(airportFrom) : null,
+          outstation: outstationFrom ? formatINR(outstationFrom) : null,
+          local: localFrom ? formatINR(localFrom) : null,
+        }}
+      />
+
+      {/* ================================================================ */}
+      {/* 3. HOW BOOKING WORKS + URGENT BANNER (design.md §3.4)            */}
+      {/* ================================================================ */}
+      <BookingTimeline />
+
+      {/* ================================================================ */}
+      {/* 4. FEATURED ROUTES SLIDER                                        */}
+      {/* ================================================================ */}
+      <section id="routes" className="section scroll-mt-24 py-16 sm:py-20">
+        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+          <div className="max-w-2xl">
+            <span className="eyebrow">Featured routes</span>
+            <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Popular trips from Bangalore</h2>
+            <p className="mt-3 text-slate-600">
+              Fares shown for both models where available — otherwise get a quick quote on WhatsApp.
+            </p>
+          </div>
+          <Link href="/routes" className="btn-ghost group shrink-0">
+            All routes
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
+        <div className="mt-6">
+          <RouteSlider routes={sliderRoutes} />
         </div>
       </section>
 
-      {/* ==================================================================== */}
-      {/* 9. FAQ: EXACTLY 5 QUESTIONS                                         */}
-      {/* ==================================================================== */}
-      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
-        <div className="text-center mb-12">
-          <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-            Helpful Information
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-brand-navy mt-1">
-            Frequently Asked Questions
-          </h2>
-          <p className="text-sm text-gray-600 mt-2">
-            Clear answers to common questions about tariffs, booking steps, and travel terms.
-          </p>
-        </div>
+      {/* ================================================================ */}
+      {/* 5. FEATURED VEHICLES (confirmed models only)                     */}
+      {/* ================================================================ */}
+      <FleetSection vehicles={fleetCards} />
 
-        <div className="space-y-4">
-          {homeFaqs.map((faq, idx) => (
-            <div
-              key={idx}
-              className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm"
-            >
-              <h3 className="text-base sm:text-lg font-bold text-brand-navy mb-2 flex items-start gap-2.5">
-                <HelpCircle className="w-5 h-5 text-brand-orange shrink-0 mt-0.5" />
-                <span>{faq.q}</span>
-              </h3>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed pl-7.5">
-                {faq.a}
+      {/* ================================================================ */}
+      {/* 6. TRUST — stats + why us (testimonials stay hidden until real   */}
+      {/*    client reviews are supplied in siteConfig.testimonials)       */}
+      {/* ================================================================ */}
+      <section className="section py-16 sm:py-20">
+        <Reveal>
+          <div className="card-float overflow-hidden p-6 sm:p-10">
+            <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+              <div>
+                <span className="eyebrow">Why travellers choose us</span>
+                <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                  Trusted by {siteConfig.trustClaims.happyCustomers.value} customers
+                </h2>
+                <p className="mt-3 text-slate-600">
+                  {siteConfig.brand.closingLine} Fares are shared upfront and never change at the end of the trip.
+                </p>
+                <div className="mt-8 grid grid-cols-2 gap-3">
+                  {stats.map((stat) => (
+                    <div key={stat.label} className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5">
+                      <p className="text-3xl font-extrabold tracking-tight text-brand-700">{stat.value}</p>
+                      <p className="mt-1 text-sm font-medium text-slate-600">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {testimonials.length > 0
+                  ? testimonials.slice(0, 3).map((t) => (
+                      <figure key={t.id} className="rounded-2xl border border-slate-200/80 bg-white p-5">
+                        <div className="flex gap-0.5 text-amber-400" aria-label={`${t.rating} out of 5 stars`}>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} className="h-4 w-4 fill-current" />
+                          ))}
+                        </div>
+                        <blockquote className="mt-3 text-sm leading-relaxed text-slate-700">“{t.comment}”</blockquote>
+                        <figcaption className="mt-3 text-xs font-semibold text-slate-500">
+                          <span className="text-ink">{t.name}</span>
+                          {t.source === 'google' && ' · Google review'}
+                        </figcaption>
+                      </figure>
+                    ))
+                  : whyChooseUs.map(({ icon: Icon, title, desc }) => (
+                      <div key={title} className="flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-white p-5">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <div>
+                          <h3 className="text-[15px] font-extrabold">{title}</h3>
+                          <p className="mt-1 text-sm leading-relaxed text-slate-600">{desc}</p>
+                        </div>
+                      </div>
+                    ))}
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ================================================================ */}
+      {/* 7. FAQ                                                           */}
+      {/* ================================================================ */}
+      <section id="faq" className="section scroll-mt-24 pb-16 sm:pb-20">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="max-w-2xl">
+            <span className="eyebrow">Good to know</span>
+            <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Frequently asked questions</h2>
+            <p className="mt-3 text-slate-600">Clear answers on tariffs, booking steps and travel terms.</p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              <Link href="/faq" className="btn-ghost group">
+                Read full FAQ
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+                <MessageCircle className="h-4 w-4" /> Ask on WhatsApp
+              </a>
+            </div>
+          </div>
+          <FaqAccordion faqs={homeFaqs} />
+        </div>
+      </section>
+
+      {/* ================================================================ */}
+      {/* 8. CTA BAND (design.md §3.6)                                     */}
+      {/* ================================================================ */}
+      <section className="section pb-20">
+        <div className="relative overflow-hidden rounded-4xl bg-ink p-8 text-white shadow-float-lg sm:p-12">
+          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-600/40 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 left-10 h-60 w-60 rounded-full bg-amber-400/20 blur-3xl" />
+          <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-balance text-2xl font-extrabold tracking-tight sm:text-3xl">Ready when you are — day or night.</h2>
+              <p className="mt-2 text-slate-300">
+                {siteConfig.cta.advanceBooking} — ₹0 advance and a verified chauffeur at your door.
               </p>
             </div>
-          ))}
-        </div>
-
-        <div className="text-center mt-10">
-          <Link
-            href="/faq"
-            className="text-xs font-bold text-brand-orange hover:text-brand-orange-hover inline-flex items-center gap-1"
-          >
-            <span>Have more questions? Read full FAQ</span>
-            <ChevronRight className="w-4 h-4" />
-          </Link>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <BookButton className="btn group bg-white text-ink hover:-translate-y-0.5">
+                Get instant fare
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </BookButton>
+              <a href={siteConfig.contact.phone.tel} className="btn border border-white/20 bg-white/10 text-white hover:bg-white/15">
+                <Phone className="h-4 w-4" /> Call 24/7
+              </a>
+              <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+                <MessageCircle className="h-4 w-4" /> WhatsApp
+              </a>
+            </div>
+          </div>
         </div>
       </section>
     </div>

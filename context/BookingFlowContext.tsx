@@ -2,31 +2,61 @@
 
 /**
  * BookingFlowContext.tsx
- * 
+ *
  * Sourced from PROJECT_CONTEXT.md.
- * Manages the entire booking request flow state across:
- * - Loading Screen
- * - Vehicle Selection (Firestore cards with nullable pricing rules)
- * - Your Details (ONLY Full Name and 10-digit Mobile)
- * - Review with Edit Links
- * - Processing Screen
- * - Success Screen
- * - Error Screen with Try Again (keeps all entered data)
+ * Two stages:
+ *  1. Fare search — "See Fares & Available Innovas" calls /api/fare and the
+ *     results (cars, prices, T&Cs, WhatsApp) render inline under the booking
+ *     widget (components/FareResults.tsx).
+ *  2. Booking request — "Request Booking" on a car opens the modal flow:
+ *     Your Details (ONLY Full Name and 10-digit Mobile) → Review →
+ *     Processing → Success / Error (Try Again keeps all entered data).
  */
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { LocationData } from '@/lib/googlePlaces';
 import { Vehicle, ServiceType, TripType, Booking } from '@/lib/types';
-import { createBookingRequest } from '@/app/actions/booking';
+import { formatTime12 } from '@/lib/time';
 
-export type BookingStep =
-  | 'loading'
-  | 'vehicle'
-  | 'details'
-  | 'review'
-  | 'processing'
-  | 'success'
-  | 'error';
+export type BookingStep = 'loading' | 'vehicle' | 'details' | 'review' | 'processing' | 'success' | 'error';
+
+export interface FareResult {
+  vehicleId: string;
+  vehicleName: string;
+  vehicleType?: string;
+  seats?: number;
+  luggage?: number;
+  features?: string[];
+  fare: number | null;
+  breakdown: string[];
+  terms: string[];
+}
+
+export interface TripParams {
+  serviceType: ServiceType;
+  tripType: TripType;
+  pickup: LocationData;
+  drop: LocationData;
+  stops?: LocationData[];
+  date: string;
+  time: string;
+  returnDate?: string | null;
+  packageHours?: number | null;
+  packageLabel?: string | null;
+  routeSlug?: string;
+}
+
+export interface FareSearchState {
+  status: 'idle' | 'loading' | 'done' | 'error';
+  trip: TripParams | null;
+  results: FareResult[];
+  distanceKm: number | null;
+  totalKm: number | null;
+  days: number;
+  error: string | null;
+  /** Increments per search so the results panel can scroll into view */
+  searchId: number;
+}
 
 export interface BookingFlowState {
   isOpen: boolean;
@@ -35,8 +65,11 @@ export interface BookingFlowState {
   tripType: TripType;
   pickupLocation: LocationData | null;
   dropLocation: LocationData | null;
+  stops: LocationData[];
   pickupDate: string;
   pickupTime: string;
+  returnDate: string | null;
+  packageHours: number | null;
   distanceKm: number | null;
   routeSlug?: string;
 
@@ -57,15 +90,10 @@ export interface BookingFlowState {
 
 interface BookingFlowContextType {
   state: BookingFlowState;
-  openBookingFlow: (params: {
-    serviceType?: ServiceType;
-    tripType: TripType;
-    pickup: LocationData;
-    drop: LocationData;
-    date: string;
-    time: string;
-    routeSlug?: string;
-  }) => Promise<void>;
+  search: FareSearchState;
+  searchFares: (params: TripParams) => Promise<void>;
+  clearSearch: () => void;
+  requestBooking: (vehicleId: string) => void;
   closeBookingFlow: () => void;
   setStep: (step: BookingStep) => void;
   selectVehicle: (vehicle: Vehicle) => void;
@@ -76,13 +104,16 @@ interface BookingFlowContextType {
 
 const defaultState: BookingFlowState = {
   isOpen: false,
-  step: 'loading',
+  step: 'details',
   serviceType: 'outstation',
-  tripType: 'oneway',
+  tripType: 'round',
   pickupLocation: null,
   dropLocation: null,
+  stops: [],
   pickupDate: '',
   pickupTime: '',
+  returnDate: null,
+  packageHours: null,
   distanceKm: null,
   routeSlug: undefined,
   availableVehicles: [],
@@ -95,117 +126,115 @@ const defaultState: BookingFlowState = {
   errorMessage: null,
 };
 
+const defaultSearch: FareSearchState = {
+  status: 'idle',
+  trip: null,
+  results: [],
+  distanceKm: null,
+  totalKm: null,
+  days: 1,
+  error: null,
+  searchId: 0,
+};
+
+const toVehicle = (r: FareResult): Vehicle => ({
+  id: r.vehicleId,
+  name: r.vehicleName,
+  type: r.vehicleType || 'Chauffeur-driven MPV',
+  seats: r.seats || 7,
+  luggage: r.luggage || 3,
+  features: r.features || [],
+  confirmed: true,
+  baseFare: r.fare,
+});
+
 const BookingFlowContext = createContext<BookingFlowContextType | undefined>(undefined);
 
 export function BookingFlowProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<BookingFlowState>(defaultState);
+  const [search, setSearch] = useState<FareSearchState>(defaultSearch);
 
-  // Triggered when user clicks "Check Fare" in BookingWidget
-  const openBookingFlow = useCallback(
-    async (params: {
-      serviceType?: ServiceType;
-      tripType: TripType;
-      pickup: LocationData;
-      drop: LocationData;
-      date: string;
-      time: string;
-      routeSlug?: string;
-    }) => {
-      // Open modal in loading state immediately
+  // Triggered by "See Fares & Available Innovas" in the booking widget
+  const searchFares = useCallback(async (params: TripParams) => {
+    setSearch((prev) => ({ ...defaultSearch, status: 'loading', trip: params, searchId: prev.searchId + 1 }));
+
+    try {
+      const response = await fetch('/api/fare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceType: params.serviceType,
+          tripType: params.tripType,
+          pickupLat: params.pickup.lat,
+          pickupLng: params.pickup.lng,
+          dropLat: params.drop.lat,
+          dropLng: params.drop.lng,
+          stops: (params.stops ?? []).map((s) => ({ lat: s.lat, lng: s.lng })),
+          pickupDate: params.date,
+          returnDate: params.returnDate,
+          packageHours: params.packageHours,
+          routeSlug: params.routeSlug,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'Could not fetch fares');
+
+      setSearch((prev) => ({
+        ...prev,
+        status: 'done',
+        results: data.results || [],
+        distanceKm: data.distanceKm ?? null,
+        totalKm: data.totalKm ?? null,
+        days: data.days ?? 1,
+      }));
+    } catch (err) {
+      console.error('[BookingFlow] Fare search failed:', err);
+      setSearch((prev) => ({
+        ...prev,
+        status: 'error',
+        error: 'We could not load fares right now. Please try again or WhatsApp us for a quick quote.',
+      }));
+    }
+  }, []);
+
+  const clearSearch = useCallback(() => setSearch((prev) => ({ ...defaultSearch, searchId: prev.searchId })), []);
+
+  // "Request Booking" on a result card → modal at the details step
+  const requestBooking = useCallback(
+    (vehicleId: string) => {
+      const trip = search.trip;
+      if (!trip) return;
+      const vehicles = search.results.map(toVehicle);
+      const selected = vehicles.find((v) => v.id === vehicleId) || null;
+
       setState((prev) => ({
         ...prev,
         isOpen: true,
-        step: 'loading',
-        serviceType: params.serviceType || 'outstation',
-        tripType: params.tripType,
-        pickupLocation: params.pickup,
-        dropLocation: params.drop,
-        pickupDate: params.date,
-        pickupTime: params.time,
-        routeSlug: params.routeSlug,
+        step: 'details',
+        serviceType: trip.serviceType,
+        tripType: trip.tripType,
+        pickupLocation: trip.pickup,
+        dropLocation: trip.drop,
+        stops: trip.stops ?? [],
+        pickupDate: trip.date,
+        pickupTime: trip.time,
+        returnDate: trip.returnDate ?? null,
+        packageHours: trip.packageHours ?? null,
+        routeSlug: trip.routeSlug,
+        distanceKm: search.distanceKm,
+        availableVehicles: vehicles,
+        faresMap: Object.fromEntries(search.results.map((r) => [r.vehicleId, r.fare])),
+        selectedVehicle: selected,
+        confirmedBooking: null,
+        adminWhatsAppUrl: null,
         errorMessage: null,
       }));
-
-      try {
-        // Fetch server-calculated fares and vehicles
-        const response = await fetch('/api/fare', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            serviceType: params.serviceType || 'outstation',
-            tripType: params.tripType,
-            pickupLat: params.pickup.lat,
-            pickupLng: params.pickup.lng,
-            dropLat: params.drop.lat,
-            dropLng: params.drop.lng,
-            routeSlug: params.routeSlug,
-          }),
-        });
-
-        const data = await response.json();
-
-        // Dynamically fetch confirmed vehicles from server calculation results
-        const vehiclesFromApi: Vehicle[] = (data.results || []).map((r: any) => ({
-          id: r.vehicleId,
-          name: r.vehicleName,
-          type: r.vehicleType || (r.vehicleName.includes('Crysta') ? 'Luxury Executive 7/8 Seater MPV' : 'Standard 7/8 Seater MPV'),
-          seats: r.seats || 7,
-          luggage: r.luggage || (r.vehicleName.includes('Crysta') ? 4 : 3),
-          features: r.features || (r.vehicleName.includes('Crysta')
-            ? ['Climate Control AC', 'Captain Seat Recliners', 'Superior Legroom & Noise Insulation', 'High-Speed Highway Stability']
-            : ['Dual Air Conditioning', 'Comfortable 7/8 Seater Layout', 'Audio & AUX Support', 'Experienced Chauffeur']),
-          confirmed: true,
-          baseFare: data.fares?.[r.vehicleId] ?? null,
-        }));
-
-        setState((prev) => ({
-          ...prev,
-          step: 'vehicle',
-          distanceKm: data.distanceKm || null,
-          faresMap: data.fares || {},
-          availableVehicles: vehiclesFromApi,
-          // Pre-select first vehicle if none selected
-          selectedVehicle: prev.selectedVehicle || vehiclesFromApi[0] || null,
-        }));
-      } catch (err) {
-        console.error('[BookingFlow] Error initializing fare calculations:', err);
-        // Fallback default vehicles in case of network glitch
-        setState((prev) => ({
-          ...prev,
-          step: 'vehicle',
-          availableVehicles: [
-            {
-              id: 'innova',
-              name: 'Toyota Innova',
-              type: 'Standard 7/8 Seater MPV',
-              seats: 7,
-              luggage: 3,
-              features: ['Comfortable 7/8 Seater', 'Dual AC Vents', 'Experienced Chauffeur'],
-              confirmed: true,
-              baseFare: null,
-            },
-            {
-              id: 'innova-crysta',
-              name: 'Toyota Innova Crysta',
-              type: 'Executive Luxury MPV',
-              seats: 7,
-              luggage: 4,
-              features: ['Captain Seat Recliners', 'Dual Climate AC', 'Smooth Highway Ride'],
-              confirmed: true,
-              baseFare: null,
-            },
-          ],
-        }));
-      }
     },
-    []
+    [search]
   );
 
   const closeBookingFlow = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      isOpen: false,
-    }));
+    setState((prev) => ({ ...prev, isOpen: false }));
   }, []);
 
   const setStep = useCallback((step: BookingStep) => {
@@ -217,14 +246,10 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const updateCustomerDetails = useCallback((name: string, phone: string) => {
-    setState((prev) => ({
-      ...prev,
-      customerName: name,
-      customerPhone: phone,
-    }));
+    setState((prev) => ({ ...prev, customerName: name, customerPhone: phone }));
   }, []);
 
-  // Executes Server Action to create booking
+  // Executes POST /api/bookings to create the booking request
   const executeBookingSubmission = useCallback(async () => {
     setState((prev) => ({ ...prev, step: 'processing', errorMessage: null }));
 
@@ -233,7 +258,6 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
         throw new Error('Incomplete booking information. Please review your trip details.');
       }
 
-      // Submit to POST /api/bookings with Zod validation, rate limiting, and email dispatch
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -248,10 +272,13 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
           dropAddress: state.dropLocation.address,
           dropLat: state.dropLocation.lat,
           dropLng: state.dropLocation.lng,
+          stops: state.stops.map((s) => ({ name: s.name, address: s.address, lat: s.lat, lng: s.lng })),
           tripType: state.tripType,
           serviceType: state.serviceType,
           pickupDate: state.pickupDate,
           pickupTime: state.pickupTime,
+          returnDate: state.returnDate,
+          packageHours: state.packageHours,
           vehicleId: state.selectedVehicle.id,
           vehicleName: state.selectedVehicle.name,
           routeSlug: state.routeSlug,
@@ -266,15 +293,10 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
         const cleanPhone = bk.customerPhone.replace(/\D/g, '');
         const waNumber = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
         const whatsAppUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
-          `Hello ${bk.customerName},\n\nThis is Innova Cabs Bangalore. We have received your booking request #${bk.bookingId}:\n• Route: ${bk.pickupName} ➔ ${bk.dropName}\n• Date & Time: ${bk.pickupDate} at ${bk.pickupTime}\n• Vehicle: ${bk.vehicleName}\n\nOur operations desk will confirm your vehicle shortly!`
+          `Hello ${bk.customerName},\n\nThis is Innova Cabs Bangalore. We have received your booking request #${bk.bookingId}:\n• Route: ${bk.pickupName} ➔ ${bk.dropName}\n• Date & Time: ${bk.pickupDate} at ${formatTime12(bk.pickupTime)}\n• Vehicle: ${bk.vehicleName}\n\nOur operations desk will confirm your vehicle shortly!`
         )}`;
 
-        setState((prev) => ({
-          ...prev,
-          step: 'success',
-          confirmedBooking: bk,
-          adminWhatsAppUrl: whatsAppUrl,
-        }));
+        setState((prev) => ({ ...prev, step: 'success', confirmedBooking: bk, adminWhatsAppUrl: whatsAppUrl }));
       } else {
         setState((prev) => ({
           ...prev,
@@ -304,7 +326,10 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
     <BookingFlowContext.Provider
       value={{
         state,
-        openBookingFlow,
+        search,
+        searchFares,
+        clearSearch,
+        requestBooking,
         closeBookingFlow,
         setStep,
         selectVehicle,

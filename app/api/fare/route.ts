@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
         ? body.serviceType
         : 'outstation';
 
-    const tripType: TripType = body.tripType === 'round' ? 'round' : 'oneway';
+    // Outstation trips are round trip only
+    const tripType: TripType = serviceType === 'outstation' || body.tripType === 'round' ? 'round' : 'oneway';
 
     const input: FareCalculationInput = {
       serviceType,
@@ -38,6 +39,15 @@ export async function POST(req: NextRequest) {
       pickupLng: body.pickupLng != null ? Number(body.pickupLng) : undefined,
       dropLat: body.dropLat != null ? Number(body.dropLat) : undefined,
       dropLng: body.dropLng != null ? Number(body.dropLng) : undefined,
+      stops: Array.isArray(body.stops)
+        ? body.stops.slice(0, 3).map((s: { lat?: unknown; lng?: unknown }) => ({
+            lat: s?.lat != null ? Number(s.lat) : null,
+            lng: s?.lng != null ? Number(s.lng) : null,
+          }))
+        : undefined,
+      pickupDate: typeof body.pickupDate === 'string' ? body.pickupDate : undefined,
+      returnDate: typeof body.returnDate === 'string' ? body.returnDate : undefined,
+      packageHours: body.packageHours != null ? Number(body.packageHours) : undefined,
       vehicleId: body.vehicleId || undefined,
     };
 

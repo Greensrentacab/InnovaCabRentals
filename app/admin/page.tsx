@@ -45,7 +45,6 @@ import {
   getAdminDashboardData,
   updateBookingStatus,
   assignDriverToBooking,
-  updateRouteFares,
   toggleVehicleActive,
   updateEnquiryStatus,
   adminLogout,
@@ -53,6 +52,8 @@ import {
 } from '@/app/actions/admin';
 import { Booking, BookingStatus, Route, Vehicle, Enquiry } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
+import { formatTime12 } from '@/lib/time';
+import VehicleRatesEditor from '@/components/admin/VehicleRatesEditor';
 
 type AdminTab = 'overview' | 'bookings' | 'pricing' | 'fleet' | 'enquiries';
 
@@ -76,11 +77,6 @@ export default function AdminDashboardPage() {
   const [vehicleReg, setVehicleReg] = useState('');
   const [driverSubmitting, setDriverSubmitting] = useState(false);
 
-  // Pricing Edit State (Route slug -> fares)
-  const [editingFares, setEditingFares] = useState<{
-    [slug: string]: { innova: string; crysta: string };
-  }>({});
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
@@ -92,15 +88,6 @@ export default function AdminDashboardPage() {
       const res = await getAdminDashboardData();
       setData(res);
 
-      // Pre-populate pricing editable inputs
-      const initialFares: { [slug: string]: { innova: string; crysta: string } } = {};
-      res.routes.forEach((r) => {
-        initialFares[r.slug] = {
-          innova: r.fares.innova !== null ? String(r.fares.innova) : '',
-          crysta: r.fares['innova-crysta'] !== null ? String(r.fares['innova-crysta']) : '',
-        };
-      });
-      setEditingFares(initialFares);
     } catch (err) {
       console.error('[Admin] Error loading dashboard data:', err);
       showToast('Error loading live operations data.');
@@ -167,26 +154,6 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleSaveRouteFares = async (slug: string) => {
-    const current = editingFares[slug];
-    if (!current) return;
-
-    const parsedInnova = current.innova.trim() ? Number(current.innova) : null;
-    const parsedCrysta = current.crysta.trim() ? Number(current.crysta) : null;
-
-    const res = await updateRouteFares(slug, {
-      innova: isNaN(parsedInnova as number) ? null : parsedInnova,
-      'innova-crysta': isNaN(parsedCrysta as number) ? null : parsedCrysta,
-    });
-
-    if (res.success) {
-      showToast(`Updated tariffs for ${slug}`);
-      loadData();
-    } else {
-      showToast(res.error || 'Failed to update tariffs');
-    }
-  };
-
   const handleToggleVehicle = async (vehicleId: string, currentConfirmed: boolean) => {
     const res = await toggleVehicleActive(vehicleId, !currentConfirmed);
     if (res.success) {
@@ -220,380 +187,276 @@ export default function AdminDashboardPage() {
     return matchesSearch && matchesStatus;
   });
 
+  // design.md §1.1 "Status chips (booking pipeline)"
   const getStatusBadge = (status: BookingStatus) => {
     switch (status) {
       case 'PENDING':
-        return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+        return 'bg-amber-100 text-amber-800';
       case 'CONFIRMED':
-        return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+        return 'bg-brand-100 text-brand-800';
       case 'DRIVER_ASSIGNED':
-        return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+        return 'bg-indigo-100 text-indigo-800';
       case 'TRIP_STARTED':
-        return 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
+        return 'bg-sky-100 text-sky-800';
       case 'COMPLETED':
-        return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+        return 'bg-live-500/15 text-live-600';
       case 'CANCELLED':
-        return 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+        return 'bg-rose-100 text-rose-700';
       default:
-        return 'bg-slate-700 text-slate-300 border-slate-600';
+        return 'bg-slate-100 text-slate-700';
     }
   };
 
+  const enquiryBadge = (status: Enquiry['status']) =>
+    status === 'PENDING'
+      ? 'bg-amber-100 text-amber-800'
+      : status === 'CONTACTED'
+        ? 'bg-brand-100 text-brand-800'
+        : status === 'CONVERTED'
+          ? 'bg-live-500/15 text-live-600'
+          : 'bg-rose-100 text-rose-700';
+
+  const tabs: { id: AdminTab; label: string; icon: React.ElementType; count?: number }[] = [
+    { id: 'overview', label: 'Overview', icon: Compass },
+    { id: 'bookings', label: 'Bookings & Dispatch', icon: Calendar, count: data?.stats.pendingBookings },
+    { id: 'pricing', label: 'Pricing & Tariffs', icon: Tag },
+    { id: 'fleet', label: 'Fleet & Vehicles', icon: Car },
+    { id: 'enquiries', label: 'Tour Enquiries', icon: Users, count: data?.stats.pendingEnquiries },
+  ];
+
+  const kpis = [
+    { label: 'Total Bookings', value: data?.stats.totalBookings || 0, hint: 'All time', tone: 'text-ink' },
+    { label: 'Pending Approval', value: data?.stats.pendingBookings || 0, hint: 'Action needed', tone: 'text-amber-600' },
+    { label: 'Assigned / Active', value: data?.stats.activeTrips || 0, hint: 'Chauffeur on duty', tone: 'text-indigo-600' },
+    { label: 'Completed Trips', value: data?.stats.completedTrips || 0, hint: 'Finished', tone: 'text-live-600' },
+  ];
+
+  const smallBtn = 'btn px-3 py-1.5 text-xs';
+  const panelTitle = 'text-xl font-extrabold tracking-tight';
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Toast Notification */}
+    <div className="flex min-h-screen flex-col bg-porcelain">
+      {/* Toast */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-brand-orange text-white px-5 py-3 rounded-2xl shadow-2xl font-bold text-xs flex items-center gap-2 animate-in slide-in-from-top duration-200">
-          <CheckCircle2 className="w-4 h-4" />
-          <span>{toastMessage}</span>
+        <div
+          role="status"
+          className="fixed right-5 top-5 z-[70] flex animate-pop-in items-center gap-2 rounded-2xl bg-ink px-5 py-3 text-xs font-bold text-white shadow-float-lg"
+        >
+          <CheckCircle2 className="h-4 w-4 text-live-400" />
+          {toastMessage}
         </div>
       )}
 
-      {/* ================================================================== */}
-      {/* TOP CONSOLE NAVIGATION                                             */}
-      {/* ================================================================== */}
-      <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-3.5">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-between">
+      {/* Console header */}
+      <header className="sticky top-0 z-40 px-3 pt-3 sm:px-4">
+        <div className="glass-strong mx-auto max-w-7xl rounded-3xl p-3 sm:p-4">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-brand-orange text-white flex items-center justify-center font-black shadow-md">
-                <Car className="w-5 h-5" />
-              </div>
-              <div>
-                <h1 className="text-sm sm:text-base font-extrabold tracking-tight text-white flex items-center gap-2">
-                  <span>INNOVA CABS</span>
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    Operations Live
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 text-white shadow-glow">
+                <Car className="h-5 w-5" strokeWidth={2.2} />
+              </span>
+              <div className="leading-none">
+                <p className="flex items-center gap-2 text-[15px] font-extrabold tracking-tight">
+                  {siteConfig.brand.name}
+                  <span className="chip-live hidden sm:inline-flex">
+                    <span className="h-1.5 w-1.5 rounded-full bg-live-500" /> Operations Live
                   </span>
-                </h1>
-                <p className="text-[10px] text-slate-400">
+                </p>
+                <p className="mt-1 text-[11px] text-slate-500">
                   Bangalore Dispatch Desk • <code>greensrentacab@gmail.com</code>
                 </p>
               </div>
             </div>
 
-            <div className="flex sm:hidden items-center gap-2">
-              <button
-                onClick={loadData}
-                className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white"
-                title="Refresh"
-              >
-                <RefreshCw className="w-4 h-4" />
+            <div className="flex items-center gap-2">
+              <Link href="/" target="_blank" className="btn-ghost hidden px-3.5 py-2 text-xs sm:inline-flex">
+                <ExternalLink className="h-3.5 w-3.5" /> View Live Website
+              </Link>
+              <button type="button" onClick={loadData} disabled={loading} className="btn-ghost px-3 py-2 text-xs" title="Refresh">
+                <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
               </button>
               <button
+                type="button"
                 onClick={handleLogout}
-                className="p-2 rounded-lg bg-red-950 text-red-300"
-                title="Logout"
+                className="btn border border-rose-300 bg-rose-50/50 px-3 py-2 text-xs text-rose-700 hover:bg-rose-50"
+                title="Sign out"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Sign Out</span>
               </button>
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-3">
-            <Link
-              href="/"
-              target="_blank"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>View Live Website</span>
-            </Link>
-
-            <button
-              onClick={loadData}
-              disabled={loading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
-            </button>
-
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-950/60 hover:bg-red-900/60 text-red-300 text-xs font-semibold border border-red-800/60 transition-colors"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign Out</span>
-            </button>
+          {/* Tabs */}
+          <div role="tablist" className="no-scrollbar mt-3 flex gap-1 overflow-x-auto rounded-2xl bg-slate-100/80 p-1">
+            {tabs.map(({ id, label, icon: Icon, count }) => {
+              const active = activeTab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setActiveTab(id)}
+                  className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all sm:text-[13px] ${
+                    active ? 'bg-white text-brand-700 shadow-float ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                  {count ? (
+                    <span className="rounded-full bg-amber-400 px-1.5 text-[10px] font-extrabold text-amber-950">{count}</span>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
-        </div>
-
-        {/* Tab Switcher */}
-        <div className="max-w-7xl mx-auto mt-3 pt-2 border-t border-slate-800 flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 text-xs font-bold scrollbar-none">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'overview'
-                ? 'bg-brand-orange text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            <span>Overview</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('bookings')}
-            className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'bookings'
-                ? 'bg-brand-orange text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Calendar className="w-4 h-4" />
-            <span>Bookings &amp; Dispatch</span>
-            {data?.stats.pendingBookings ? (
-              <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-red-500 text-white font-black">
-                {data.stats.pendingBookings}
-              </span>
-            ) : null}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('pricing')}
-            className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'pricing'
-                ? 'bg-brand-orange text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Tag className="w-4 h-4" />
-            <span>Pricing &amp; Tariffs</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('fleet')}
-            className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'fleet'
-                ? 'bg-brand-orange text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Car className="w-4 h-4" />
-            <span>Fleet &amp; Vehicles</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('enquiries')}
-            className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'enquiries'
-                ? 'bg-brand-orange text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Tour Enquiries</span>
-            {data?.stats.pendingEnquiries ? (
-              <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500 text-slate-950 font-black">
-                {data.stats.pendingEnquiries}
-              </span>
-            ) : null}
-          </button>
         </div>
       </header>
 
-      {/* ================================================================== */}
-      {/* MAIN CONSOLE BODY                                                  */}
-      {/* ================================================================== */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8 space-y-8">
-        
-        {/* ---------------------------------------------------------------- */}
-        {/* TAB 1: OVERVIEW DASHBOARD                                        */}
-        {/* ---------------------------------------------------------------- */}
+      <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
-          <div className="space-y-6">
-            {/* Urgent Pending Action Banner */}
+          <div className="animate-panel-in space-y-6">
             {(data?.stats.pendingBookings || 0) > 0 && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-                    <AlertCircle className="w-6 h-6" />
+              <div className="relative overflow-hidden rounded-4xl bg-gradient-to-br from-brand-800 via-brand-700 to-indigo-700 p-6 text-white shadow-float-lg">
+                <div className="pointer-events-none absolute inset-0 bg-grid-slate opacity-20 [background-size:32px_32px]" />
+                <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-4">
+                    <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">
+                      <span className="absolute inset-0 animate-pulse-ring rounded-2xl bg-amber-400/40" />
+                      <AlertCircle className="relative h-6 w-6" />
+                    </span>
+                    <div>
+                      <p className="text-lg font-extrabold tracking-tight">
+                        {data?.stats.pendingBookings} Booking Request(s) Awaiting Confirmation
+                      </p>
+                      <p className="mt-0.5 text-sm text-brand-100">
+                        Passengers are waiting for driver assignment or WhatsApp verification.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-amber-200">
-                      {data?.stats.pendingBookings} Booking Request(s) Awaiting Confirmation
-                    </h3>
-                    <p className="text-xs text-amber-300/80">
-                      Passengers are waiting for driver assignment or WhatsApp verification.
-                    </p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('bookings');
+                      setStatusFilter('PENDING');
+                    }}
+                    className="btn shrink-0 bg-white text-brand-800 shadow-float hover:-translate-y-0.5"
+                  >
+                    Review Pending Requests
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    setActiveTab('bookings');
-                    setStatusFilter('PENDING');
-                  }}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all self-start sm:self-auto"
-                >
-                  Review Pending Requests
-                </button>
               </div>
             )}
 
-            {/* Live KPI Metric Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Total Bookings
-                </span>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-3xl font-black text-white">
-                    {data?.stats.totalBookings || 0}
-                  </span>
-                  <span className="text-xs text-slate-500">All time</span>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {kpis.map((k) => (
+                <div key={k.label} className="card-float p-5">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{k.label}</p>
+                  <p className={`mt-1 text-3xl font-extrabold tracking-tight tabular-nums ${k.tone}`}>
+                    {loading && !data ? <span className="shimmer block h-8 w-16 rounded-lg" /> : k.value}
+                  </p>
+                  <p className="text-xs font-medium text-slate-500">{k.hint}</p>
                 </div>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
-                  Pending Approval
-                </span>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-3xl font-black text-amber-400">
-                    {data?.stats.pendingBookings || 0}
-                  </span>
-                  <span className="text-xs text-amber-500/70 font-semibold">Action needed</span>
-                </div>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-400">
-                  Assigned / Active
-                </span>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-3xl font-black text-purple-400">
-                    {data?.stats.activeTrips || 0}
-                  </span>
-                  <span className="text-xs text-purple-500/70 font-semibold">Chauffeur on duty</span>
-                </div>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
-                  Completed Trips
-                </span>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-3xl font-black text-emerald-400">
-                    {data?.stats.completedTrips || 0}
-                  </span>
-                  <span className="text-xs text-emerald-500/70 font-semibold">Finished</span>
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* Quick Overview Tables */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-              {/* Recent Bookings preview */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div className="grid gap-5 lg:grid-cols-2">
+              <div className="card-float p-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-brand-orange" />
-                    <span>Recent Booking Requests</span>
+                  <h3 className="flex items-center gap-2 text-base font-extrabold">
+                    <Calendar className="h-4 w-4 text-brand-600" /> Recent Booking Requests
                   </h3>
-                  <button
-                    onClick={() => setActiveTab('bookings')}
-                    className="text-xs font-bold text-brand-orange hover:underline"
-                  >
+                  <button type="button" onClick={() => setActiveTab('bookings')} className="text-xs font-bold text-brand-700 hover:text-brand-800">
                     View All
                   </button>
                 </div>
-
-                <div className="divide-y divide-slate-800/80">
+                <ul className="mt-3 divide-y divide-slate-100">
                   {(data?.bookings || []).slice(0, 4).map((b) => (
-                    <div key={b.bookingId} className="py-3 flex items-center justify-between text-xs">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-white">{b.bookingId}</span>
-                          <span className="font-semibold text-slate-300">{b.customerName}</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400">
-                          {b.pickupName} ➔ {b.dropName}
+                    <li key={b.bookingId} className="flex items-center justify-between gap-3 py-3 text-xs">
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-brand-700">{b.bookingId}</span>
+                          <span className="truncate font-semibold text-ink">{b.customerName}</span>
+                        </p>
+                        <p className="truncate text-[11px] text-slate-500">
+                          {b.pickupName} → {b.dropName}
                         </p>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${getStatusBadge(b.bookingStatus)}`}>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${getStatusBadge(b.bookingStatus)}`}>
                         {b.bookingStatus}
                       </span>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                  {!loading && (data?.bookings || []).length === 0 && (
+                    <li className="py-6 text-center text-xs text-slate-400">No booking requests yet.</li>
+                  )}
+                </ul>
               </div>
 
-              {/* Recent Enquiries preview */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div className="card-float p-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <Users className="w-4 h-4 text-emerald-400" />
-                    <span>Recent Tour Enquiries</span>
+                  <h3 className="flex items-center gap-2 text-base font-extrabold">
+                    <Users className="h-4 w-4 text-live-600" /> Recent Tour Enquiries
                   </h3>
-                  <button
-                    onClick={() => setActiveTab('enquiries')}
-                    className="text-xs font-bold text-emerald-400 hover:underline"
-                  >
+                  <button type="button" onClick={() => setActiveTab('enquiries')} className="text-xs font-bold text-brand-700 hover:text-brand-800">
                     View All
                   </button>
                 </div>
-
-                <div className="divide-y divide-slate-800/80">
+                <ul className="mt-3 divide-y divide-slate-100">
                   {(data?.enquiries || []).slice(0, 4).map((e, idx) => (
-                    <div key={e.id || idx} className="py-3 flex items-center justify-between text-xs">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-white">{e.name}</span>
-                          <span className="text-[11px] text-slate-400">+91 {e.phone}</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400 truncate max-w-xs">
-                          {e.destination}
+                    <li key={e.id || idx} className="flex items-center justify-between gap-3 py-3 text-xs">
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-2">
+                          <span className="font-bold text-ink">{e.name}</span>
+                          <span className="text-[11px] text-slate-500">+91 {e.phone}</span>
                         </p>
+                        <p className="max-w-xs truncate text-[11px] text-slate-500">{e.destination}</p>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-300">
-                        {e.status}
-                      </span>
-                    </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${enquiryBadge(e.status)}`}>{e.status}</span>
+                    </li>
                   ))}
-                </div>
+                  {!loading && (data?.enquiries || []).length === 0 && (
+                    <li className="py-6 text-center text-xs text-slate-400">No enquiries yet.</li>
+                  )}
+                </ul>
               </div>
             </div>
           </div>
         )}
 
-        {/* ---------------------------------------------------------------- */}
-        {/* TAB 2: BOOKINGS & DISPATCH                                       */}
-        {/* ---------------------------------------------------------------- */}
+        {/* TAB 2: BOOKINGS & DISPATCH */}
         {activeTab === 'bookings' && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="animate-panel-in space-y-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h2 className="text-lg font-bold text-white">
-                  Bookings &amp; Chauffeur Dispatch
-                </h2>
-                <p className="text-xs text-slate-400">
-                  Manage approvals, driver assignments, and direct customer communication.
-                </p>
+                <h2 className={panelTitle}>Bookings &amp; Chauffeur Dispatch</h2>
+                <p className="text-sm text-slate-600">Manage approvals, driver assignments, and direct customer communication.</p>
               </div>
-
-              {/* Search & Filter */}
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="relative sm:w-64">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
-                    type="text"
+                    type="search"
                     value={bookingSearch}
                     onChange={(e) => setBookingSearch(e.target.value)}
                     placeholder="Search by ID, name, phone..."
-                    className="pl-9 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 w-48 sm:w-64"
+                    aria-label="Search bookings"
+                    className="field py-2.5 pl-11"
                   />
                 </div>
-
-                <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+                <div role="radiogroup" aria-label="Status filter" className="no-scrollbar flex gap-1 overflow-x-auto rounded-full border border-slate-200/80 bg-slate-100/70 p-1">
                   {['ALL', 'PENDING', 'CONFIRMED', 'DRIVER_ASSIGNED', 'COMPLETED'].map((st) => (
                     <button
                       key={st}
+                      type="button"
+                      role="radio"
+                      aria-checked={statusFilter === st}
                       onClick={() => setStatusFilter(st)}
-                      className={`px-2.5 py-1.5 rounded-lg font-semibold transition-all ${
-                        statusFilter === st
-                          ? 'bg-brand-orange text-white shadow-sm'
-                          : 'text-slate-400 hover:text-white'
+                      className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        statusFilter === st ? 'bg-white text-ink shadow-float ring-1 ring-slate-200/80' : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
                       {st === 'DRIVER_ASSIGNED' ? 'ASSIGNED' : st}
@@ -603,17 +466,13 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Bookings List */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {filteredBookings.length === 0 ? (
-                <div className="py-16 text-center text-slate-500 bg-slate-900 border border-slate-800 rounded-2xl">
-                  No bookings found matching your search.
-                </div>
+                <div className="card-float py-14 text-center text-sm text-slate-500">No bookings found matching your search.</div>
               ) : (
                 filteredBookings.map((b) => {
                   const cleanCustomerPhone = b.customerPhone.replace(/\D/g, '');
-                  const customerWaNumber =
-                    cleanCustomerPhone.length === 10 ? `91${cleanCustomerPhone}` : cleanCustomerPhone;
+                  const customerWaNumber = cleanCustomerPhone.length === 10 ? `91${cleanCustomerPhone}` : cleanCustomerPhone;
 
                   const confirmWaMessage = encodeURIComponent(
                     `Hello ${b.customerName},\n\nThis is ${siteConfig.brand.name}. We are pleased to confirm your Innova booking #${b.bookingId}:\n• Route: ${b.pickupName} ➔ ${b.dropName}\n• Service: ${b.serviceType.toUpperCase()} (${b.tripType === 'round' ? 'Round Trip' : 'One Way'})\n• Date & Time: ${b.pickupDate} at ${b.pickupTime}\n• Vehicle: ${b.vehicleName}\n• Tariff: ${b.fare !== null ? `₹${b.fare}` : 'Price on request'}\n\nOur operations desk will send chauffeur details 2 hours prior to departure.`
@@ -621,36 +480,24 @@ export default function AdminDashboardPage() {
                   const confirmWaUrl = `https://wa.me/${customerWaNumber}?text=${confirmWaMessage}`;
 
                   return (
-                    <div
-                      key={b.bookingId}
-                      className="bg-slate-900 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-5 transition-all shadow-md space-y-4"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className="font-mono text-sm font-extrabold text-brand-orange">
-                            #{b.bookingId}
-                          </span>
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full border text-xs font-bold ${getStatusBadge(
-                              b.bookingStatus
-                            )}`}
-                          >
+                    <article key={b.bookingId} className="card-float p-5">
+                      <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <span className="font-mono text-sm font-extrabold text-brand-700">#{b.bookingId}</span>
+                          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${getStatusBadge(b.bookingStatus)}`}>
                             {b.bookingStatus}
                           </span>
-                          <span className="text-xs text-slate-400">
-                            Created: {new Date(b.createdAt).toLocaleDateString()}
-                          </span>
+                          <span className="text-xs text-slate-500">Created: {new Date(b.createdAt).toLocaleDateString()}</span>
                         </div>
-
-                        {/* Status Switcher Dropdown */}
                         <div className="flex items-center gap-2">
-                          <label className="text-xs text-slate-400 font-medium">Status:</label>
+                          <label htmlFor={`status-${b.bookingId}`} className="text-xs font-semibold text-slate-500">
+                            Status:
+                          </label>
                           <select
+                            id={`status-${b.bookingId}`}
                             value={b.bookingStatus}
-                            onChange={(e) =>
-                              handleStatusChange(b.bookingId, e.target.value as BookingStatus)
-                            }
-                            className="bg-slate-950 border border-slate-700 text-xs text-white rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-orange"
+                            onChange={(e) => handleStatusChange(b.bookingId, e.target.value as BookingStatus)}
+                            className="field w-auto py-2 text-xs"
                           >
                             <option value="PENDING">PENDING</option>
                             <option value="CONFIRMED">CONFIRMED</option>
@@ -662,90 +509,77 @@ export default function AdminDashboardPage() {
                         </div>
                       </div>
 
-                      {/* Booking Details Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                        {/* Passenger */}
-                        <div className="space-y-1">
-                          <span className="text-[10px] uppercase font-bold text-slate-500">
-                            Passenger Info
-                          </span>
-                          <p className="font-bold text-white text-sm">{b.customerName}</p>
-                          <p className="text-slate-400 font-mono">+91 {b.customerPhone}</p>
-                          <div className="flex items-center gap-2 pt-1">
-                            <a
-                              href={`tel:+91${cleanCustomerPhone}`}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 text-[11px] font-semibold transition-colors"
-                            >
-                              <Phone className="w-3 h-3 text-brand-orange" />
-                              <span>Call</span>
+                      <div className="mt-4 grid gap-4 text-xs md:grid-cols-3">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Passenger Info</p>
+                          <p className="mt-1 text-sm font-bold text-ink">{b.customerName}</p>
+                          <p className="font-mono text-slate-500">+91 {b.customerPhone}</p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <a href={`tel:+91${cleanCustomerPhone}`} className={`${smallBtn} border border-slate-200/80 bg-white text-slate-800 hover:border-slate-300`}>
+                              <Phone className="h-3 w-3 text-brand-600" /> Call
                             </a>
-                            <a
-                              href={confirmWaUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-950 text-emerald-300 hover:bg-emerald-900 border border-emerald-800/60 text-[11px] font-semibold transition-colors"
-                            >
-                              <MessageCircle className="w-3 h-3" />
-                              <span>WhatsApp</span>
+                            <a href={confirmWaUrl} target="_blank" rel="noopener noreferrer" className={`${smallBtn} bg-whatsapp text-white hover:brightness-95`}>
+                              <MessageCircle className="h-3 w-3" /> WhatsApp
                             </a>
                           </div>
                         </div>
 
-                        {/* Route & Schedule */}
-                        <div className="space-y-1">
-                          <span className="text-[10px] uppercase font-bold text-slate-500">
-                            Route &amp; Journey ({b.tripType === 'round' ? 'Round Trip' : 'One Way'})
-                          </span>
-                          <p className="font-bold text-white flex items-center gap-1.5">
-                            <MapPin className="w-3.5 h-3.5 text-brand-orange shrink-0" />
-                            <span>{b.pickupName} ➔ {b.dropName}</span>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                            Route &amp; Journey ({b.serviceType === 'outstation' || b.tripType === 'round' ? 'Round Trip' : 'One Way'})
                           </p>
-                          <p className="text-slate-400 flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                            <span>{b.pickupDate} at {b.pickupTime}</span>
+                          <p className="mt-1 flex items-start gap-1.5 font-bold text-ink">
+                            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-600" />
+                            {b.pickupName} → {b.dropName}
                           </p>
-                          <p className="text-[11px] text-slate-400 capitalize">
+                          <p className="mt-0.5 flex items-center gap-1.5 text-slate-500">
+                            <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                            {b.pickupDate} at {formatTime12(b.pickupTime)}
+                            {b.returnDate && ` · Return ${b.returnDate}`}
+                          </p>
+                          <p className="text-[11px] capitalize text-slate-500">
                             Service: {b.serviceType}
+                            {b.serviceType === "local" && b.packageHours != null ? (b.packageHours ? ` · ${b.packageHours} hr package` : " · custom duration") : ""}
                           </p>
+                          {b.stops && b.stops.length > 0 && (
+                            <p className="text-[11px] text-slate-500">Stops: {b.stops.join(' → ')}</p>
+                          )}
                         </div>
 
-                        {/* Vehicle & Chauffeur */}
-                        <div className="space-y-1">
-                          <span className="text-[10px] uppercase font-bold text-slate-500">
-                            Vehicle &amp; Chauffeur
-                          </span>
-                          <p className="font-bold text-white flex items-center gap-1.5">
-                            <Car className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                            <span>{b.vehicleName}</span>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Vehicle &amp; Chauffeur</p>
+                          <p className="mt-1 flex items-center gap-1.5 font-bold text-ink">
+                            <Car className="h-3.5 w-3.5 shrink-0 text-brand-600" />
+                            {b.vehicleName}
                           </p>
-                          <p className="text-slate-300">
-                            Tariff: <strong className="text-brand-orange">{b.fare !== null ? `₹${b.fare}` : 'Price on request'}</strong>
+                          <p className="text-slate-600">
+                            Tariff: <strong className="text-brand-700">{b.fare !== null ? `₹${b.fare}` : 'Price on request'}</strong>
                           </p>
-
                           {b.driverName ? (
-                            <div className="pt-1 text-[11px] text-purple-300 bg-purple-950/40 p-2 rounded-lg border border-purple-800/40">
-                              <p className="font-bold">Chauffeur: {b.driverName} ({b.driverPhone})</p>
-                              <p className="text-slate-400">Reg: {b.vehicleRegistration}</p>
+                            <div className="mt-2 rounded-xl border border-indigo-100 bg-indigo-50 p-2.5 text-[11px] text-indigo-800">
+                              <p className="font-bold">
+                                Chauffeur: {b.driverName} ({b.driverPhone})
+                              </p>
+                              <p className="text-indigo-700/80">Reg: {b.vehicleRegistration}</p>
                             </div>
                           ) : (
                             <button
+                              type="button"
                               onClick={() => handleOpenAssignDriver(b)}
-                              className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-900/60 hover:bg-purple-800 text-purple-200 border border-purple-700/60 text-xs font-bold transition-colors"
+                              className={`${smallBtn} mt-2 bg-brand-600 text-white shadow-glow hover:bg-brand-700`}
                             >
-                              <UserCheck className="w-3.5 h-3.5" />
-                              <span>Assign Chauffeur</span>
+                              <UserCheck className="h-3.5 w-3.5" /> Assign Chauffeur
                             </button>
                           )}
                         </div>
                       </div>
 
-                      {/* Notes if any */}
                       {b.notes && (
-                        <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 text-xs text-slate-400">
-                          <strong className="text-slate-300">Passenger Notes:</strong> {b.notes}
-                        </div>
+                        <p className="mt-4 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                          <strong className="text-ink">Passenger Notes:</strong> {b.notes}
+                        </p>
                       )}
-                    </div>
+                    </article>
                   );
                 })
               )}
@@ -753,165 +587,79 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* ---------------------------------------------------------------- */}
-        {/* TAB 3: PRICING & TARIFFS                                         */}
-        {/* ---------------------------------------------------------------- */}
+        {/* TAB 3: PRICING — per-car tariffs, live across the website */}
         {activeTab === 'pricing' && (
-          <div className="space-y-6">
+          <div className="animate-panel-in space-y-5">
             <div>
-              <h2 className="text-lg font-bold text-white">
-                Tariffs &amp; Route Pricing Manager
-              </h2>
-              <p className="text-xs text-slate-400">
-                All prices in Firestore are nullable. Leaving values empty will show &quot;Price on request&quot; on the website.
+              <h2 className={panelTitle}>Car Prices &amp; Tariffs</h2>
+              <p className="text-sm text-slate-600">
+                Set each car&apos;s rates once — fare results, fleet cards, route prices, vehicle pages and the comparison
+                table all update automatically. Leave a field empty to show &quot;Price on request&quot;.
               </p>
             </div>
-
-            {/* 8 Routes Pricing Editor */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-md">
-              <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-white">
-                  Outstation &amp; Airport Route Fixed Fares
-                </h3>
-                <span className="text-[11px] text-slate-400">
-                  8 Pre-configured Routes
-                </span>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase font-semibold text-[10px]">
-                    <tr>
-                      <th className="px-6 py-3">Route Destination</th>
-                      <th className="px-4 py-3">Distance &amp; Time</th>
-                      <th className="px-4 py-3">Toyota Innova (₹)</th>
-                      <th className="px-4 py-3">Toyota Innova Crysta (₹)</th>
-                      <th className="px-6 py-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/80">
-                    {(data?.routes || []).map((r) => {
-                      const current = editingFares[r.slug] || { innova: '', crysta: '' };
-
-                      return (
-                        <tr key={r.slug} className="hover:bg-slate-800/40 transition-colors">
-                          <td className="px-6 py-4 font-bold text-white">
-                            <div>{r.name}</div>
-                            <span className="text-[10px] text-slate-500 font-mono">
-                              /routes/{r.slug}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4 text-slate-300">
-                            <div>{r.distanceKm} Km</div>
-                            <span className="text-[10px] text-slate-500">{r.durationText}</span>
-                          </td>
-                          <td className="px-4 py-4">
-                            <input
-                              type="number"
-                              value={current.innova}
-                              onChange={(e) =>
-                                setEditingFares({
-                                  ...editingFares,
-                                  [r.slug]: { ...current, innova: e.target.value },
-                                })
-                              }
-                              placeholder="Null (On request)"
-                              className="w-32 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono focus:outline-none focus:ring-1 focus:ring-brand-orange"
-                            />
-                          </td>
-                          <td className="px-4 py-4">
-                            <input
-                              type="number"
-                              value={current.crysta}
-                              onChange={(e) =>
-                                setEditingFares({
-                                  ...editingFares,
-                                  [r.slug]: { ...current, crysta: e.target.value },
-                                })
-                              }
-                              placeholder="Null (On request)"
-                              className="w-32 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white font-mono focus:outline-none focus:ring-1 focus:ring-brand-orange"
-                            />
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <button
-                              onClick={() => handleSaveRouteFares(r.slug)}
-                              className="px-3 py-1.5 rounded-lg bg-brand-orange hover:bg-brand-orange-hover text-white font-bold text-xs shadow-sm transition-all"
-                            >
-                              Save Tariff
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+            <div className="grid gap-5 xl:grid-cols-2">
+              {(data?.vehicles || []).map((v) => (
+                <VehicleRatesEditor
+                  key={`${v.id}-${JSON.stringify(v.rates)}`}
+                  vehicle={v}
+                  onSaved={(msg) => {
+                    showToast(msg);
+                    loadData();
+                  }}
+                />
+              ))}
             </div>
           </div>
         )}
 
-        {/* ---------------------------------------------------------------- */}
-        {/* TAB 4: FLEET & VEHICLES                                          */}
-        {/* ---------------------------------------------------------------- */}
+        {/* TAB 4: FLEET & VEHICLES */}
         {activeTab === 'fleet' && (
-          <div className="space-y-6">
+          <div className="animate-panel-in space-y-5">
             <div>
-              <h2 className="text-lg font-bold text-white">
-                Fleet &amp; Vehicle Confirmation
-              </h2>
-              <p className="text-xs text-slate-400">
+              <h2 className={panelTitle}>Fleet &amp; Vehicle Confirmation</h2>
+              <p className="text-sm text-slate-600">
                 Vehicles flagged as unconfirmed (such as Hycross) remain hidden from customer vehicle selection until toggled active.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid gap-5 md:grid-cols-3">
               {(data?.vehicles || []).map((v) => (
                 <div
                   key={v.id}
-                  className={`bg-slate-900 border rounded-2xl p-6 space-y-4 transition-all shadow-md ${
-                    v.confirmed
-                      ? 'border-slate-800'
-                      : 'border-dashed border-amber-500/40 bg-slate-900/60'
-                  }`}
+                  className={`card-float p-6 ${v.confirmed ? '' : 'border-dashed border-amber-300 bg-amber-50/30'}`}
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-base font-bold text-white">{v.name}</h3>
-                      <p className="text-xs text-slate-400">{v.type}</p>
+                      <h3 className="text-lg font-extrabold tracking-tight">{v.name}</h3>
+                      <p className="text-xs text-slate-500">{v.type}</p>
                     </div>
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                        v.confirmed
-                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                          : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                        v.confirmed ? 'bg-live-500/15 text-live-600' : 'bg-amber-100 text-amber-800'
                       }`}
                     >
                       {v.confirmed ? 'Active on Site' : 'Unconfirmed / Hidden'}
                     </span>
                   </div>
-
-                  <div className="flex items-center gap-4 text-xs text-slate-400">
-                    <span>{v.seats} Seats</span>
-                    <span>•</span>
-                    <span>{v.luggage} Luggage Bags</span>
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                    <span className="flex items-center gap-1.5 rounded-xl bg-slate-50 px-3 py-2 font-medium text-slate-700">
+                      <Users className="h-3.5 w-3.5 text-brand-600" /> {v.seats} Seats
+                    </span>
+                    <span className="flex items-center gap-1.5 rounded-xl bg-slate-50 px-3 py-2 font-medium text-slate-700">
+                      <Car className="h-3.5 w-3.5 text-brand-600" /> {v.luggage} Luggage Bags
+                    </span>
                   </div>
-
-                  <div className="pt-2 border-t border-slate-800">
+                  <div className="mt-5 border-t border-slate-100 pt-4">
                     <button
+                      type="button"
                       onClick={() => handleToggleVehicle(v.id, v.confirmed)}
-                      className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${
-                        v.confirmed
-                          ? 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-                          : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                      }`}
+                      className={v.confirmed ? 'btn-ghost w-full text-xs' : 'btn w-full bg-live-600 text-xs text-white hover:-translate-y-0.5 hover:bg-live-500'}
                     >
                       {v.confirmed ? (
-                        <span>Deactivate Vehicle</span>
+                        'Deactivate Vehicle'
                       ) : (
                         <>
-                          <Check className="w-4 h-4" />
-                          <span>Activate Hycross on Storefront</span>
+                          <Check className="h-4 w-4" /> Activate Hycross on Storefront
                         </>
                       )}
                     </button>
@@ -922,21 +670,18 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* ---------------------------------------------------------------- */}
-        {/* TAB 5: TOUR ENQUIRIES                                            */}
-        {/* ---------------------------------------------------------------- */}
+        {/* TAB 5: TOUR ENQUIRIES */}
         {activeTab === 'enquiries' && (
-          <div className="space-y-6">
+          <div className="animate-panel-in space-y-5">
             <div>
-              <h2 className="text-lg font-bold text-white">
-                Tour Package &amp; Contact Enquiries
-              </h2>
-              <p className="text-xs text-slate-400">
-                Inquiries captured from /tour-packages and /contact lead forms.
-              </p>
+              <h2 className={panelTitle}>Tour Package &amp; Contact Enquiries</h2>
+              <p className="text-sm text-slate-600">Inquiries captured from /tour-packages and /contact lead forms.</p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
+              {(data?.enquiries || []).length === 0 && (
+                <div className="card-float py-14 text-center text-sm text-slate-500">No enquiries yet.</div>
+              )}
               {(data?.enquiries || []).map((e, idx) => {
                 const cleanPhone = e.phone.replace(/\D/g, '');
                 const waNumber = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
@@ -946,180 +691,145 @@ export default function AdminDashboardPage() {
                 const tourWaUrl = `https://wa.me/${waNumber}?text=${tourWaMessage}`;
 
                 return (
-                  <div
-                    key={e.id || idx}
-                    className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                  <article key={e.id || idx} className="card-float p-5">
+                    <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                          <span>{e.name}</span>
-                          <span className="text-xs text-slate-400 font-mono">+91 {e.phone}</span>
+                        <h4 className="flex flex-wrap items-center gap-2 text-sm font-extrabold text-ink">
+                          {e.name}
+                          <span className="font-mono text-xs font-medium text-slate-500">+91 {e.phone}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${enquiryBadge(e.status)}`}>{e.status}</span>
                         </h4>
-                        <p className="text-xs text-brand-orange font-semibold mt-0.5">
-                          Destination: {e.destination}
-                        </p>
+                        <p className="mt-0.5 text-xs font-semibold text-brand-700">Destination: {e.destination}</p>
                       </div>
-
-                      <div className="flex items-center gap-3">
-                        <select
-                          value={e.status}
-                          onChange={(ev) =>
-                            handleEnquiryStatus(e.id || '', ev.target.value as Enquiry['status'])
-                          }
-                          className="bg-slate-950 border border-slate-700 text-xs text-white rounded-lg px-2.5 py-1.5"
-                        >
-                          <option value="PENDING">PENDING</option>
-                          <option value="CONTACTED">CONTACTED</option>
-                          <option value="CONVERTED">CONVERTED</option>
-                          <option value="CANCELLED">CANCELLED</option>
-                        </select>
-                      </div>
+                      <select
+                        value={e.status}
+                        onChange={(ev) => handleEnquiryStatus(e.id || '', ev.target.value as Enquiry['status'])}
+                        aria-label={`Status for ${e.name}`}
+                        className="field w-auto py-2 text-xs"
+                      >
+                        <option value="PENDING">PENDING</option>
+                        <option value="CONTACTED">CONTACTED</option>
+                        <option value="CONVERTED">CONVERTED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                      </select>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-300">
+                    <div className="mt-4 grid gap-3 text-xs text-slate-700 sm:grid-cols-3">
                       <div>
-                        <span className="text-[10px] text-slate-500 uppercase font-bold block">
-                          Travel Schedule
-                        </span>
-                        <span>Date: {e.travelDate}</span>
-                        {e.duration && <span className="block text-slate-400">Duration: {e.duration}</span>}
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Travel Schedule</p>
+                        <p className="mt-1">Date: {e.travelDate}</p>
+                        {e.duration && <p className="text-slate-500">Duration: {e.duration}</p>}
                       </div>
-
                       <div>
-                        <span className="text-[10px] text-slate-500 uppercase font-bold block">
-                          Passengers &amp; Car
-                        </span>
-                        <span>{e.passengers} Passengers</span>
-                        <span className="block text-slate-400">{e.vehicleModel || 'Innova Crysta'}</span>
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Passengers &amp; Car</p>
+                        <p className="mt-1">{e.passengers} Passengers</p>
+                        <p className="text-slate-500">{e.vehicleModel || 'Innova Crysta'}</p>
                       </div>
-
                       <div className="flex items-center gap-2 sm:justify-end">
-                        <a
-                          href={`tel:+91${cleanPhone}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold text-xs"
-                        >
-                          <Phone className="w-3.5 h-3.5 text-brand-orange" />
-                          <span>Call</span>
+                        <a href={`tel:+91${cleanPhone}`} className={`${smallBtn} border border-slate-200/80 bg-white text-slate-800 hover:border-slate-300`}>
+                          <Phone className="h-3.5 w-3.5 text-brand-600" /> Call
                         </a>
-
-                        <a
-                          href={tourWaUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5" />
-                          <span>WhatsApp Lead</span>
+                        <a href={tourWaUrl} target="_blank" rel="noopener noreferrer" className={`${smallBtn} bg-whatsapp text-white hover:brightness-95`}>
+                          <MessageCircle className="h-3.5 w-3.5" /> WhatsApp Lead
                         </a>
                       </div>
                     </div>
 
                     {e.notes && (
-                      <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-400">
-                        <strong className="text-slate-300">Requirements:</strong> {e.notes}
-                      </div>
+                      <p className="mt-4 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
+                        <strong className="text-ink">Requirements:</strong> {e.notes}
+                      </p>
                     )}
-                  </div>
+                  </article>
                 );
               })}
             </div>
           </div>
         )}
-
       </main>
 
-      {/* ================================================================== */}
-      {/* ASSIGN CHAUFFEUR MODAL                                             */}
-      {/* ================================================================== */}
+      {/* Assign chauffeur modal (design.md §3.6 overlay) */}
       {assignModalBooking && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-purple-400">
-                  Chauffeur Assignment
-                </span>
-                <h3 className="text-base font-bold text-white">
-                  Booking #{assignModalBooking.bookingId}
-                </h3>
-              </div>
-              <button
-                onClick={() => setAssignModalBooking(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveDriverAssignment} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Chauffeur Full Name *
-                </label>
-                <input
-                  type="text"
-                  value={driverName}
-                  onChange={(e) => setDriverName(e.target.value)}
-                  placeholder="e.g. Manjunath Gowda"
-                  required
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-orange/40"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Chauffeur Mobile Number *
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">
-                    +91
-                  </span>
-                  <input
-                    type="tel"
-                    value={driverPhone}
-                    onChange={(e) => setDriverPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="9448123456"
-                    required
-                    maxLength={10}
-                    className="w-full pl-12 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-orange/40"
-                  />
+        <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-labelledby="assign-title">
+          <div className="absolute inset-0 animate-fade-in bg-slate-900/40 backdrop-blur-sm" onClick={() => setAssignModalBooking(null)} />
+          <div className="pointer-events-none absolute inset-0 flex items-end justify-center p-3 sm:items-center">
+            <div className="pointer-events-auto w-full animate-drawer-in overflow-hidden rounded-4xl bg-white shadow-float-lg sm:w-[480px]">
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-5 pb-4 pt-5">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-700">Chauffeur Assignment</p>
+                  <h3 id="assign-title" className="text-lg font-extrabold tracking-tight">
+                    Booking #{assignModalBooking.bookingId}
+                  </h3>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Vehicle Registration Number *
-                </label>
-                <input
-                  type="text"
-                  value={vehicleReg}
-                  onChange={(e) => setVehicleReg(e.target.value.toUpperCase())}
-                  placeholder="e.g. KA 04 MP 7821"
-                  required
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white font-mono focus:outline-none focus:ring-2 focus:ring-brand-orange/40"
-                />
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setAssignModalBooking(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+                  aria-label="Close"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-ink hover:bg-slate-200"
                 >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={driverSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>{driverSubmitting ? 'Assigning...' : 'Assign & Send WhatsApp'}</span>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
-            </form>
+
+              <form onSubmit={handleSaveDriverAssignment} className="space-y-4 px-5 py-5">
+                <div>
+                  <label htmlFor="assign-name" className="label">
+                    Chauffeur Full Name *
+                  </label>
+                  <input
+                    id="assign-name"
+                    type="text"
+                    value={driverName}
+                    onChange={(e) => setDriverName(e.target.value)}
+                    placeholder="e.g. Manjunath Gowda"
+                    required
+                    className="field"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="assign-phone" className="label">
+                    Chauffeur Mobile Number *
+                  </label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">+91</span>
+                    <input
+                      id="assign-phone"
+                      type="tel"
+                      value={driverPhone}
+                      onChange={(e) => setDriverPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="9448123456"
+                      required
+                      maxLength={10}
+                      className="field pl-12 tabular-nums"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="assign-reg" className="label">
+                    Vehicle Registration Number *
+                  </label>
+                  <input
+                    id="assign-reg"
+                    type="text"
+                    value={vehicleReg}
+                    onChange={(e) => setVehicleReg(e.target.value.toUpperCase())}
+                    placeholder="e.g. KA 04 MP 7821"
+                    required
+                    className="field font-mono"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+                  <button type="button" onClick={() => setAssignModalBooking(null)} className="btn-ghost">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={driverSubmitting} className="btn-primary">
+                    <Send className="h-4 w-4" />
+                    {driverSubmitting ? 'Assigning...' : 'Assign & Send WhatsApp'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

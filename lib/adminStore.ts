@@ -6,8 +6,8 @@
  * and uses an in-memory reactive state in local development.
  */
 
-import { Booking, BookingStatus, Route, Vehicle, Enquiry } from '@/lib/types';
-import { seedVehicles, seedRoutes } from '@/scripts/seed';
+import { Booking, BookingStatus, Route, Vehicle, Enquiry, VehicleRates } from '@/lib/types';
+import { seedVehicles, seedRoutes, emptyRates } from '@/scripts/seed';
 
 // Sample pre-populated bookings for realistic testing & operation
 let memoryBookings: Booking[] = [
@@ -152,8 +152,39 @@ let memoryEnquiries: Enquiry[] = [
   },
 ];
 
-let memoryRoutes: Route[] = [...seedRoutes];
-let memoryVehicles: Vehicle[] = [...seedVehicles];
+// Kept on globalThis so admin server actions and storefront pages share one
+// in-memory catalogue during local development (no Firestore configured).
+const memoryGlobal = globalThis as unknown as {
+  __icbRoutes?: Route[];
+  __icbVehicles?: Vehicle[];
+};
+memoryGlobal.__icbRoutes ??= [...seedRoutes];
+memoryGlobal.__icbVehicles ??= seedVehicles.map((v) => ({ ...v, rates: { ...emptyRates(), ...v.rates } }));
+let memoryRoutes: Route[] = memoryGlobal.__icbRoutes;
+let memoryVehicles: Vehicle[] = memoryGlobal.__icbVehicles;
+
+const hasFirestore = () => Boolean(process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY);
+
+/**
+ * Stored docs are layered over the seed catalogue (so partial docs written by
+ * admin edits still have every field) and seed items missing from Firestore
+ * are appended (e.g. newly added cars/routes).
+ */
+function mergeWithSeed<T>(stored: T[], seed: T[], key: (item: T) => string): T[] {
+  const seedByKey = new Map(seed.map((item) => [key(item), item]));
+  const seen = new Set(stored.map(key));
+  return [
+    ...stored.map((item) => ({ ...(seedByKey.get(key(item)) ?? {}), ...item }) as T),
+    ...seed.filter((item) => !seen.has(key(item))),
+  ];
+}
+
+const withRates = (v: Vehicle): Vehicle => ({ ...v, rates: { ...emptyRates(), ...(v.rates ?? {}) } });
+
+const seedOrder = (id: string) => {
+  const i = seedVehicles.findIndex((v) => v.id === id);
+  return i === -1 ? 99 : i;
+};
 
 export async function fetchAllBookings(): Promise<Booking[]> {
   try {
@@ -242,7 +273,7 @@ export async function fetchAdminRoutes(): Promise<Route[]> {
       const { adminDb } = await import('@/lib/firebaseAdmin');
       const snapshot = await adminDb.collection('routes').get();
       if (!snapshot.empty) {
-        return snapshot.docs.map((doc) => doc.data() as Route);
+        return mergeWithSeed(snapshot.docs.map((doc) => doc.data() as Route), seedRoutes, (r) => r.slug);
       }
     }
   } catch (error) {
@@ -282,13 +313,31 @@ export async function fetchAdminVehicles(): Promise<Vehicle[]> {
       const { adminDb } = await import('@/lib/firebaseAdmin');
       const snapshot = await adminDb.collection('vehicles').get();
       if (!snapshot.empty) {
-        return snapshot.docs.map((doc) => doc.data() as Vehicle);
+        return mergeWithSeed(snapshot.docs.map((doc) => doc.data() as Vehicle), seedVehicles, (v) => v.id)
+          .map(withRates)
+          .sort((a, b) => seedOrder(a.id) - seedOrder(b.id));
       }
     }
   } catch (error) {
     console.warn('[adminStore] Falling back to memory vehicles:', error);
   }
-  return memoryVehicles;
+  return memoryVehicles.map(withRates);
+}
+
+/**
+ * Update a car's admin-editable tariff (Admin → Pricing).
+ */
+export async function updateVehicleRatesInStore(vehicleId: string, rates: VehicleRates): Promise<void> {
+  const index = memoryVehicles.findIndex((v) => v.id === vehicleId);
+  if (index !== -1) {
+    memoryVehicles[index] = { ...memoryVehicles[index], rates };
+  }
+
+  if (hasFirestore()) {
+    const { adminDb } = await import('@/lib/firebaseAdmin');
+    // set+merge creates the doc for cars that only exist in the seed catalogue
+    await adminDb.collection('vehicles').doc(vehicleId).set({ id: vehicleId, rates }, { merge: true });
+  }
 }
 
 export async function toggleVehicleInStore(
@@ -306,7 +355,7 @@ export async function toggleVehicleInStore(
   try {
     if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
       const { adminDb } = await import('@/lib/firebaseAdmin');
-      await adminDb.collection('vehicles').doc(vehicleId).update({ confirmed });
+      await adminDb.collection('vehicles').doc(vehicleId).set({ id: vehicleId, confirmed }, { merge: true });
     }
   } catch (error) {
     console.warn('[adminStore] Could not toggle vehicle status:', error);

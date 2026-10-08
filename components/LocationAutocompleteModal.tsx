@@ -24,7 +24,6 @@ import {
   AlertCircle,
   RotateCcw,
   Loader2,
-  Check,
 } from 'lucide-react';
 import {
   LocationData,
@@ -140,13 +139,16 @@ export default function LocationAutocompleteModal({
     let finalLocation = { ...item };
 
     // Fetch coordinates if not present and placeId exists
-    if ((finalLocation.lat === null || finalLocation.lng === null) && item._placeId) {
-      const coords = await getPlaceCoordinates(item._placeId, sessionTokenRef.current);
-      if (coords) {
-        finalLocation.lat = coords.lat;
-        finalLocation.lng = coords.lng;
+    if (item._placeId) {
+      const details = await getPlaceCoordinates(item._placeId, sessionTokenRef.current);
+      if (details) {
+        finalLocation.lat = details.lat;
+        finalLocation.lng = details.lng;
+        // Full formatted address includes the pincode
+        if (details.address) finalLocation.address = details.address;
       }
     }
+    delete (finalLocation as { _placeId?: string })._placeId;
 
     // Save to localStorage (max 3)
     saveRecentLocation(finalLocation);
@@ -216,181 +218,166 @@ export default function LocationAutocompleteModal({
     );
   };
 
+  // Esc closes; body scroll locked while open (design.md §3.6 overlay behaviour)
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
+  const rowClass =
+    'flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-slate-50 active:bg-brand-50';
+
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex justify-center items-end md:items-center p-0 md:p-4 animate-in fade-in duration-150">
-      {/* Full-screen sheet on mobile (h-full w-full rounded-none), Centered Dialog on desktop */}
-      <div
-        className="w-full h-full md:h-auto md:max-h-[85vh] md:max-w-lg bg-white md:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200"
-        role="dialog"
-        aria-modal="true"
-      >
-        {/* Header with Title & Close (min 44px touch target) */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-brand-navy text-white">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-brand-orange" />
-            <h3 className="text-base font-bold tracking-tight text-white">{title}</h3>
+    <div className="ds-scope fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-labelledby="location-modal-title">
+      <div className="absolute inset-0 animate-fade-in bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+
+      <div className="pointer-events-none absolute inset-0 flex items-end justify-center p-3 sm:items-center">
+        <div className="pointer-events-auto flex max-h-[88dvh] w-full animate-drawer-in flex-col overflow-hidden rounded-4xl bg-white shadow-float-lg sm:w-[560px]">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 pb-4 pt-5">
+            <h3 id="location-modal-title" className="flex items-center gap-2.5 text-lg font-extrabold tracking-tight text-ink">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
+                <MapPin className="h-4 w-4" />
+              </span>
+              {title}
+            </h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-ink transition hover:bg-slate-200"
+              aria-label="Close location selector"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="min-h-[44px] min-w-[44px] -mr-2 flex items-center justify-center rounded-full text-gray-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all"
-            aria-label="Close location selector"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
 
-        {/* Search Input Bar */}
-        <div className="p-4 bg-gray-50 border-b border-gray-200">
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={handleInputChange}
-              placeholder={placeholder}
-              className="min-h-[48px] w-full pl-10 pr-10 py-3 text-sm sm:text-base rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 bg-white shadow-inner"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery('');
-                  setPredictions([]);
-                  setHasSearched(false);
-                  setSearchError(false);
-                  inputRef.current?.focus();
-                }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 min-h-[40px] min-w-[40px] flex items-center justify-center text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+          {/* Search input */}
+          <div className="px-5 pt-4">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                ref={inputRef}
+                type="text"
+                role="combobox"
+                aria-expanded={predictions.length > 0}
+                value={query}
+                onChange={handleInputChange}
+                placeholder={placeholder}
+                className="field pl-11 pr-11"
+              />
+              {query && (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  onClick={() => {
+                    setQuery('');
+                    setPredictions([]);
+                    setHasSearched(false);
+                    setSearchError(false);
+                    inputRef.current?.focus();
+                  }}
+                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Modal Body / Results / Recents */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* 1. "Use my current location" Action (min 44px height) */}
-          <button
-            type="button"
-            onClick={handleUseCurrentLocation}
-            disabled={isLocating}
-            className="min-h-[48px] w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-brand-orange/5 hover:bg-brand-orange/10 border border-brand-orange/20 text-brand-navy active:scale-[0.99] transition-all group"
-          >
-            {isLocating ? (
-              <Loader2 className="w-5 h-5 text-brand-orange animate-spin" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-brand-orange text-white flex items-center justify-center shrink-0 shadow-sm">
-                <Navigation className="w-4 h-4" />
-              </div>
-            )}
-            <div className="text-left flex-1">
-              <p className="text-sm font-bold text-brand-navy group-hover:text-brand-orange transition-colors">
-                {isLocating ? 'Detecting current location...' : 'Use my current location'}
-              </p>
-              <p className="text-xs text-gray-500">GPS location via device</p>
-            </div>
-          </button>
+          {/* Results */}
+          <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+            <button
+              type="button"
+              onClick={handleUseCurrentLocation}
+              disabled={isLocating}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-brand-100 bg-brand-50/70 px-3 py-2.5 text-left transition hover:border-brand-300 disabled:opacity-70"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
+                {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-ink group-hover:text-brand-700">
+                  {isLocating ? 'Detecting current location...' : 'Use my current location'}
+                </span>
+                <span className="block text-xs text-slate-500">GPS location via device</span>
+              </span>
+            </button>
 
-          {/* 2. Loading Spinner */}
-          {isLoading && (
-            <div className="py-8 flex flex-col items-center justify-center gap-2 text-gray-500">
-              <Loader2 className="w-6 h-6 animate-spin text-brand-orange" />
-              <span className="text-xs">Searching Bengaluru locations...</span>
-            </div>
-          )}
-
-          {/* 3. Error state: "We couldn't find that location" with Retry */}
-          {!isLoading && hasSearched && searchError && (
-            <div className="py-8 px-4 text-center space-y-3 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
-              <div className="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center mx-auto">
-                <AlertCircle className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-800">
-                  We couldn&apos;t find that location
+            {isLoading && (
+              <div className="space-y-2" aria-live="polite">
+                <p className="flex items-center gap-2 px-1 text-xs font-semibold text-slate-500">
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+                  Searching Bengaluru locations...
                 </p>
-                <p className="text-xs text-gray-500 mt-1 max-w-xs mx-auto">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="shimmer h-12 rounded-xl" />
+                ))}
+              </div>
+            )}
+
+            {!isLoading && hasSearched && searchError && (
+              <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-8 text-center">
+                <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                  <AlertCircle className="h-5 w-5" />
+                </span>
+                <p className="mt-3 text-sm font-bold text-ink">We couldn&apos;t find that location</p>
+                <p className="mx-auto mt-1 max-w-xs text-xs text-slate-500">
                   Try checking for spelling errors or search for a nearby major road, landmark, or area.
                 </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleRetry}
-                className="min-h-[44px] inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-navy text-white text-xs font-semibold hover:bg-brand-navy-light active:scale-95 transition-all shadow-sm"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Retry Search</span>
-              </button>
-            </div>
-          )}
-
-          {/* 4. Autocomplete Predictions List */}
-          {!isLoading && predictions.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-2">
-                Suggestions in India
-              </p>
-              {predictions.map((p, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleSelectLocation(p)}
-                  className="min-h-[48px] w-full flex items-start gap-3 p-3 rounded-xl hover:bg-gray-100 active:bg-gray-200 text-left transition-colors"
-                >
-                  <MapPin className="w-4 h-4 text-brand-orange shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-brand-navy truncate">
-                      {p.name}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {p.address}
-                    </p>
-                  </div>
+                <button type="button" onClick={handleRetry} className="btn-ghost mt-4 px-4 py-2.5">
+                  <RotateCcw className="h-3.5 w-3.5" /> Retry Search
                 </button>
-              ))}
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* 5. Recent Locations (3 items from localStorage) */}
-          {!query && recentLocations.length > 0 && (
-            <div className="space-y-1 pt-2">
-              <div className="flex items-center justify-between px-2">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>Recent Locations</span>
+            {!isLoading && predictions.length > 0 && (
+              <div role="listbox" aria-label="Suggestions">
+                <p className="px-1 pb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Suggestions (search by area, landmark or pincode)</p>
+                {predictions.map((p, idx) => (
+                  <button key={idx} type="button" role="option" aria-selected={false} onClick={() => handleSelectLocation(p)} className={rowClass}>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                      <MapPin className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-ink">{p.name}</span>
+                      <span className="block truncate text-xs text-slate-500">{p.address}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {!query && recentLocations.length > 0 && (
+              <div>
+                <p className="flex items-center gap-1.5 px-1 pb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                  <Clock className="h-3.5 w-3.5" /> Recent Locations
                 </p>
+                {recentLocations.map((loc, idx) => (
+                  <button key={idx} type="button" onClick={() => handleSelectLocation(loc)} className={rowClass}>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                      <Clock className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-ink">{loc.name}</span>
+                      <span className="block truncate text-xs text-slate-500">{loc.address}</span>
+                    </span>
+                  </button>
+                ))}
               </div>
+            )}
+          </div>
 
-              {recentLocations.map((loc, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleSelectLocation(loc)}
-                  className="min-h-[48px] w-full flex items-start gap-3 p-3 rounded-xl hover:bg-gray-100 active:bg-gray-200 text-left transition-colors border border-gray-100"
-                >
-                  <Clock className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-brand-navy truncate">
-                      {loc.name}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {loc.address}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Footer info note */}
-        <div className="p-3 bg-gray-50 border-t border-gray-100 text-center">
-          <p className="text-[10px] text-gray-400">
+          {/* Footer note */}
+          <p className="border-t border-slate-100 px-5 py-3 text-center text-[10px] text-slate-400">
             Biased to Bengaluru • Restricted to India • Google Places API
           </p>
         </div>

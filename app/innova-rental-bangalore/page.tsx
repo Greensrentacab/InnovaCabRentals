@@ -26,25 +26,6 @@ export default async function InnovaRentalBangalorePage() {
     notFound();
   }
 
-  const galleryPlaceholders = [
-    {
-      title: 'Toyota Innova Exterior Front & Profile',
-      caption: 'Sanitized classic Innova MPV in pristine silver/white finish',
-    },
-    {
-      title: 'Cabin Interior & Reclining Seats',
-      caption: 'Spacious 7/8 seater layout with dual air conditioning vents',
-    },
-    {
-      title: 'Rear Boot & Luggage Space',
-      caption: 'Generous luggage storage with foldable third-row seating',
-    },
-    {
-      title: 'Cockpit & Safety Controls',
-      caption: 'GPS-enabled fleet vehicle with emergency first-aid kit',
-    },
-  ];
-
   const idealFor = [
     'Family Holiday Trips (Mysore, Coorg, Ooty)',
     'Kempegowda Airport (BLR) Pickup & Drop',
@@ -69,7 +50,6 @@ export default async function InnovaRentalBangalorePage() {
       tagline="Comfortable Cars. Experienced Drivers. Reliable Journeys."
       overview="The classic Toyota Innova remains India's most beloved multi-purpose vehicle for good reason. Renowned for its bulletproof reliability, plush shock absorption, and spacious 7 and 8 passenger seating, it is the number one choice for family holidays and outstation highway travel across Karnataka, Tamil Nadu, and Kerala."
       idealFor={idealFor}
-      galleryPlaceholders={galleryPlaceholders}
       detailedSpecs={detailedSpecs}
     />
   );

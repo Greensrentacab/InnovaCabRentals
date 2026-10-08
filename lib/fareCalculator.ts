@@ -1,21 +1,25 @@
 /**
  * Server-Side Fare Calculator
- * 
- * Sourced from PROJECT_CONTEXT.md.
- * 
- * CORE RULES:
- * 1. If route has a fixed fare, use it.
- * 2. Else if a per-km rate exists in the Firestore 'pricing' doc:
- *    - Use max(minimumFare, roadDistance * perKmRate) with a 1.3 road factor.
- *    - For round trips: 2x distance plus driver allowance.
- * 3. If no pricing is configured (or values are null):
- *    - Return null so the UI shows "Price on request".
- *    - Never invent prices!
- * 4. Always recalculate on the server when a booking is created and never trust a browser-sent fare.
+ *
+ * Prices come from each car's admin-editable tariff (Vehicle.rates):
+ *  - Outstation (round trip only): billable km = max(actual round-trip km,
+ *    min km/day × trip days) × per-km rate + driver allowance × days.
+ *    Actual km = pickup → stops → destination → pickup (route distance or
+ *    straight-line × 1.3 road factor).
+ *  - Airport: fixed fare each way (Round = 2 legs).
+ *  - Local: 8 / 12 hour package price; custom durations on request.
+ * Any missing rate → fare null ("Price on request"). Never invent prices.
+ * Tolls, parking and state permits are always paid by the customer.
+ * Always recalculated on the server — never trust a browser-sent fare.
  */
 
-import { ServiceType, TripType, Vehicle, Route, Pricing } from '@/lib/types';
+import { ServiceType, TripType, Vehicle, Route, VehicleRates } from '@/lib/types';
 import { getRoutes, getVehicles } from '@/lib/dataService';
+
+export interface FarePoint {
+  lat?: number | null;
+  lng?: number | null;
+}
 
 export interface FareCalculationInput {
   serviceType: ServiceType;
@@ -26,6 +30,10 @@ export interface FareCalculationInput {
   pickupLng?: number | null;
   dropLat?: number | null;
   dropLng?: number | null;
+  stops?: FarePoint[];
+  pickupDate?: string | null;
+  returnDate?: string | null;
+  packageHours?: number | null;
   vehicleId?: string; // Optional: single vehicle or all
 }
 
@@ -38,211 +46,187 @@ export interface VehicleFareResult {
   features?: string[];
   fare: number | null; // null = "Price on request"
   isFixed: boolean;
-  breakdown?: {
-    distanceKm: number;
-    effectiveDistanceKm: number;
-    perKmRate: number | null;
-    minimumFare: number | null;
-    driverAllowance: number | null;
-    tripType: TripType;
-  };
+  /** Human-readable fare lines, e.g. "600 km × ₹16/km" */
+  breakdown: string[];
+  /** Car- and service-specific terms & conditions */
+  terms: string[];
 }
 
 export interface FareCalculationResponse {
   success: boolean;
   distanceKm: number | null;
+  /** Round-trip / billable km for outstation */
+  totalKm: number | null;
+  days: number;
   tripType: TripType;
   serviceType: ServiceType;
-  route?: {
-    name: string;
-    slug: string;
-  } | null;
-  fares: {
-    [vehicleId: string]: number | null;
-  };
+  route?: { name: string; slug: string } | null;
+  fares: { [vehicleId: string]: number | null };
   results: VehicleFareResult[];
   notice: string;
 }
 
+const ROAD_FACTOR = 1.3;
+const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
+const isNum = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0;
+
 /**
  * Calculates straight-line distance in kilometres between two coordinates
  */
-export function calculateHaversineKm(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
+export function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in kilometers
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
 
-/**
- * Fetches pricing document from Firestore 'pricing' collection
- */
-async function getPricingFromFirestore(
-  serviceType: ServiceType,
-  vehicleId: string
-): Promise<Pricing | null> {
-  try {
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
-      const { adminDb } = await import('@/lib/firebaseAdmin');
-      const docId = `${serviceType}_${vehicleId}`;
-      const doc = await adminDb.collection('pricing').doc(docId).get();
-      if (doc.exists) {
-        return doc.data() as Pricing;
-      }
-    }
-  } catch (err) {
-    console.warn('[fareCalculator] Could not read pricing document from Firestore:', err);
-  }
-  return null;
+const hasCoords = (p: FarePoint) => p.lat != null && p.lng != null;
+const roadKm = (a: FarePoint, b: FarePoint) => calculateHaversineKm(a.lat!, a.lng!, b.lat!, b.lng!) * ROAD_FACTOR;
+
+/** Calendar days covered by a trip (inclusive), minimum 1. */
+export function tripDays(pickupDate?: string | null, returnDate?: string | null): number {
+  if (!pickupDate || !returnDate) return 1;
+  const [y1, m1, d1] = pickupDate.split('-').map(Number);
+  const [y2, m2, d2] = returnDate.split('-').map(Number);
+  const diff = Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
+  return Number.isFinite(diff) && diff >= 0 ? diff + 1 : 1;
+}
+
+const COMMON_TERMS = [
+  'Tolls, parking, state permits and entry taxes are paid by the customer.',
+  'Fare is an estimate; final fare is confirmed by our dispatch team before the trip.',
+  'No advance payment. Pay after the trip.',
+  'Free cancellation or rescheduling up to 4 hours before pickup.',
+];
+
+function outstationQuote(rates: VehicleRates, totalKm: number | null, days: number) {
+  const minKm = rates.outstationMinKmPerDay * days;
+  const terms = [
+    `Round trip only. Minimum ${rates.outstationMinKmPerDay} km billed per day (${minKm} km for ${days} day${days > 1 ? 's' : ''}).`,
+    isNum(rates.outstationPerKm)
+      ? `Extra km beyond the estimate billed at ${inr(rates.outstationPerKm)}/km.`
+      : 'Per-km rate shared on request.',
+    isNum(rates.driverAllowancePerDay)
+      ? `Driver allowance ${inr(rates.driverAllowancePerDay)}/day included.`
+      : 'Driver allowance per day extra, shared on confirmation.',
+    'Night driving allowance applies between 10:00 PM and 6:00 AM.',
+    ...COMMON_TERMS,
+  ];
+
+  if (!isNum(rates.outstationPerKm)) return { fare: null, breakdown: [], terms };
+
+  const billableKm = Math.max(totalKm ?? 0, minKm);
+  const kmFare = billableKm * rates.outstationPerKm;
+  const allowance = isNum(rates.driverAllowancePerDay) ? rates.driverAllowancePerDay * days : 0;
+  const breakdown = [
+    `${Math.round(billableKm)} km × ${inr(rates.outstationPerKm)}/km = ${inr(kmFare)}`,
+    ...(allowance ? [`Driver allowance ${days} day${days > 1 ? 's' : ''} × ${inr(rates.driverAllowancePerDay!)} = ${inr(allowance)}`] : []),
+  ];
+  return { fare: Math.round(kmFare + allowance), breakdown, terms };
+}
+
+function airportQuote(rates: VehicleRates, legs: number) {
+  const terms = [
+    legs > 1 ? 'Fixed fare per leg; round trip = 2 legs.' : 'Fixed airport fare, one way.',
+    'Airport parking and toll charges are paid by the customer.',
+    ...COMMON_TERMS.slice(1),
+  ];
+  if (!isNum(rates.airportFare)) return { fare: null, breakdown: [], terms };
+  return {
+    fare: Math.round(rates.airportFare * legs),
+    breakdown: [`${legs} leg${legs > 1 ? 's' : ''} × ${inr(rates.airportFare)}`],
+    terms,
+  };
+}
+
+function localQuote(rates: VehicleRates, hours: number) {
+  // Only 8 hr / 80 km and 12 hr / 120 km packages have list prices;
+  // any other duration (custom) is quoted on request.
+  const pkg = hours === 8 ? rates.local8h : hours === 12 ? rates.local12h : null;
+  const isCustom = hours !== 8 && hours !== 12;
+  const km = hours * 10;
+  const terms = [
+    isCustom
+      ? 'Custom duration — our dispatch team shares the fare on request.'
+      : `Package includes ${hours} hours / ${km} km from pickup.`,
+    isNum(rates.extraKmRate) ? `Extra km at ${inr(rates.extraKmRate)}/km.` : 'Extra km charged at actuals, shared on request.',
+    isNum(rates.extraHourRate) ? `Extra hour at ${inr(rates.extraHourRate)}/hr.` : 'Extra hours charged at actuals, shared on request.',
+    ...COMMON_TERMS,
+  ];
+  if (!isNum(pkg)) return { fare: null, breakdown: [], terms };
+  return { fare: Math.round(pkg), breakdown: [`${hours} hr / ${km} km package = ${inr(pkg)}`], terms };
 }
 
 /**
  * Master Server-Side Calculation Function
- * Must be used both by /api/fare and server-side booking creation.
+ * Used by both /api/fare and server-side booking creation.
  */
-export async function calculateServerFare(
-  input: FareCalculationInput
-): Promise<FareCalculationResponse> {
-  const allRoutes = await getRoutes();
-  const allVehicles = await getVehicles();
+export async function calculateServerFare(input: FareCalculationInput): Promise<FareCalculationResponse> {
+  const [allRoutes, allVehicles] = await Promise.all([getRoutes(), getVehicles()]);
 
-  // Filter out unconfirmed vehicles per client rule
+  // Confirmed cars only (Hycross stays hidden until confirmed)
   const confirmedVehicles = allVehicles.filter((v) => v.confirmed !== false);
-
-  // 1. Resolve Route & Distance
-  let matchedRoute: Route | null = null;
-  let resolvedDistanceKm: number | null = null;
-
-  if (input.routeSlug) {
-    matchedRoute = allRoutes.find((r) => r.slug === input.routeSlug) || null;
-    if (matchedRoute) {
-      resolvedDistanceKm = matchedRoute.distanceKm;
-    }
-  }
-
-  // If no route distance, use provided distance or calculate from coordinates
-  if (resolvedDistanceKm === null || resolvedDistanceKm <= 0) {
-    if (input.distanceKm && input.distanceKm > 0) {
-      resolvedDistanceKm = input.distanceKm;
-    } else if (
-      input.pickupLat != null &&
-      input.pickupLng != null &&
-      input.dropLat != null &&
-      input.dropLng != null
-    ) {
-      const straightLineKm = calculateHaversineKm(
-        input.pickupLat,
-        input.pickupLng,
-        input.dropLat,
-        input.dropLng
-      );
-      // 1.3 ROAD FACTOR APPLIED
-      resolvedDistanceKm = Math.round(straightLineKm * 1.3);
-    }
-  }
-
-  const results: VehicleFareResult[] = [];
-  const faresMap: { [vehicleId: string]: number | null } = {};
-
-  const vehiclesToCalculate = input.vehicleId
+  const vehiclesToCalculate: Vehicle[] = input.vehicleId
     ? confirmedVehicles.filter((v) => v.id === input.vehicleId)
     : confirmedVehicles;
 
-  for (const vehicle of vehiclesToCalculate) {
-    let finalFare: number | null = null;
-    let isFixed = false;
-    let breakdown: VehicleFareResult['breakdown'] = undefined;
+  const matchedRoute: Route | null = input.routeSlug ? allRoutes.find((r) => r.slug === input.routeSlug) || null : null;
+  const pickup: FarePoint = { lat: input.pickupLat, lng: input.pickupLng };
+  const drop: FarePoint = { lat: input.dropLat, lng: input.dropLng };
+  const stops = (input.stops ?? []).slice(0, 3);
+  const days = input.serviceType === 'outstation' ? tripDays(input.pickupDate, input.returnDate) : 1;
 
-    // RULE 1: If route has a fixed fare, use it
-    if (
-      matchedRoute &&
-      matchedRoute.fares &&
-      matchedRoute.fares[vehicle.id] !== null &&
-      matchedRoute.fares[vehicle.id] !== undefined
-    ) {
-      const baseFixed = matchedRoute.fares[vehicle.id]!;
-      isFixed = true;
-      if (input.tripType === 'round') {
-        finalFare = Math.round(baseFixed * 1.9); // Round trip package pricing if fixed
-      } else {
-        finalFare = baseFixed;
-      }
-    } else {
-      // RULE 2: Check if per-km rate exists in Firestore 'pricing' doc
-      const pricing = await getPricingFromFirestore(input.serviceType, vehicle.id);
+  // One-way distance (pickup → stops → destination)
+  let oneWayKm: number | null = null;
+  let totalKm: number | null = null;
+  const path = [pickup, ...stops, drop];
+  if (path.every(hasCoords)) {
+    oneWayKm = path.slice(1).reduce((sum, p, i) => sum + roadKm(path[i], p), 0);
+    totalKm = oneWayKm + roadKm(drop, pickup);
+  } else if (matchedRoute?.distanceKm) {
+    oneWayKm = matchedRoute.distanceKm;
+    totalKm = matchedRoute.distanceKm * 2;
+  } else if (isNum(input.distanceKm)) {
+    oneWayKm = input.distanceKm;
+    totalKm = input.distanceKm * 2;
+  }
 
-      if (
-        pricing &&
-        pricing.perKmPrice !== null &&
-        pricing.perKmPrice !== undefined &&
-        resolvedDistanceKm !== null &&
-        resolvedDistanceKm > 0
-      ) {
-        const perKmRate = pricing.perKmPrice;
-        const roadDistance = resolvedDistanceKm;
-        
-        // For round trips: 2x distance plus driver allowance
-        const effectiveDistanceKm = input.tripType === 'round' ? roadDistance * 2 : roadDistance;
-        const rawDistanceFare = effectiveDistanceKm * perKmRate;
-        const minFare = pricing.minimumFare ?? pricing.basePrice ?? 0;
-        const baseComputedFare = Math.max(minFare, rawDistanceFare);
+  const results: VehicleFareResult[] = vehiclesToCalculate.map((vehicle) => {
+    const rates = vehicle.rates!;
+    const quote =
+      input.serviceType === 'airport'
+        ? airportQuote(rates, input.tripType === 'round' ? 2 : 1)
+        : input.serviceType === 'local'
+          ? localQuote(rates, input.packageHours ?? 8)
+          : outstationQuote(rates, totalKm, days);
 
-        const allowance = input.tripType === 'round' ? (pricing.driverAllowance ?? 0) : 0;
-        finalFare = Math.round(baseComputedFare + allowance);
-
-        breakdown = {
-          distanceKm: roadDistance,
-          effectiveDistanceKm,
-          perKmRate,
-          minimumFare: minFare,
-          driverAllowance: allowance,
-          tripType: input.tripType,
-        };
-      } else {
-        // RULE 3: If no pricing is configured, return null (shows "Price on request")
-        finalFare = null;
-      }
-    }
-
-    results.push({
+    return {
       vehicleId: vehicle.id,
       vehicleName: vehicle.name,
       vehicleType: vehicle.type,
       seats: vehicle.seats,
       luggage: vehicle.luggage,
       features: vehicle.features,
-      fare: finalFare,
-      isFixed,
-      breakdown,
-    });
-
-    faresMap[vehicle.id] = finalFare;
-  }
+      fare: quote.fare,
+      isFixed: input.serviceType !== 'outstation',
+      breakdown: quote.breakdown,
+      terms: quote.terms,
+    };
+  });
 
   return {
     success: true,
-    distanceKm: resolvedDistanceKm,
+    distanceKm: oneWayKm !== null ? Math.round(oneWayKm) : null,
+    totalKm: input.serviceType === 'outstation' && totalKm !== null ? Math.round(totalKm) : null,
+    days,
     tripType: input.tripType,
     serviceType: input.serviceType,
-    route: matchedRoute
-      ? {
-          name: matchedRoute.name,
-          slug: matchedRoute.slug,
-        }
-      : null,
-    fares: faresMap,
+    route: matchedRoute ? { name: matchedRoute.name, slug: matchedRoute.slug } : null,
+    fares: Object.fromEntries(results.map((r) => [r.vehicleId, r.fare])),
     results,
     notice: 'Fares recalculated on server. Null fares indicate Price on request per client policy.',
   };

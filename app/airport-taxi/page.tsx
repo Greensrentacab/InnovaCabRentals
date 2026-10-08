@@ -1,17 +1,18 @@
 import { Plane, Clock, ShieldCheck, Luggage, Navigation } from 'lucide-react';
 import LandingTemplate from '@/components/LandingTemplate';
-import { getVehicles, getRoutes } from '@/lib/dataService';
+import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
   title: `Innova Airport Taxi Bangalore | BLR Airport Pickup & Drop | ${siteConfig.brand.name}`,
   description:
-    'Book Toyota Innova & Innova Crysta airport taxi in Bangalore. Reliable 24/7 Kempegowda International Airport pickup and drop with zero surge charges and flight tracking.',
+    'Book Toyota Innova, Innova Crysta & Ertiga airport taxi in Bangalore. Reliable 24/7 Kempegowda International Airport pickup and drop with zero surge charges and flight tracking.',
 };
 
 export default async function AirportTaxiPage() {
   const vehicles = await getVehicles();
   const allRoutes = await getRoutes();
+  const localPackages = await getLocalPackages();
   const airportRoutes = allRoutes.filter(
     (r) => r.slug.includes('airport') || r.destination.toLowerCase().includes('airport')
   );
@@ -50,7 +51,7 @@ export default async function AirportTaxiPage() {
     },
     {
       q: 'Are airport highway toll charges included in the fare?',
-      a: 'Airport trumpet toll fees and state highway taxes are transparently shared and billed at actuals, or can be bundled into a single package price on request.',
+      a: 'No. Airport trumpet toll fees and airport parking charges are paid by the customer at actuals.',
     },
     {
       q: 'Can I book an airport drop at 2:00 AM or 3:00 AM?',
@@ -60,17 +61,20 @@ export default async function AirportTaxiPage() {
 
   return (
     <LandingTemplate
+      breadcrumb="Airport Taxi"
       badge="Kempegowda International Airport (BLR)"
       title="Innova Airport Taxi Bangalore"
-      subtitle="Chauffeur-driven Toyota Innova, Crysta, and Hycross airport transfers with flight tracking, verified drivers, and guaranteed zero surge pricing."
-      heroNotice="24/7 Flight Tracking &amp; Guaranteed On-Time Airport Pickup"
+      subtitle="Chauffeur-driven Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga airport transfers with flight tracking, verified drivers, and guaranteed zero surge pricing."
+      heroNotice="24/7 Flight Tracking & Guaranteed On-Time Airport Pickup"
       benefitsTitle="Why Choose Our Innova Airport Cabs"
       benefitsSubtitle="Enjoy a stress-free transition from baggage claim to your doorstep."
       benefits={benefits}
       routesTitle="Popular Airport Transfer Routes"
       routesSubtitle="Seamless airport connectivity to all prime Bangalore technology corridors."
       routes={airportRoutes.length > 0 ? airportRoutes : allRoutes.slice(0, 4)}
+      allRoutes={allRoutes}
       vehicles={vehicles}
+      localPackages={localPackages}
       faqs={faqs}
       showLocalAreas={true}
       localAreasTitle="Kempegowda Airport Taxi Coverage Across Bangalore Localities"

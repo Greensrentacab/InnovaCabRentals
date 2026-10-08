@@ -56,12 +56,12 @@ export const siteConfig = {
     {
       id: 'local',
       name: 'Local City Rental',
-      description: 'Chauffeur-driven Innova rentals for half-day or full-day city travel.',
+      description: 'Chauffeur-driven 8 hour and 12 hour city rentals, with custom durations on request.',
     },
     {
       id: 'outstation',
       name: 'Outstation Trips',
-      description: 'One-way drops and round-trip rentals for intercity journeys with zero stress.',
+      description: 'Round-trip outstation rentals for intercity journeys, with up to 3 stops on the way.',
     },
     {
       id: 'tour-packages',

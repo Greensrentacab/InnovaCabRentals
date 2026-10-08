@@ -57,6 +57,20 @@ const createBookingSchema = z.object({
   vehicleName: z.string().min(1, 'Vehicle name is required'),
   routeSlug: z.string().optional(),
   distanceKm: z.number().nullable().optional(),
+  returnDate: z.string().nullable().optional(),
+  stops: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        address: z.string().optional().default(''),
+        lat: z.number().nullable().optional(),
+        lng: z.number().nullable().optional(),
+      })
+    )
+    .max(3)
+    .optional()
+    .default([]),
+  packageHours: z.number().nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 
@@ -124,6 +138,10 @@ export async function POST(req: NextRequest) {
       pickupLng: data.pickupLng,
       dropLat: data.dropLat,
       dropLng: data.dropLng,
+      stops: data.stops,
+      pickupDate: data.pickupDate,
+      returnDate: data.returnDate,
+      packageHours: data.packageHours,
       vehicleId: data.vehicleId,
     });
 
@@ -145,10 +163,14 @@ export async function POST(req: NextRequest) {
       dropAddress: data.dropAddress || data.dropName,
       dropLat: data.dropLat ?? null,
       dropLng: data.dropLng ?? null,
-      tripType: data.tripType as TripType,
+      // Outstation is round trip only
+      tripType: (data.serviceType === 'outstation' ? 'round' : data.tripType) as TripType,
       serviceType: data.serviceType as ServiceType,
       pickupDate: data.pickupDate,
       pickupTime: data.pickupTime,
+      returnDate: data.serviceType === 'outstation' ? data.returnDate ?? null : null,
+      stops: data.stops.map((s) => (s.address && s.address !== s.name ? `${s.name}, ${s.address}` : s.name)),
+      packageHours: data.serviceType === 'local' ? data.packageHours ?? null : null,
       vehicleId: data.vehicleId,
       vehicleName: data.vehicleName,
       fare: serverFare,

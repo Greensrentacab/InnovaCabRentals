@@ -14,11 +14,13 @@
  */
 
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import {
   Booking,
   BookingStatus,
   Route,
   Vehicle,
+  VehicleRates,
   Enquiry,
 } from '@/lib/types';
 import {
@@ -30,8 +32,10 @@ import {
   updateRouteFaresInStore,
   fetchAdminVehicles,
   toggleVehicleInStore,
+  updateVehicleRatesInStore,
 } from '@/lib/adminStore';
 import { siteConfig } from '@/lib/siteConfig';
+import { formatTime12 } from '@/lib/time';
 
 const ADMIN_COOKIE_NAME = 'innova_admin_session';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'innova2026';
@@ -160,7 +164,7 @@ export async function assignDriverToBooking(
     const customerWaNumber = cleanCustomerPhone.length === 10 ? `91${cleanCustomerPhone}` : cleanCustomerPhone;
 
     const message = encodeURIComponent(
-      `Hello ${updated.customerName},\n\nYour Chauffeur has been assigned for Innova Booking #${updated.bookingId}:\n• Vehicle: ${updated.vehicleName} (${updated.vehicleRegistration})\n• Chauffeur Name: ${updated.driverName}\n• Chauffeur Mobile: ${updated.driverPhone}\n• Pickup Date & Time: ${updated.pickupDate} at ${updated.pickupTime}\n• Route: ${updated.pickupName} ➔ ${updated.dropName}\n\nOur chauffeur will report 15 minutes before the pickup time. Have a pleasant journey with ${siteConfig.brand.name}!`
+      `Hello ${updated.customerName},\n\nYour Chauffeur has been assigned for Innova Booking #${updated.bookingId}:\n• Vehicle: ${updated.vehicleName} (${updated.vehicleRegistration})\n• Chauffeur Name: ${updated.driverName}\n• Chauffeur Mobile: ${updated.driverPhone}\n• Pickup Date & Time: ${updated.pickupDate} at ${formatTime12(updated.pickupTime)}\n• Route: ${updated.pickupName} ➔ ${updated.dropName}\n\nOur chauffeur will report 15 minutes before the pickup time. Have a pleasant journey with ${siteConfig.brand.name}!`
     );
 
     const driverWhatsAppUrl = `https://wa.me/${customerWaNumber}?text=${message}`;
@@ -198,6 +202,7 @@ export async function toggleVehicleActive(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await toggleVehicleInStore(vehicleId, confirmed);
+    revalidatePath('/', 'layout');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to toggle vehicle status' };
@@ -216,5 +221,48 @@ export async function updateEnquiryStatus(
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to update enquiry status' };
+  }
+}
+
+const RATE_KEYS: (keyof VehicleRates)[] = [
+  'outstationPerKm',
+  'outstationMinKmPerDay',
+  'driverAllowancePerDay',
+  'airportFare',
+  'local8h',
+  'local12h',
+  'extraKmRate',
+  'extraHourRate',
+];
+
+/**
+ * Update a car's tariff (Admin → Pricing). Every storefront page reads these
+ * rates, so the whole site is revalidated after a change.
+ */
+export async function updateVehicleRates(
+  vehicleId: string,
+  rates: VehicleRates
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!(await verifyAdminSession())) {
+      return { success: false, error: 'Your admin session has expired. Please sign in again.' };
+    }
+
+    const clean = {} as VehicleRates;
+    for (const key of RATE_KEYS) {
+      const raw = rates[key];
+      const num = raw === null || raw === undefined || (raw as unknown) === '' ? null : Number(raw);
+      if (num !== null && (!Number.isFinite(num) || num < 0)) {
+        return { success: false, error: `Invalid value for ${key}` };
+      }
+      (clean as unknown as Record<string, number | null>)[key] = num;
+    }
+    clean.outstationMinKmPerDay = clean.outstationMinKmPerDay && clean.outstationMinKmPerDay > 0 ? clean.outstationMinKmPerDay : 300;
+
+    await updateVehicleRatesInStore(vehicleId, clean);
+    revalidatePath('/', 'layout');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to update car prices' };
   }
 }

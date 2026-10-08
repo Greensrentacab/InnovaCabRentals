@@ -19,7 +19,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { doc, onSnapshot, Firestore } from 'firebase/firestore';
 import {
-  CheckCircle2,
+
   Clock,
   MapPin,
   Calendar,
@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { siteConfig } from '@/lib/siteConfig';
 import { BookingStatus } from '@/lib/types';
+import { formatTime12 } from '@/lib/time';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -119,57 +120,23 @@ function getStatusIndex(status: BookingStatus): number {
 /*  Status Badge Colors                                                       */
 /* -------------------------------------------------------------------------- */
 
-function getStatusColor(status: BookingStatus) {
+// design.md §1.1 "Status chips (booking pipeline)"
+function getStatusChip(status: BookingStatus) {
   switch (status) {
     case 'PENDING':
-      return {
-        bg: 'bg-amber-50',
-        border: 'border-amber-200',
-        text: 'text-amber-700',
-        dot: 'bg-amber-500',
-      };
+      return { chip: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' };
     case 'CONFIRMED':
-      return {
-        bg: 'bg-blue-50',
-        border: 'border-blue-200',
-        text: 'text-blue-700',
-        dot: 'bg-blue-500',
-      };
+      return { chip: 'bg-brand-100 text-brand-800', dot: 'bg-brand-600' };
     case 'DRIVER_ASSIGNED':
-      return {
-        bg: 'bg-indigo-50',
-        border: 'border-indigo-200',
-        text: 'text-indigo-700',
-        dot: 'bg-indigo-500',
-      };
+      return { chip: 'bg-indigo-100 text-indigo-800', dot: 'bg-indigo-600' };
     case 'TRIP_STARTED':
-      return {
-        bg: 'bg-emerald-50',
-        border: 'border-emerald-200',
-        text: 'text-emerald-700',
-        dot: 'bg-emerald-500',
-      };
+      return { chip: 'bg-sky-100 text-sky-800', dot: 'bg-sky-800' };
     case 'COMPLETED':
-      return {
-        bg: 'bg-green-50',
-        border: 'border-green-200',
-        text: 'text-green-700',
-        dot: 'bg-green-500',
-      };
+      return { chip: 'bg-live-500/15 text-live-600', dot: 'bg-live-500' };
     case 'CANCELLED':
-      return {
-        bg: 'bg-red-50',
-        border: 'border-red-200',
-        text: 'text-red-700',
-        dot: 'bg-red-500',
-      };
+      return { chip: 'bg-rose-100 text-rose-700', dot: 'bg-rose-500' };
     default:
-      return {
-        bg: 'bg-gray-50',
-        border: 'border-gray-200',
-        text: 'text-gray-700',
-        dot: 'bg-gray-500',
-      };
+      return { chip: 'bg-slate-100 text-slate-700', dot: 'bg-slate-500' };
   }
 }
 
@@ -291,7 +258,7 @@ export default function BookingTrackingPage({
   }, [bookingId]);
 
   // ----- Derived values -----
-  const statusColor = booking ? getStatusColor(booking.bookingStatus) : null;
+  const statusChip = booking ? getStatusChip(booking.bookingStatus) : null;
   const currentStepIndex = booking ? getStatusIndex(booking.bookingStatus) : 0;
   const fareText =
     booking?.fare != null ? `₹${booking.fare.toLocaleString('en-IN')}` : 'Price on request';
@@ -308,19 +275,32 @@ export default function BookingTrackingPage({
   // WhatsApp message prefill
   const waMessage = booking
     ? encodeURIComponent(
-        `Hello ${siteConfig.brand.name},\n\nI'd like an update on booking #${bookingId}:\n• Route: ${booking.pickupName} ➔ ${booking.dropName}\n• Date: ${booking.pickupDate} at ${booking.pickupTime}\n• Vehicle: ${booking.vehicleName}\n\nPlease share the latest status. Thank you!`
+        `Hello ${siteConfig.brand.name},\n\nI'd like an update on booking #${bookingId}:\n• Route: ${booking.pickupName} ➔ ${booking.dropName}\n• Date: ${booking.pickupDate} at ${formatTime12(booking.pickupTime)}\n• Vehicle: ${booking.vehicleName}\n\nPlease share the latest status. Thank you!`
       )
     : '';
   const whatsAppUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${waMessage}`;
+
+  const pageShell = (children: React.ReactNode) => (
+    <div className="relative bg-porcelain pb-20 pt-28 sm:pt-32">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[480px] overflow-hidden" aria-hidden="true">
+        <div className="absolute inset-0 bg-grid-slate [background-size:44px_44px] [mask-image:radial-gradient(ellipse_at_top,#000_30%,transparent_70%)]" />
+        <div className="absolute -top-40 left-1/2 h-[480px] w-[860px] -translate-x-1/2 rounded-full bg-brand-400/20 blur-[120px]" />
+      </div>
+      <div className="relative mx-auto w-full max-w-3xl space-y-5 px-4 sm:px-6">{children}</div>
+    </div>
+  );
 
   /* ===================================================================== */
   /*  LOADING STATE                                                        */
   /* ===================================================================== */
   if (loading) {
-    return (
-      <div className="min-h-screen bg-brand-offwhite flex flex-col items-center justify-center gap-4 px-4">
-        <div className="w-14 h-14 border-4 border-brand-orange border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-bold text-brand-navy">
+    return pageShell(
+      <div className="card-float flex flex-col items-center gap-4 p-10">
+        <div className="shimmer h-24 w-3/5 rounded-[40%]" />
+        <div className="shimmer h-3 w-2/3 rounded-full" />
+        <div className="shimmer h-3 w-1/2 rounded-full" />
+        <p className="flex items-center gap-2 text-xs font-bold text-slate-500">
+          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
           Loading booking #{bookingId}...
         </p>
       </div>
@@ -331,55 +311,34 @@ export default function BookingTrackingPage({
   /*  NOT FOUND STATE                                                      */
   /* ===================================================================== */
   if (notFound || !booking) {
-    return (
-      <div className="min-h-screen bg-brand-offwhite flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-gray-100 p-8 sm:p-10 text-center space-y-5">
-          {/* Icon */}
-          <div className="w-20 h-20 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mx-auto">
-            <Search className="w-10 h-10" />
-          </div>
-
-          <div className="space-y-2">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-brand-navy">
-              Booking Not Found
-            </h1>
-            <p className="text-sm text-gray-500 max-w-sm mx-auto">
-              We couldn&apos;t locate a booking with ID{' '}
-              <strong className="text-brand-navy font-mono">{bookingId}</strong>.
-              Please double-check the reference number from your confirmation message.
-            </p>
-          </div>
-
-          {/* Helpful actions */}
-          <div className="space-y-3 pt-2">
-            <a
-              href={`${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
-                `Hello, I'm trying to track my booking but it shows not found. My booking reference is: ${bookingId}. Can you help?`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="min-h-[48px] w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span>Chat on WhatsApp</span>
-            </a>
-
-            <a
-              href={siteConfig.contact.phone.tel}
-              className="min-h-[48px] w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-brand-navy hover:bg-brand-navy/90 text-white font-bold text-sm shadow-md active:scale-95 transition-all"
-            >
-              <Phone className="w-4 h-4 text-brand-orange" />
-              <span>Call Dispatch: +91 {siteConfig.contact.phone.raw}</span>
-            </a>
-
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-orange hover:underline pt-1"
-            >
-              <span>Back to Homepage</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+    return pageShell(
+      <div className="card-float mx-auto max-w-md animate-fade-up p-8 text-center shadow-float-lg sm:p-10">
+        <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+          <Search className="h-8 w-8" />
+        </span>
+        <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Booking Not Found</h1>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-slate-600">
+          We couldn&apos;t locate a booking with ID <strong className="font-mono text-ink">{bookingId}</strong>. Please
+          double-check the reference number from your confirmation message.
+        </p>
+        <div className="mt-6 grid gap-2">
+          <a
+            href={`${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
+              `Hello, I'm trying to track my booking but it shows not found. My booking reference is: ${bookingId}. Can you help?`
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-whatsapp"
+          >
+            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+          </a>
+          <a href={siteConfig.contact.phone.tel} className="btn-primary">
+            <Phone className="h-4 w-4" /> Call Dispatch: +91 {siteConfig.contact.phone.raw}
+          </a>
+          <Link href="/" className="group mt-2 inline-flex items-center justify-center gap-1.5 text-sm font-bold text-brand-700">
+            Back to Homepage
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
         </div>
       </div>
     );
@@ -388,400 +347,257 @@ export default function BookingTrackingPage({
   /* ===================================================================== */
   /*  MAIN TRACKING VIEW                                                   */
   /* ===================================================================== */
-  return (
-    <div className="min-h-screen bg-brand-offwhite py-8 sm:py-12 px-4 sm:px-6 lg:px-8 text-brand-navy">
-      <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8">
-        {/* ================================================================ */}
-        {/* 1. HEADER CARD — Booking ID + Status Badge                       */}
-        {/* ================================================================ */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 space-y-5">
-          {/* Live indicator */}
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-[10px] uppercase font-bold tracking-wider text-brand-orange">
-                Innova Cabs Bangalore
-              </span>
-              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-brand-navy">
-                Track Your Booking
-              </h1>
-            </div>
-
-            {isLive && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live
-              </span>
-            )}
+  return pageShell(
+    <>
+      {/* 1. Header — booking ID + status chip */}
+      <div className="card-float animate-fade-up p-6 shadow-float-lg sm:p-8">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-brand-700">{siteConfig.brand.name}</p>
+            <h1 className="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl">Track Your Booking</h1>
           </div>
-
-          {/* Booking ID ribbon */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-brand-navy text-white shadow-md">
-              <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">
-                Booking ID:
+          {isLive && (
+            <span className="chip-live shrink-0">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-live-500" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-live-500" />
               </span>
-              <strong className="text-lg font-mono text-brand-orange tracking-wider font-extrabold">
-                {bookingId}
-              </strong>
-              <button
-                type="button"
-                onClick={handleCopyId}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-gray-300 hover:text-white transition-all"
-                title="Copy Booking ID"
-                aria-label="Copy booking ID"
-              >
-                {copied ? (
-                  <Check className="w-4 h-4 text-emerald-400" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-
-            {/* Status Badge */}
-            {statusColor && (
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${statusColor.bg} ${statusColor.border} ${statusColor.text} uppercase tracking-wide`}
-              >
-                <span
-                  className={`w-2 h-2 rounded-full ${statusColor.dot} ${
-                    booking.bookingStatus === 'PENDING' ||
-                    booking.bookingStatus === 'TRIP_STARTED'
-                      ? 'animate-pulse'
-                      : ''
-                  }`}
-                />
-                {isCancelled ? 'Cancelled' : booking.bookingStatus.replace(/_/g, ' ')}
-              </span>
-            )}
-          </div>
-
-          {copied && (
-            <p className="text-[11px] text-emerald-600 font-semibold animate-in fade-in">
-              ✓ Booking ID copied to clipboard!
-            </p>
+              Live
+            </span>
           )}
         </div>
 
-        {/* ================================================================ */}
-        {/* 2. LIVE STATUS TIMELINE                                          */}
-        {/* ================================================================ */}
-        {!isCancelled && (
-          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 space-y-5">
-            <h2 className="text-sm font-bold text-brand-navy uppercase tracking-wider flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-brand-orange" />
-              Trip Status Timeline
-            </h2>
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="inline-flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 py-2 pl-4 pr-2">
+            <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Booking ID</span>
+            <strong className="font-mono text-lg font-extrabold tracking-wider text-brand-700">{bookingId}</strong>
+            <button
+              type="button"
+              onClick={handleCopyId}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200/80 transition hover:text-brand-700 active:scale-95"
+              title="Copy Booking ID"
+              aria-label="Copy booking ID"
+            >
+              {copied ? <Check className="h-4 w-4 text-live-600" /> : <Copy className="h-4 w-4" />}
+            </button>
+          </div>
 
-            <div className="relative">
-              {STATUS_STEPS.map((step, idx) => {
-                const isCompleted = idx < currentStepIndex;
-                const isCurrent = idx === currentStepIndex;
-                const isPending = idx > currentStepIndex;
-                const StepIcon = step.icon;
+          {statusChip && (
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide ${statusChip.chip}`}
+            >
+              <span className="relative flex h-2 w-2">
+                {(booking.bookingStatus === 'PENDING' || booking.bookingStatus === 'TRIP_STARTED') && (
+                  <span className={`absolute inline-flex h-full w-full animate-pulse-ring rounded-full ${statusChip.dot}`} />
+                )}
+                <span className={`relative inline-flex h-2 w-2 rounded-full ${statusChip.dot}`} />
+              </span>
+              {isCancelled ? 'Cancelled' : booking.bookingStatus.replace(/_/g, ' ')}
+            </span>
+          )}
+        </div>
+        <p className={`mt-2 h-4 text-[11px] font-semibold text-live-600 transition-opacity ${copied ? 'opacity-100' : 'opacity-0'}`}>
+          ✓ Booking ID copied to clipboard!
+        </p>
+      </div>
 
-                return (
-                  <div key={step.key} className="flex items-start gap-4 relative">
-                    {/* Vertical connector line */}
-                    {idx < STATUS_STEPS.length - 1 && (
+      {/* 2. Live status timeline (design.md §3.4 node states, vertical) */}
+      {!isCancelled && (
+        <div className="card-float animate-fade-up p-6 [animation-delay:100ms] sm:p-8">
+          <h2 className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
+            <ShieldCheck className="h-5 w-5 text-brand-600" /> Trip Status Timeline
+          </h2>
+
+          <ol className="mt-6">
+            {STATUS_STEPS.map((step, idx) => {
+              const isCompleted = idx < currentStepIndex;
+              const isCurrent = idx === currentStepIndex;
+              const StepIcon = step.icon;
+              const isLast = idx === STATUS_STEPS.length - 1;
+
+              return (
+                <li key={step.key} className="relative flex items-start gap-4">
+                  {!isLast && (
+                    <div className="absolute left-[23px] top-12 h-[calc(100%-40px)] w-0.5 overflow-hidden bg-slate-200">
                       <div
-                        className={`absolute left-[19px] top-[40px] w-0.5 h-[calc(100%-8px)] ${
-                          isCompleted
-                            ? 'bg-emerald-400'
-                            : isCurrent
-                            ? 'bg-gradient-to-b from-brand-orange to-gray-200'
-                            : 'bg-gray-200'
-                        }`}
+                        className="h-full w-full origin-top bg-brand-600 transition-transform duration-700 ease-premium"
+                        style={{ transform: `scaleY(${isCompleted ? 1 : 0})` }}
                       />
-                    )}
-
-                    {/* Step circle */}
-                    <div
-                      className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-500 ${
-                        isCompleted
-                          ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
-                          : isCurrent
-                          ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/30 ring-4 ring-brand-orange/20'
-                          : 'bg-gray-100 text-gray-400 border-2 border-gray-200'
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <CheckCircle2 className="w-5 h-5" />
-                      ) : (
-                        <StepIcon
-                          className={`w-5 h-5 ${
-                            isCurrent ? 'animate-pulse' : ''
-                          }`}
-                        />
-                      )}
                     </div>
+                  )}
 
-                    {/* Step content */}
+                  <div className="relative z-10 shrink-0">
+                    {isCurrent && <span className="absolute inset-0 animate-pulse-ring rounded-full bg-brand-500/40" />}
                     <div
-                      className={`pb-8 ${
-                        idx === STATUS_STEPS.length - 1 ? 'pb-0' : ''
+                      className={`relative flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-500 ${
+                        isCurrent
+                          ? 'border-brand-600 bg-brand-600 text-white shadow-glow'
+                          : isCompleted
+                            ? 'border-brand-200 bg-brand-50 text-brand-700'
+                            : 'border-slate-200 bg-white text-slate-400'
                       }`}
                     >
-                      <p
-                        className={`text-sm font-bold ${
-                          isCompleted || isCurrent
-                            ? 'text-brand-navy'
-                            : 'text-gray-400'
-                        }`}
-                      >
-                        {step.label}
-                      </p>
-                      <p
-                        className={`text-xs mt-0.5 ${
-                          isCompleted || isCurrent
-                            ? 'text-gray-500'
-                            : 'text-gray-300'
-                        }`}
-                      >
-                        {step.subLabel}
-                      </p>
-
-                      {/* Current step pulse indicator */}
-                      {isCurrent && (
-                        <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-orange/10 text-brand-orange text-[10px] font-bold uppercase tracking-wider">
-                          <span className="w-1.5 h-1.5 rounded-full bg-brand-orange animate-pulse" />
-                          Current Step
-                        </div>
-                      )}
+                      {isCompleted ? <Check className="h-5 w-5" strokeWidth={3} /> : <StepIcon className="h-5 w-5" />}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
-        {/* CANCELLED Banner */}
-        {isCancelled && (
-          <div className="bg-red-50 rounded-3xl p-6 sm:p-8 shadow-xl border border-red-200 space-y-3 text-center">
-            <div className="w-16 h-16 rounded-full bg-red-100 text-red-500 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-8 h-8" />
-            </div>
-            <h2 className="text-lg font-extrabold text-red-700">
-              Booking Cancelled
-            </h2>
-            <p className="text-sm text-red-600 max-w-md mx-auto">
-              This booking has been cancelled. If this was a mistake, please contact
-              our dispatch team immediately.
-            </p>
-          </div>
-        )}
-
-        {/* ================================================================ */}
-        {/* 3. DRIVER INFO CARD (shown only when driver is assigned)         */}
-        {/* ================================================================ */}
-        {showDriverInfo && (
-          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 space-y-5 overflow-hidden relative">
-            {/* Decorative accent */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-orange via-emerald-500 to-brand-navy" />
-
-            <h2 className="text-sm font-bold text-brand-navy uppercase tracking-wider flex items-center gap-2">
-              <Truck className="w-4 h-4 text-emerald-600" />
-              Your Chauffeur
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* Driver name */}
-              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 space-y-1">
-                <span className="text-[10px] font-bold text-gray-400 uppercase">
-                  Driver Name
-                </span>
-                <p className="text-sm font-bold text-brand-navy flex items-center gap-2">
-                  <User className="w-4 h-4 text-brand-orange shrink-0" />
-                  <span>{booking.driverName}</span>
-                </p>
-              </div>
-
-              {/* Driver phone */}
-              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 space-y-1">
-                <span className="text-[10px] font-bold text-gray-400 uppercase">
-                  Driver Phone
-                </span>
-                <p className="text-sm font-bold text-brand-navy flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>+91 {booking.driverPhone}</span>
-                </p>
-              </div>
-
-              {/* Vehicle registration */}
-              <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 space-y-1">
-                <span className="text-[10px] font-bold text-gray-400 uppercase">
-                  Vehicle Number
-                </span>
-                <p className="text-sm font-bold text-brand-navy flex items-center gap-2">
-                  <Car className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span className="font-mono tracking-wider">
-                    {booking.vehicleRegistration}
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            {/* Driver CTAs */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-1">
-              <a
-                href={`tel:+91${booking.driverPhone}`}
-                className="min-h-[48px] flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-brand-navy hover:bg-brand-navy/90 text-white font-bold text-sm shadow-md active:scale-95 transition-all"
-              >
-                <Phone className="w-4 h-4 text-brand-orange" />
-                <span>Call Driver</span>
-              </a>
-              <a
-                href={`https://wa.me/91${booking.driverPhone}?text=${encodeURIComponent(
-                  `Hello, I have a booking ${bookingId} with ${siteConfig.brand.name}. I'd like to coordinate pickup details.`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="min-h-[48px] flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md shadow-emerald-600/20 active:scale-95 transition-all"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>WhatsApp Driver</span>
-              </a>
-            </div>
-          </div>
-        )}
-
-        {/* ================================================================ */}
-        {/* 4. TRIP DETAILS CARD                                             */}
-        {/* ================================================================ */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-            <h2 className="text-sm font-bold text-brand-navy uppercase tracking-wider">
-              Trip Details
-            </h2>
-            <span className="text-xs font-bold text-gray-400 font-mono">
-              #{bookingId}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            {/* Route */}
-            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 space-y-1 sm:col-span-2">
-              <span className="text-[10px] font-bold text-gray-400 uppercase">
-                Travel Route (
-                {booking.tripType === 'round' ? 'Round Trip' : 'One Way'})
-              </span>
-              <p className="text-sm font-bold text-brand-navy flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-brand-orange shrink-0" />
-                <span>
-                  {booking.pickupName} ➔ {booking.dropName}
-                </span>
-              </p>
-              <p className="text-xs text-gray-500 pl-6">
-                Pickup: {booking.pickupAddress}
-              </p>
-              <p className="text-xs text-gray-500 pl-6">
-                Drop: {booking.dropAddress}
-              </p>
-            </div>
-
-            {/* Schedule */}
-            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 space-y-1">
-              <span className="text-[10px] font-bold text-gray-400 uppercase">
-                Departure Schedule
-              </span>
-              <p className="text-sm font-bold text-brand-navy flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-brand-orange shrink-0" />
-                <span>
-                  {booking.pickupDate} at {booking.pickupTime}
-                </span>
-              </p>
-              <p className="text-xs text-gray-500 capitalize">
-                Service Type: {booking.serviceType} transfer
-              </p>
-            </div>
-
-            {/* Vehicle */}
-            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 space-y-1">
-              <span className="text-[10px] font-bold text-gray-400 uppercase">
-                Selected Vehicle
-              </span>
-              <p className="text-sm font-bold text-brand-navy flex items-center gap-2">
-                <Car className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>{booking.vehicleName}</span>
-              </p>
-              <p className="text-xs text-gray-500">
-                Clean, AC Chauffeur Driven MPV
-              </p>
-            </div>
-
-            {/* Passenger */}
-            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 space-y-1">
-              <span className="text-[10px] font-bold text-gray-400 uppercase">
-                Passenger
-              </span>
-              <p className="text-sm font-bold text-brand-navy flex items-center gap-2">
-                <User className="w-4 h-4 text-brand-orange shrink-0" />
-                <span>{booking.customerName}</span>
-              </p>
-              {booking.customerPhoneMasked && (
-                <p className="text-xs text-gray-500 font-mono">
-                  {booking.customerPhoneMasked}
-                </p>
-              )}
-            </div>
-
-            {/* Fare */}
-            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-1">
-              <span className="text-[10px] font-bold text-emerald-700 uppercase">
-                Estimated Tariff
-              </span>
-              <p className="text-lg font-black text-brand-navy">{fareText}</p>
-              <p className="text-[11px] text-emerald-700 font-semibold">
-                No advance payment • Pay chauffeur directly
-              </p>
-            </div>
-          </div>
+                  <div className={isLast ? 'pt-2' : 'pb-8 pt-2'}>
+                    <p className={`text-base font-extrabold ${isCurrent ? 'text-brand-700' : isCompleted ? 'text-ink' : 'text-slate-400'}`}>
+                      {step.label}
+                    </p>
+                    <p className={`mt-0.5 text-sm ${isCompleted || isCurrent ? 'text-slate-600' : 'text-slate-400'}`}>
+                      {step.subLabel}
+                    </p>
+                    {isCurrent && (
+                      <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-brand-700">
+                        <span className="h-1.5 w-1.5 rounded-full bg-brand-600" /> Current Step
+                      </span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
         </div>
+      )}
 
-        {/* ================================================================ */}
-        {/* 5. ACTION BUTTONS                                                */}
-        {/* ================================================================ */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 space-y-4 text-center">
-          <h3 className="text-base font-bold text-brand-navy">
-            Need Assistance?
-          </h3>
-          <p className="text-xs text-gray-500 max-w-md mx-auto">
-            Our 24/7 dispatch desk is always available. Chat on WhatsApp for the
-            fastest response or call us directly.
+      {/* Cancelled banner */}
+      {isCancelled && (
+        <div className="card-float animate-fade-up border-rose-300 bg-rose-50/50 p-6 text-center sm:p-8">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+            <AlertTriangle className="h-7 w-7" />
+          </span>
+          <h2 className="mt-4 text-xl font-extrabold tracking-tight text-rose-700">Booking Cancelled</h2>
+          <p className="mx-auto mt-1.5 max-w-md text-sm text-rose-600">
+            This booking has been cancelled. If this was a mistake, please contact our dispatch team immediately.
           </p>
+        </div>
+      )}
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+      {/* 3. Driver info (only once assigned) */}
+      {showDriverInfo && (
+        <div className="card-float relative animate-fade-up overflow-hidden p-6 sm:p-8">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-600 to-brand-400" />
+          <h2 className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
+            <Truck className="h-5 w-5 text-brand-600" /> Your Chauffeur
+          </h2>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <InfoTile icon={User} label="Driver name" value={booking.driverName ?? ''} />
+            <InfoTile icon={Phone} label="Driver phone" value={`+91 ${booking.driverPhone}`} />
+            <InfoTile icon={Car} label="Vehicle number" value={booking.vehicleRegistration ?? ''} mono />
+          </div>
+          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+            <a href={`tel:+91${booking.driverPhone}`} className="btn-primary">
+              <Phone className="h-4 w-4" /> Call Driver
+            </a>
             <a
-              href={whatsAppUrl}
+              href={`https://wa.me/91${booking.driverPhone}?text=${encodeURIComponent(
+                `Hello, I have a booking ${bookingId} with ${siteConfig.brand.name}. I'd like to coordinate pickup details.`
+              )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+              className="btn-whatsapp"
             >
-              <MessageCircle className="w-5 h-5" />
-              <span>Chat on WhatsApp</span>
-            </a>
-
-            <a
-              href={siteConfig.contact.phone.tel}
-              className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-brand-navy hover:bg-brand-navy/90 text-white font-bold text-sm shadow-md active:scale-95 transition-all"
-            >
-              <Phone className="w-4 h-4 text-brand-orange" />
-              <span>Call Dispatch: +91 {siteConfig.contact.phone.raw}</span>
+              <MessageCircle className="h-4 w-4" /> WhatsApp Driver
             </a>
           </div>
+        </div>
+      )}
 
-          <div className="pt-4 border-t border-gray-100">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-orange hover:underline"
-            >
-              <span>Back to Homepage</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+      {/* 4. Trip details */}
+      <div className="card-float animate-fade-up p-6 [animation-delay:200ms] sm:p-8">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <h2 className="text-lg font-extrabold tracking-tight">Trip Details</h2>
+          <span className="font-mono text-xs font-bold text-slate-400">#{bookingId}</span>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl bg-slate-50 p-4 sm:col-span-2">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+              Travel route ({booking.tripType === 'round' ? 'Round Trip' : 'One Way'})
+            </p>
+            <div className="relative mt-2 space-y-3 pl-8">
+              <span className="absolute left-[11px] top-6 h-[calc(100%-36px)] border-l-2 border-dashed border-slate-300" />
+              <div className="relative">
+                <span className="absolute -left-8 flex h-6 w-6 items-center justify-center rounded-full bg-brand-50 text-brand-700">
+                  <MapPin className="h-3.5 w-3.5" />
+                </span>
+                <p className="text-sm font-bold text-ink">{booking.pickupName}</p>
+                <p className="text-xs text-slate-500">Pickup: {booking.pickupAddress}</p>
+              </div>
+              <div className="relative">
+                <span className="absolute -left-8 flex h-6 w-6 items-center justify-center rounded-full bg-live-500/10 text-live-600">
+                  <MapPin className="h-3.5 w-3.5" />
+                </span>
+                <p className="text-sm font-bold text-ink">{booking.dropName}</p>
+                <p className="text-xs text-slate-500">Drop: {booking.dropAddress}</p>
+              </div>
+            </div>
+          </div>
+
+          <InfoTile icon={Calendar} label="Departure schedule" value={`${booking.pickupDate} at ${formatTime12(booking.pickupTime)}`}>
+            <span className="capitalize">Service Type: {booking.serviceType} transfer</span>
+          </InfoTile>
+          <InfoTile icon={Car} label="Selected vehicle" value={booking.vehicleName}>
+            Clean, AC Chauffeur Driven MPV
+          </InfoTile>
+          <InfoTile icon={User} label="Passenger" value={booking.customerName}>
+            {booking.customerPhoneMasked && <span className="font-mono">{booking.customerPhoneMasked}</span>}
+          </InfoTile>
+          <div className="rounded-2xl border border-live-500/20 bg-live-500/10 p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-live-600">Estimated tariff</p>
+            <p className="mt-1 text-lg font-extrabold text-ink">{fareText}</p>
+            <p className="text-[11px] font-semibold text-live-600">No advance payment • Pay chauffeur directly</p>
           </div>
         </div>
       </div>
+
+      {/* 5. Actions */}
+      <div className="card-float p-6 text-center sm:p-8">
+        <h3 className="text-lg font-extrabold tracking-tight">Need Assistance?</h3>
+        <p className="mx-auto mt-1.5 max-w-md text-sm text-slate-600">
+          Our 24/7 dispatch desk is always available. Chat on WhatsApp for the fastest response or call us directly.
+        </p>
+        <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
+          <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+          </a>
+          <a href={siteConfig.contact.phone.tel} className="btn-primary">
+            <Phone className="h-4 w-4" /> Call Dispatch: +91 {siteConfig.contact.phone.raw}
+          </a>
+        </div>
+        <div className="mt-5 border-t border-slate-100 pt-4">
+          <Link href="/" className="group inline-flex items-center gap-1.5 text-sm font-bold text-brand-700 hover:text-brand-800">
+            Back to Homepage
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function InfoTile({
+  icon: Icon,
+  label,
+  value,
+  mono = false,
+  children,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  mono?: boolean;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl bg-slate-50 p-4">
+      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
+      <p className="mt-1 flex items-center gap-2 text-sm font-bold text-ink">
+        <Icon className="h-4 w-4 shrink-0 text-brand-600" />
+        <span className={mono ? 'font-mono tracking-wider' : undefined}>{value}</span>
+      </p>
+      {children && <p className="mt-0.5 text-xs text-slate-500">{children}</p>}
     </div>
   );
 }

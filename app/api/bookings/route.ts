@@ -203,11 +203,12 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    // Includes Firestore write failures: never report a booking that wasn't saved
     console.error('[POST /api/bookings] Error processing booking request:', error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Internal server error while processing booking request.',
+        error: `We could not save your booking right now. Please call or WhatsApp us on ${siteConfig.contact.phone.display}.`,
       },
       { status: 500 }
     );

@@ -9,117 +9,8 @@
 import { Booking, BookingStatus, Route, Vehicle, Enquiry, VehicleRates } from '@/lib/types';
 import { seedVehicles, seedRoutes, emptyRates } from '@/scripts/seed';
 
-// Sample pre-populated bookings for realistic testing & operation
-let memoryBookings: Booking[] = [
-  {
-    bookingId: 'BK-INV8921',
-    customerName: 'Suresh Kumar',
-    customerPhone: '9876543210',
-    pickupName: 'Kempegowda Airport (BLR)',
-    pickupAddress: 'Terminal 1 Arrivals, BLR Airport, Devanahalli, Bengaluru',
-    pickupLat: 13.1986,
-    pickupLng: 77.7066,
-    dropName: 'Indiranagar 100ft Road',
-    dropAddress: 'HAL 2nd Stage, Indiranagar, Bengaluru, Karnataka 560038',
-    dropLat: 12.9784,
-    dropLng: 77.6408,
-    tripType: 'oneway',
-    serviceType: 'airport',
-    pickupDate: new Date().toISOString().split('T')[0],
-    pickupTime: '18:30',
-    vehicleId: 'innova-crysta',
-    vehicleName: 'Toyota Innova Crysta',
-    fare: null, // Price on request
-    bookingStatus: 'PENDING',
-    driverId: null,
-    driverName: null,
-    driverPhone: null,
-    vehicleRegistration: null,
-    notes: 'Flight 6E-452 arriving from Delhi. Requires luggage assistance.',
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    bookingId: 'BK-INV8920',
-    customerName: 'Ramesh Iyer',
-    customerPhone: '9845012345',
-    pickupName: 'Jayanagar 4th Block',
-    pickupAddress: 'Jayanagar, Bengaluru, Karnataka 560011',
-    pickupLat: 12.9250,
-    pickupLng: 77.5938,
-    dropName: 'Mysore Palace',
-    dropAddress: 'Sayyaji Rao Rd, Mysuru, Karnataka 570001',
-    dropLat: 12.3051,
-    dropLng: 76.6551,
-    tripType: 'round',
-    serviceType: 'outstation',
-    pickupDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-    pickupTime: '06:00',
-    vehicleId: 'innova',
-    vehicleName: 'Toyota Innova',
-    fare: null,
-    bookingStatus: 'CONFIRMED',
-    driverId: null,
-    driverName: null,
-    driverPhone: null,
-    vehicleRegistration: null,
-    notes: 'Family trip with senior citizens. Prefer peaceful driving.',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    bookingId: 'BK-INV8918',
-    customerName: 'Priya Nair',
-    customerPhone: '9741234567',
-    pickupName: 'Whitefield ITPL',
-    pickupAddress: 'ITPL Main Rd, Whitefield, Bengaluru, Karnataka 560066',
-    pickupLat: 12.9866,
-    pickupLng: 77.7381,
-    dropName: 'Kempegowda Airport (BLR)',
-    dropAddress: 'BLR Airport, Devanahalli, Bengaluru',
-    dropLat: 13.1986,
-    dropLng: 77.7066,
-    tripType: 'oneway',
-    serviceType: 'airport',
-    pickupDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-    pickupTime: '04:30',
-    vehicleId: 'innova-crysta',
-    vehicleName: 'Toyota Innova Crysta',
-    fare: null,
-    bookingStatus: 'DRIVER_ASSIGNED',
-    driverId: 'DRV-102',
-    driverName: 'Manjunath Gowda',
-    driverPhone: '9448123456',
-    vehicleRegistration: 'KA 04 MP 7821',
-    notes: 'Early morning flight at 07:00 AM.',
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-  },
-  {
-    bookingId: 'BK-INV8915',
-    customerName: 'Karthik Raja',
-    customerPhone: '9980112233',
-    pickupName: 'Electronic City Phase 1',
-    pickupAddress: 'Hosur Rd, Electronic City, Bengaluru',
-    pickupLat: 12.8452,
-    pickupLng: 77.6602,
-    dropName: 'Ooty (Udhagamandalam)',
-    dropAddress: 'Ooty, Tamil Nadu 643001',
-    dropLat: 11.4102,
-    dropLng: 76.6950,
-    tripType: 'round',
-    serviceType: 'outstation',
-    pickupDate: new Date(Date.now() - 259200000).toISOString().split('T')[0],
-    pickupTime: '05:00',
-    vehicleId: 'innova-crysta',
-    vehicleName: 'Toyota Innova Crysta',
-    fare: null,
-    bookingStatus: 'COMPLETED',
-    driverId: 'DRV-101',
-    driverName: 'Santhosh Kumar',
-    driverPhone: '9880198765',
-    vehicleRegistration: 'KA 03 AA 4589',
-    notes: '3-day round trip completed successfully.',
-    createdAt: new Date(Date.now() - 345600000).toISOString(),
-  },
-];
+// Live bookings store (empty by default; populated from Firestore or live submissions)
+let memoryBookings: Booking[] = [];
 
 let memoryEnquiries: Enquiry[] = [
   {
@@ -163,7 +54,23 @@ memoryGlobal.__icbVehicles ??= seedVehicles.map((v) => ({ ...v, rates: { ...empt
 let memoryRoutes: Route[] = memoryGlobal.__icbRoutes;
 let memoryVehicles: Vehicle[] = memoryGlobal.__icbVehicles;
 
-const hasFirestore = () => Boolean(process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY);
+/**
+ * True when Firebase Admin credentials are present. Firestore is then the only
+ * source of truth for bookings & enquiries: errors are thrown (never hidden
+ * behind the in-memory demo data, which serverless instances can't share).
+ * The in-memory store is only used for local development without Firebase.
+ */
+const hasFirestore = () =>
+  Boolean(
+    process.env.FIREBASE_PROJECT_ID &&
+      process.env.FIREBASE_CLIENT_EMAIL &&
+      (process.env.FIREBASE_PRIVATE_KEY_BASE64 || process.env.FIREBASE_PRIVATE_KEY)
+  );
+
+async function getAdminDb() {
+  const { adminDb } = await import('@/lib/firebaseAdmin');
+  return adminDb;
+}
 
 /**
  * Stored docs are layered over the seed catalogue (so partial docs written by
@@ -187,97 +94,81 @@ const seedOrder = (id: string) => {
 };
 
 export async function fetchAllBookings(): Promise<Booking[]> {
-  try {
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
-      const { adminDb } = await import('@/lib/firebaseAdmin');
-      const snapshot = await adminDb.collection('bookings').orderBy('createdAt', 'desc').get();
-      if (!snapshot.empty) {
-        return snapshot.docs.map((doc) => doc.data() as Booking);
-      }
-    }
-  } catch (error) {
-    console.warn('[adminStore] Falling back to memory bookings:', error);
-  }
-  return memoryBookings;
+  if (!hasFirestore()) return memoryBookings;
+
+  const adminDb = await getAdminDb();
+  const snapshot = await adminDb.collection('bookings').orderBy('createdAt', 'desc').get();
+  return snapshot.docs.map((doc) => doc.data() as Booking);
 }
 
 export async function addBooking(booking: Booking): Promise<void> {
-  memoryBookings = [booking, ...memoryBookings.filter((b) => b.bookingId !== booking.bookingId)];
-  try {
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
-      const { adminDb } = await import('@/lib/firebaseAdmin');
-      await adminDb.collection('bookings').doc(booking.bookingId).set(booking);
-    }
-  } catch (error) {
-    console.warn('[adminStore] Could not write booking to Firestore:', error);
+  if (!hasFirestore()) {
+    memoryBookings = [booking, ...memoryBookings.filter((b) => b.bookingId !== booking.bookingId)];
+    return;
   }
+
+  const adminDb = await getAdminDb();
+  await adminDb.collection('bookings').doc(booking.bookingId).set(booking);
 }
 
 export async function updateBookingInStore(
   bookingId: string,
   updates: Partial<Booking>
 ): Promise<Booking | null> {
-  const index = memoryBookings.findIndex((b) => b.bookingId === bookingId);
-  if (index !== -1) {
+  if (!hasFirestore()) {
+    const index = memoryBookings.findIndex((b) => b.bookingId === bookingId);
+    if (index === -1) return null;
     memoryBookings[index] = { ...memoryBookings[index], ...updates };
+    return memoryBookings[index];
   }
 
-  try {
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
-      const { adminDb } = await import('@/lib/firebaseAdmin');
-      await adminDb.collection('bookings').doc(bookingId).update(updates);
-    }
-  } catch (error) {
-    console.warn('[adminStore] Could not update Firestore booking:', error);
-  }
-
-  return memoryBookings.find((b) => b.bookingId === bookingId) || null;
+  const adminDb = await getAdminDb();
+  const ref = adminDb.collection('bookings').doc(bookingId);
+  const existing = await ref.get();
+  if (!existing.exists) return null;
+  await ref.update(updates);
+  return { ...(existing.data() as Booking), ...updates };
 }
 
 export async function fetchAllEnquiries(): Promise<Enquiry[]> {
-  try {
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
-      const { adminDb } = await import('@/lib/firebaseAdmin');
-      const snapshot = await adminDb.collection('enquiries').orderBy('createdAt', 'desc').get();
-      if (!snapshot.empty) {
-        return snapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Enquiry) }));
-      }
-    }
-  } catch (error) {
-    console.warn('[adminStore] Falling back to memory enquiries:', error);
-  }
-  return memoryEnquiries;
+  if (!hasFirestore()) return memoryEnquiries;
+
+  const adminDb = await getAdminDb();
+  const snapshot = await adminDb.collection('enquiries').orderBy('createdAt', 'desc').get();
+  return snapshot.docs.map((doc) => ({ ...(doc.data() as Enquiry), id: doc.id }));
 }
 
 export async function updateEnquiryStatusInStore(
   id: string,
   status: Enquiry['status']
 ): Promise<void> {
-  const index = memoryEnquiries.findIndex((e) => e.id === id);
-  if (index !== -1) {
-    memoryEnquiries[index].status = status;
-  }
-  try {
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
-      const { adminDb } = await import('@/lib/firebaseAdmin');
-      await adminDb.collection('enquiries').doc(id).update({ status });
+  if (!hasFirestore()) {
+    const index = memoryEnquiries.findIndex((e) => e.id === id);
+    if (index !== -1) {
+      memoryEnquiries[index].status = status;
     }
-  } catch (error) {
-    console.warn('[adminStore] Could not update enquiry status:', error);
+    return;
   }
+
+  const adminDb = await getAdminDb();
+  await adminDb.collection('enquiries').doc(id).update({ status });
 }
 
+/**
+ * Catalogue reads keep falling back to the seed data on error so the public
+ * storefront stays up even if Firestore is briefly unreachable.
+ */
 export async function fetchAdminRoutes(): Promise<Route[]> {
   try {
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
-      const { adminDb } = await import('@/lib/firebaseAdmin');
+    if (hasFirestore()) {
+      const adminDb = await getAdminDb();
       const snapshot = await adminDb.collection('routes').get();
       if (!snapshot.empty) {
         return mergeWithSeed(snapshot.docs.map((doc) => doc.data() as Route), seedRoutes, (r) => r.slug);
       }
     }
   } catch (error) {
-    console.warn('[adminStore] Falling back to memory routes:', error);
+    console.error('[adminStore] Falling back to seed routes:', error);
   }
   return memoryRoutes;
 }
@@ -297,20 +188,17 @@ export async function updateRouteFaresInStore(
     };
   }
 
-  try {
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
-      const { adminDb } = await import('@/lib/firebaseAdmin');
-      await adminDb.collection('routes').doc(slug).update({ fares });
-    }
-  } catch (error) {
-    console.warn('[adminStore] Could not update route fares:', error);
+  if (hasFirestore()) {
+    const adminDb = await getAdminDb();
+    // set+merge creates the doc for routes that only exist in the seed catalogue
+    await adminDb.collection('routes').doc(slug).set({ slug, fares }, { merge: true });
   }
 }
 
 export async function fetchAdminVehicles(): Promise<Vehicle[]> {
   try {
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
-      const { adminDb } = await import('@/lib/firebaseAdmin');
+    if (hasFirestore()) {
+      const adminDb = await getAdminDb();
       const snapshot = await adminDb.collection('vehicles').get();
       if (!snapshot.empty) {
         return mergeWithSeed(snapshot.docs.map((doc) => doc.data() as Vehicle), seedVehicles, (v) => v.id)
@@ -319,7 +207,7 @@ export async function fetchAdminVehicles(): Promise<Vehicle[]> {
       }
     }
   } catch (error) {
-    console.warn('[adminStore] Falling back to memory vehicles:', error);
+    console.error('[adminStore] Falling back to seed vehicles:', error);
   }
   return memoryVehicles.map(withRates);
 }
@@ -334,7 +222,7 @@ export async function updateVehicleRatesInStore(vehicleId: string, rates: Vehicl
   }
 
   if (hasFirestore()) {
-    const { adminDb } = await import('@/lib/firebaseAdmin');
+    const adminDb = await getAdminDb();
     // set+merge creates the doc for cars that only exist in the seed catalogue
     await adminDb.collection('vehicles').doc(vehicleId).set({ id: vehicleId, rates }, { merge: true });
   }
@@ -352,29 +240,21 @@ export async function toggleVehicleInStore(
     };
   }
 
-  try {
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
-      const { adminDb } = await import('@/lib/firebaseAdmin');
-      await adminDb.collection('vehicles').doc(vehicleId).set({ id: vehicleId, confirmed }, { merge: true });
-    }
-  } catch (error) {
-    console.warn('[adminStore] Could not toggle vehicle status:', error);
+  if (hasFirestore()) {
+    const adminDb = await getAdminDb();
+    await adminDb.collection('vehicles').doc(vehicleId).set({ id: vehicleId, confirmed }, { merge: true });
   }
 }
 
 export async function getBookingById(bookingId: string): Promise<Booking | null> {
-  try {
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
-      const { adminDb } = await import('@/lib/firebaseAdmin');
-      const doc = await adminDb.collection('bookings').doc(bookingId).get();
-      if (doc.exists) {
-        return doc.data() as Booking;
-      }
-    }
-  } catch (error) {
-    console.warn('[adminStore] Could not fetch Firestore booking by id:', error);
+  if (!hasFirestore()) {
+    return memoryBookings.find((b) => b.bookingId.toLowerCase() === bookingId.toLowerCase()) || null;
   }
-  return memoryBookings.find((b) => b.bookingId.toLowerCase() === bookingId.toLowerCase()) || null;
+
+  const adminDb = await getAdminDb();
+  // Booking IDs are stored upper-case (ICB-10482); accept any casing from the URL
+  const doc = await adminDb.collection('bookings').doc(bookingId.trim().toUpperCase()).get();
+  return doc.exists ? (doc.data() as Booking) : null;
 }
 
 /**

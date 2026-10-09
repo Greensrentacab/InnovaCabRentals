@@ -20,7 +20,11 @@ export async function submitTourEnquiry(formData: {
       createdAt: new Date().toISOString(),
     };
 
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
+    if (
+      process.env.FIREBASE_PROJECT_ID &&
+      process.env.FIREBASE_CLIENT_EMAIL &&
+      (process.env.FIREBASE_PRIVATE_KEY_BASE64 || process.env.FIREBASE_PRIVATE_KEY)
+    ) {
       const { adminDb } = await import('@/lib/firebaseAdmin');
       const docRef = await adminDb.collection('enquiries').add(enquiry);
       return { success: true, id: docRef.id };

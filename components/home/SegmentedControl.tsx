@@ -43,7 +43,7 @@ export default function SegmentedControl<T extends string>({
     >
       <span
         aria-hidden="true"
-        className="absolute bottom-1 left-1 top-1 rounded-full bg-white shadow-float ring-1 ring-slate-200/80 transition-transform duration-300 ease-[cubic-bezier(0.34,1.25,0.64,1)]"
+        className="absolute bottom-1 left-1 top-1 rounded-full bg-white shadow-[0_6px_16px_-6px_rgba(56,189,248,0.6)] ring-1 ring-sky-200 transition-transform duration-300 ease-[cubic-bezier(0.34,1.25,0.64,1)]"
         style={{
           width: `calc((100% - 8px - ${(n - 1) * 4}px) / ${n})`,
           transform: `translateX(calc(${activeIndex} * (100% + 4px)))`,

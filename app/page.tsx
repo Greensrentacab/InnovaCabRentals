@@ -143,7 +143,7 @@ export default async function HomePage() {
         <link rel="preload" as="image" href="/images/hero/hero-airport-1920.webp" media="(min-width: 1024px)" />
         <HeroBackdrop className="-z-10 hidden lg:inset-x-0 lg:top-0 lg:block lg:aspect-[1920/1071]" />
         {/* Mobile/tablet: picture band behind the header + heading, car bottom-right */}
-        <HeroBand className="inset-x-0 top-0 -z-10 h-[530px] sm:h-[680px] lg:hidden" />
+        <HeroBand className="inset-x-0 top-0 -z-10 h-[584px] sm:h-[740px] lg:hidden" />
 
         {/* Desktop: copy + widget stacked in a left column so the car stays visible on the right */}
         <div className="section grid items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,540px)_1fr] lg:gap-0">
@@ -164,14 +164,14 @@ export default async function HomePage() {
               <HeroLead />
             </p>
 
-            <ul className="mt-7 hidden animate-fade-up flex-wrap gap-2 [animation-delay:240ms]">
+            <ul className="mt-4 flex animate-fade-up flex-wrap gap-1.5 [animation-delay:240ms] sm:mt-6 sm:gap-2">
               {heroPills.map(({ label, icon: Icon, service }) => (
                 <li key={label}>
                   <BookButton
                     service={service}
-                    className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-bold text-ink shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:text-brand-700"
+                    className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-sky-200 bg-white px-2.5 py-2 text-[12.5px] font-bold text-ink shadow-[0_8px_20px_-8px_rgba(56,189,248,0.7)] transition hover:-translate-y-0.5 hover:border-brand-300 hover:text-brand-700 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
                   >
-                    <Icon className="h-4 w-4 text-brand-600" /> {label}
+                    <Icon className="h-3.5 w-3.5 text-brand-600 sm:h-4 sm:w-4" /> {label}
                   </BookButton>
                 </li>
               ))}

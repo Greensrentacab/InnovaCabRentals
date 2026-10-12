@@ -71,8 +71,18 @@ export interface Route {
 
 export interface Booking {
   bookingId: string;
+  /**
+   * Passenger for this trip (given to the chauffeur & dispatch desk). May differ
+   * from the account owner when booking for family or guests.
+   */
   customerName: string;
   customerPhone: string;
+  /** Firebase Auth UID of the account that placed the booking */
+  userId?: string | null;
+  /** Account owner's verified email — booking receipts are sent here */
+  customerEmail?: string | null;
+  /** Account owner's display name (may differ from the passenger) */
+  accountName?: string | null;
   pickupName: string;
   pickupAddress: string;
   pickupLat: number | null;
@@ -101,6 +111,21 @@ export interface Booking {
   vehicleRegistration: string | null;
   notes: string | null;
   createdAt: string | Date;
+}
+
+/**
+ * Customer account profile (Firestore users/{uid}). The account owner's
+ * identity; per-trip passenger details live on each Booking.
+ */
+export interface UserProfile {
+  uid: string;
+  email: string;
+  displayName: string;
+  /** Default 10-digit WhatsApp / mobile number used to prefill bookings */
+  phone: string;
+  photoURL: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Driver {

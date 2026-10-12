@@ -8,12 +8,14 @@
  * Booking request flow opened by "Request Booking" on a car in the inline
  * fare results (components/FareResults.tsx).
  * Features (logic unchanged):
- * - Step Tracker (Vehicle -> Details -> Review)
+ * - Step Tracker (Vehicle -> Details -> Review -> Sign in & Confirm)
  * - Loading Screen
  * - Vehicle Selection (Firestore cards, nullable price = "Price on request" + "WhatsApp for a Quick Quote", selectable)
- * - Your Details (STRICTLY ONLY Full Name & 10-digit Mobile)
+ * - Your Details (passenger Full Name & 10-digit Mobile, prefilled from the account, editable)
  * - Review with Edit Links for each section
- * - "Send Booking Request" button and Processing Screen
+ * - Sign in & Confirm: Sign In / Sign Up gate; "Submit Booking Request" stays
+ *   disabled until the customer is authenticated, then shows their account card
+ * - Processing Screen
  * - Success Screen with Booking ID (Status: PENDING)
  * - Error Screen with "Try Again" button that keeps all entered data
  */
@@ -28,7 +30,10 @@ import {
   Check,
   Edit2,
   FileText,
+  LockKeyhole,
+  LogOut,
   Luggage,
+  Mail,
   MapPin,
   MessageCircle,
   RotateCcw,
@@ -39,11 +44,14 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useBookingFlow } from '@/context/BookingFlowContext';
+import { useAuth } from '@/context/AuthContext';
+import AuthPanel from '@/components/auth/AuthPanel';
+import UserAvatar from '@/components/auth/UserAvatar';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/cn';
 import { formatTime12 } from '@/lib/time';
 
-const STEP_LABELS = ['Vehicle', 'Your Details', 'Review'];
+const STEP_LABELS = ['Vehicle', 'Your Details', 'Review', 'Sign in & Confirm'];
 
 export default function BookingFlowModal() {
   const {
@@ -55,16 +63,20 @@ export default function BookingFlowModal() {
     submitBooking,
     retrySubmission,
   } = useBookingFlow();
+  const { user, profile, loading: authLoading, signOut } = useAuth();
 
   // Local state for Step 2 validation
   const [name, setName] = useState(state.customerName);
   const [phone, setPhone] = useState(state.customerPhone);
   const [formError, setFormError] = useState('');
 
+  // Passenger defaults to the account owner; editable when booking for someone else
+  const defaultName = profile?.displayName || user?.displayName || '';
+  const defaultPhone = profile?.phone || '';
   useEffect(() => {
-    setName(state.customerName);
-    setPhone(state.customerPhone);
-  }, [state.customerName, state.customerPhone, state.isOpen]);
+    setName(state.customerName || defaultName);
+    setPhone(state.customerPhone || defaultPhone);
+  }, [state.customerName, state.customerPhone, state.isOpen, defaultName, defaultPhone]);
 
   // Esc closes; body scroll locked while open
   useEffect(() => {
@@ -116,6 +128,8 @@ export default function BookingFlowModal() {
         return 2;
       case 'review':
         return 3;
+      case 'auth':
+        return 4;
       default:
         return 0;
     }
@@ -173,7 +187,7 @@ export default function BookingFlowModal() {
                   ))}
                 </div>
                 <p className="mt-2 text-xs font-semibold text-slate-500">
-                  Step {stepNumber} of 3 · <span className="text-ink">{STEP_LABELS[stepNumber - 1]}</span>
+                  Step {stepNumber} of {STEP_LABELS.length} · <span className="text-ink">{STEP_LABELS[stepNumber - 1]}</span>
                 </p>
               </div>
             )}
@@ -308,11 +322,18 @@ export default function BookingFlowModal() {
             {state.step === 'details' && (
               <form id="booking-details-form" key="details" onSubmit={handleContinueToReview} className="animate-step-in space-y-4">
                 <div>
-                  <h3 className="text-base font-extrabold">Your Contact Details</h3>
+                  <h3 className="text-base font-extrabold">Passenger Details</h3>
                   <p className="text-xs text-slate-500">
-                    We only need your name and phone number to dispatch driver details via WhatsApp.
+                    Who&apos;s travelling? Booking for family or a guest? Just enter their name and number.
                   </p>
                 </div>
+
+                {user && (defaultName || defaultPhone) && (
+                  <p className="flex items-center gap-2 rounded-2xl bg-brand-50/70 px-4 py-2.5 text-[11px] font-semibold text-brand-800">
+                    <User className="h-3.5 w-3.5 shrink-0 text-brand-600" />
+                    Prefilled from your account. Edit if someone else is travelling.
+                  </p>
+                )}
 
                 {formError && (
                   <p role="alert" className="flex items-center gap-2 rounded-2xl border border-rose-300 bg-rose-50/50 px-4 py-3 text-xs font-medium text-rose-600">
@@ -365,7 +386,7 @@ export default function BookingFlowModal() {
                     />
                   </div>
                   <p className="mt-1.5 pl-1 text-[11px] text-slate-500">
-                    Booking confirmation and chauffeur details will be sent to this WhatsApp number.
+                    The chauffeur and our dispatch desk will contact the passenger on this WhatsApp number.
                   </p>
                 </div>
               </form>
@@ -428,10 +449,85 @@ export default function BookingFlowModal() {
                     <ShieldCheck className="h-4 w-4 text-brand-600" /> Request Status: PENDING Confirmation
                   </p>
                   <p className="mt-1 text-[11px] leading-relaxed text-brand-800/80">
-                    Submitting will place a booking request. Our dispatch manager will verify car availability and send direct
-                    driver assignment via WhatsApp.
+                    Next, sign in to confirm. Our dispatch manager will then verify car availability and send direct driver
+                    assignment via WhatsApp.
                   </p>
                 </div>
+              </div>
+            )}
+
+            {/* STEP 4: SIGN IN & CONFIRM */}
+            {state.step === 'auth' && (
+              <div key="auth" className="animate-step-in space-y-4">
+                {authLoading ? (
+                  <p className="flex items-center gap-2 py-6 text-sm font-bold text-ink">
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+                    Checking your account...
+                  </p>
+                ) : user ? (
+                  <>
+                    <div>
+                      <h3 className="text-base font-extrabold">Confirm &amp; Submit</h3>
+                      <p className="text-xs text-slate-500">This trip will be saved to your account.</p>
+                    </div>
+
+                    <div className="rounded-3xl border border-brand-500 bg-brand-50/50 p-4 ring-4 ring-brand-500/10">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar
+                          name={profile?.displayName || user.displayName}
+                          email={user.email}
+                          photoURL={profile?.photoURL ?? user.photoURL}
+                          size="md"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-extrabold text-ink">
+                            {profile?.displayName || user.displayName || 'Signed in'}
+                          </p>
+                          <p className="truncate text-xs text-slate-500">{user.email}</p>
+                        </div>
+                        <span className="chip-live shrink-0">
+                          <Check className="h-3 w-3" strokeWidth={3} /> Signed in
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void signOut()}
+                        className="mt-3 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold text-brand-700 transition hover:bg-brand-100/60"
+                      >
+                        <LogOut className="h-3 w-3" /> Not you? Sign out
+                      </button>
+                    </div>
+
+                    <div className="divide-y divide-slate-100 rounded-3xl border border-slate-200/80 text-xs">
+                      <SummaryRow label="Passenger" value={`${state.customerName} · +91 ${state.customerPhone}`} />
+                      <SummaryRow label="Vehicle" value={state.selectedVehicle?.name ?? ''} />
+                      <SummaryRow
+                        label="Estimated Tariff"
+                        value={selectedFare !== null ? `₹${selectedFare.toLocaleString('en-IN')}` : 'Price on request'}
+                      />
+                    </div>
+
+                    <p className="flex items-start gap-2 rounded-2xl bg-slate-50 p-4 text-[11px] leading-relaxed text-slate-600">
+                      <Mail className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                      <span>
+                        Your booking receipt will be emailed to <strong className="text-ink">{user.email}</strong>.
+                      </span>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="rounded-2xl border border-brand-100 bg-brand-50/70 p-4">
+                      <p className="flex items-center gap-1.5 text-xs font-bold text-brand-800">
+                        <LockKeyhole className="h-4 w-4 text-brand-600" /> Sign in to confirm your booking
+                      </p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-brand-800/80">
+                        Your trip details are saved. Sign in or create an account to submit the request, track it and get
+                        your receipt by email.
+                      </p>
+                    </div>
+                    <AuthPanel idPrefix="bf-auth" initialMode="signin" />
+                  </>
+                )}
               </div>
             )}
 
@@ -463,6 +559,14 @@ export default function BookingFlowModal() {
                   Our dispatch manager has received your travel schedule. We will reach out to you on WhatsApp at{' '}
                   <strong className="text-ink">+91 {state.customerPhone}</strong> to confirm your vehicle.
                 </p>
+                {state.confirmedBooking?.customerEmail && (
+                  <p className="mx-auto mt-2 flex max-w-sm items-center justify-center gap-1.5 text-xs text-slate-500">
+                    <Mail className="h-3.5 w-3.5 shrink-0 text-brand-600" />
+                    <span className="truncate">
+                      Receipt sent to <strong className="text-ink">{state.confirmedBooking.customerEmail}</strong>
+                    </span>
+                  </p>
+                )}
 
                 <div className="mt-6 grid gap-2">
                   {state.confirmedBooking?.bookingId && (
@@ -474,6 +578,9 @@ export default function BookingFlowModal() {
                       <FileText className="h-4 w-4" /> View My Booking
                     </Link>
                   )}
+                  <Link href="/profile?tab=bookings" onClick={closeBookingFlow} className="btn-ghost">
+                    <User className="h-4 w-4" /> Go to My Bookings
+                  </Link>
                   {state.adminWhatsAppUrl && (
                     <a href={state.adminWhatsAppUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
                       <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
@@ -556,8 +663,26 @@ export default function BookingFlowModal() {
                   <button type="button" onClick={() => setStep('details')} className="btn-ghost px-4">
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
-                  <button type="button" onClick={submitBooking} className="btn-primary group flex-1 py-3.5 text-[15px]">
-                    Send Booking Request
+                  <button type="button" onClick={() => setStep('auth')} className="btn-primary group flex-1">
+                    {user ? 'Continue to Confirm' : 'Continue to Sign In'}
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </button>
+                </>
+              )}
+              {state.step === 'auth' && (
+                <>
+                  <button type="button" onClick={() => setStep('review')} className="btn-ghost px-4">
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">Back to review</span>
+                    <span className="sm:hidden">Back</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={submitBooking}
+                    disabled={!user}
+                    className="btn-primary group flex-1 py-3.5 text-[15px]"
+                  >
+                    Submit Booking Request
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </button>
                 </>
@@ -566,6 +691,15 @@ export default function BookingFlowModal() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-4 py-3">
+      <span className="shrink-0 text-slate-500">{label}</span>
+      <span className="truncate text-right font-bold text-ink">{value}</span>
     </div>
   );
 }

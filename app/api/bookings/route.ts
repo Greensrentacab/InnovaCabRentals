@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { calculateServerFare } from '@/lib/fareCalculator';
 import { checkRateLimit } from '@/lib/rateLimit';
-import { addBooking, generateUniqueBookingId, getBookingById } from '@/lib/adminStore';
-import { sendNewBookingEmail } from '@/lib/emailService';
+import { addBooking, generateUniqueBookingId, getBookingById, getUserProfile } from '@/lib/adminStore';
+import { sendCustomerBookingEmail, sendNewBookingEmail } from '@/lib/emailService';
+import { getRequestUser } from '@/lib/authServer';
 import { Booking, ServiceType, TripType } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
 
@@ -78,12 +79,14 @@ const createBookingSchema = z.object({
  * POST /api/bookings
  * 
  * 1. Rate-limit by IP: 5 per 10 minutes
- * 2. Validate input with zod (name, 10-digit Indian mobile, no past dates)
- * 3. Recalculate fare server-side (never trust client fare)
- * 4. Generate unique ID like ICB-10482 with collision check
- * 5. Save with status PENDING in Firestore & admin store
- * 6. Email "New Booking Request" to greensrentacab@gmail.com via Resend
- * 7. Return the unique bookingId & booking object
+ * 2. Require a signed-in customer (Firebase ID token in Authorization header);
+ *    userId & customerEmail come from the verified token, never the body
+ * 3. Validate input with zod (passenger name, 10-digit Indian mobile, no past dates)
+ * 4. Recalculate fare server-side (never trust client fare)
+ * 5. Generate unique ID like ICB-10482 with collision check
+ * 6. Save with status PENDING in Firestore & admin store
+ * 7. Email "New Booking Request" to the admin desk and a receipt to the customer via Resend
+ * 8. Return the unique bookingId & booking object
  */
 export async function POST(req: NextRequest) {
   try {
@@ -108,7 +111,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Parse & Validate with Zod
+    // 2. Signed-in customers only (Step 4 "Sign in & Confirm")
+    const user = await getRequestUser(req);
+    if (!user || !user.email) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'AUTH_REQUIRED',
+          error: 'Your sign-in session has expired. Please sign in again to submit your booking request.',
+        },
+        { status: 401 }
+      );
+    }
+
+    // 3. Parse & Validate with Zod
     const body = await req.json();
     const validationResult = createBookingSchema.safeParse(body);
 
@@ -128,7 +144,7 @@ export async function POST(req: NextRequest) {
 
     const data = validationResult.data;
 
-    // 3. Recalculate fare on server (Never trust client prices)
+    // 4. Recalculate fare on server (Never trust client prices)
     const fareCalc = await calculateServerFare({
       serviceType: data.serviceType as ServiceType,
       tripType: data.tripType as TripType,
@@ -147,14 +163,19 @@ export async function POST(req: NextRequest) {
 
     const serverFare = fareCalc.fares[data.vehicleId] ?? null;
 
-    // 4. Generate unique ID like ICB-10482 with collision check
+    // 5. Generate unique ID like ICB-10482 with collision check
     const bookingId = await generateUniqueBookingId();
 
-    // 5. Construct official Booking entity
+    const profile = await getUserProfile(user.uid).catch(() => null);
+
+    // 6. Construct official Booking entity
     const booking: Booking = {
       bookingId,
       customerName: data.name,
       customerPhone: data.phone,
+      userId: user.uid,
+      customerEmail: user.email,
+      accountName: profile?.displayName || user.displayName || null,
       pickupName: data.pickupName,
       pickupAddress: data.pickupAddress || data.pickupName,
       pickupLat: data.pickupLat ?? null,
@@ -186,14 +207,19 @@ export async function POST(req: NextRequest) {
     // Save to Firestore and memory store
     await addBooking(booking);
 
-    // 6. Email "New Booking Request" to greensrentacab@gmail.com via Resend
-    try {
-      await sendNewBookingEmail(booking);
-    } catch (emailErr) {
-      console.warn('[POST /api/bookings] Email notification failed to dispatch:', emailErr);
+    // 7. Email the admin desk and the customer's receipt via Resend (never blocks the booking)
+    const [adminEmail, customerEmail] = await Promise.allSettled([
+      sendNewBookingEmail(booking),
+      booking.customerEmail ? sendCustomerBookingEmail(booking) : Promise.resolve(null),
+    ]);
+    if (adminEmail.status === 'rejected') {
+      console.warn('[POST /api/bookings] Admin email failed to dispatch:', adminEmail.reason);
+    }
+    if (customerEmail.status === 'rejected') {
+      console.warn('[POST /api/bookings] Customer email failed to dispatch:', customerEmail.reason);
     }
 
-    // 7. Return the generated ID and booking object
+    // 8. Return the generated ID and booking object
     return NextResponse.json(
       {
         success: true,
@@ -231,5 +257,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Booking not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ success: true, booking });
+  // Account identity stays private on this public, ID-only lookup
+  const { userId: _userId, customerEmail: _email, accountName: _accountName, ...publicBooking } = booking;
+  return NextResponse.json({ success: true, booking: publicBooking });
 }

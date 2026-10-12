@@ -6,11 +6,8 @@
  * and uses an in-memory reactive state in local development.
  */
 
-import { Booking, BookingStatus, Route, Vehicle, Enquiry, VehicleRates } from '@/lib/types';
+import { Booking, BookingStatus, Route, Vehicle, Enquiry, VehicleRates, UserProfile } from '@/lib/types';
 import { seedVehicles, seedRoutes, emptyRates } from '@/scripts/seed';
-
-// Live bookings store (empty by default; populated from Firestore or live submissions)
-let memoryBookings: Booking[] = [];
 
 let memoryEnquiries: Enquiry[] = [
   {
@@ -48,10 +45,16 @@ let memoryEnquiries: Enquiry[] = [
 const memoryGlobal = globalThis as unknown as {
   __icbRoutes?: Route[];
   __icbVehicles?: Vehicle[];
+  __icbBookings?: Booking[];
+  __icbUsers?: Map<string, UserProfile>;
 };
+// Live bookings store (empty by default; populated from Firestore or live submissions)
+memoryGlobal.__icbBookings ??= [];
+memoryGlobal.__icbUsers ??= new Map();
 memoryGlobal.__icbRoutes ??= [...seedRoutes];
 memoryGlobal.__icbVehicles ??= seedVehicles.map((v) => ({ ...v, rates: { ...emptyRates(), ...v.rates } }));
 let memoryRoutes: Route[] = memoryGlobal.__icbRoutes;
+const memoryBookings = (): Booking[] => memoryGlobal.__icbBookings!;
 let memoryVehicles: Vehicle[] = memoryGlobal.__icbVehicles;
 
 /**
@@ -94,7 +97,7 @@ const seedOrder = (id: string) => {
 };
 
 export async function fetchAllBookings(): Promise<Booking[]> {
-  if (!hasFirestore()) return memoryBookings;
+  if (!hasFirestore()) return memoryBookings();
 
   const adminDb = await getAdminDb();
   const snapshot = await adminDb.collection('bookings').orderBy('createdAt', 'desc').get();
@@ -103,7 +106,7 @@ export async function fetchAllBookings(): Promise<Booking[]> {
 
 export async function addBooking(booking: Booking): Promise<void> {
   if (!hasFirestore()) {
-    memoryBookings = [booking, ...memoryBookings.filter((b) => b.bookingId !== booking.bookingId)];
+    memoryGlobal.__icbBookings = [booking, ...memoryBookings().filter((b) => b.bookingId !== booking.bookingId)];
     return;
   }
 
@@ -116,10 +119,11 @@ export async function updateBookingInStore(
   updates: Partial<Booking>
 ): Promise<Booking | null> {
   if (!hasFirestore()) {
-    const index = memoryBookings.findIndex((b) => b.bookingId === bookingId);
+    const bookings = memoryBookings();
+    const index = bookings.findIndex((b) => b.bookingId === bookingId);
     if (index === -1) return null;
-    memoryBookings[index] = { ...memoryBookings[index], ...updates };
-    return memoryBookings[index];
+    bookings[index] = { ...bookings[index], ...updates };
+    return bookings[index];
   }
 
   const adminDb = await getAdminDb();
@@ -248,7 +252,7 @@ export async function toggleVehicleInStore(
 
 export async function getBookingById(bookingId: string): Promise<Booking | null> {
   if (!hasFirestore()) {
-    return memoryBookings.find((b) => b.bookingId.toLowerCase() === bookingId.toLowerCase()) || null;
+    return memoryBookings().find((b) => b.bookingId.toLowerCase() === bookingId.toLowerCase()) || null;
   }
 
   const adminDb = await getAdminDb();
@@ -275,3 +279,39 @@ export async function generateUniqueBookingId(): Promise<string> {
   return `ICB-${Date.now().toString().slice(-5)}`;
 }
 
+
+const byNewest = (a: Booking, b: Booking) =>
+  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+
+/**
+ * Bookings placed by one customer account (profile → My Bookings).
+ * Sorted in memory so Firestore needs no composite index.
+ */
+export async function fetchBookingsByUser(userId: string): Promise<Booking[]> {
+  if (!hasFirestore()) {
+    return memoryBookings().filter((b) => b.userId === userId).sort(byNewest);
+  }
+
+  const adminDb = await getAdminDb();
+  const snapshot = await adminDb.collection('bookings').where('userId', '==', userId).get();
+  return snapshot.docs.map((doc) => doc.data() as Booking).sort(byNewest);
+}
+
+export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+  if (!hasFirestore()) return memoryGlobal.__icbUsers!.get(uid) ?? null;
+
+  const adminDb = await getAdminDb();
+  const doc = await adminDb.collection('users').doc(uid).get();
+  return doc.exists ? (doc.data() as UserProfile) : null;
+}
+
+export async function saveUserProfile(profile: UserProfile): Promise<UserProfile> {
+  if (!hasFirestore()) {
+    memoryGlobal.__icbUsers!.set(profile.uid, profile);
+    return profile;
+  }
+
+  const adminDb = await getAdminDb();
+  await adminDb.collection('users').doc(profile.uid).set(profile, { merge: true });
+  return profile;
+}

@@ -4,9 +4,9 @@
  * StorefrontShell.tsx
  *
  * Wraps customer-facing pages with the design.md shell (§2.4): floating
- * HomeHeader, Footer, HomeDock (mobile quick actions + desktop WhatsApp FAB)
- * and the BookingFlowModal. /admin routes get an uninterrupted full-screen
- * console instead.
+ * HomeHeader, Footer, HomeDock (mobile quick actions + desktop WhatsApp FAB),
+ * the BookingFlowModal and the customer-account AuthDialog. /admin routes get
+ * an uninterrupted full-screen console instead.
  */
 
 import React from 'react';
@@ -15,7 +15,9 @@ import Footer from '@/components/Footer';
 import BookingFlowModal from '@/components/BookingFlowModal';
 import HomeHeader from '@/components/home/HomeHeader';
 import HomeDock from '@/components/home/HomeDock';
+import AuthDialog from '@/components/auth/AuthDialog';
 import { BookingFlowProvider } from '@/context/BookingFlowContext';
+import { AuthProvider } from '@/context/AuthContext';
 
 export default function StorefrontShell({
   children,
@@ -30,12 +32,15 @@ export default function StorefrontShell({
   }
 
   return (
-    <BookingFlowProvider>
-      <HomeHeader />
-      <main className="flex-1 bg-porcelain">{children}</main>
-      <Footer />
-      <HomeDock />
-      <BookingFlowModal />
-    </BookingFlowProvider>
+    <AuthProvider>
+      <BookingFlowProvider>
+        <HomeHeader />
+        <main className="flex-1 bg-porcelain">{children}</main>
+        <Footer />
+        <HomeDock />
+        <BookingFlowModal />
+        <AuthDialog />
+      </BookingFlowProvider>
+    </AuthProvider>
   );
 }

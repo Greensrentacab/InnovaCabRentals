@@ -135,23 +135,27 @@ export function HeroBand({ className }: { className?: string }) {
 
 const COPY: Record<HomeService, { title: string; lead: string }> = {
   airport: {
-    title: 'Innova Cab Rentals',
-    lead: 'Chauffeur-driven Innova, Crysta, Hycross & Ertiga — no advance.',
+    title: 'Innova Airport Taxi',
+    lead: 'Book Bangalore airport transfers with professional drivers and comfortable Ertiga, Innova, Crysta, and Hycross cabs. Reliable airport pickup and drop services.',
   },
   outstation: {
-    title: 'Outstation Cabs',
-    lead: 'Comfortable, safe round trips with professional chauffeurs.',
+    title: 'Innova Outstation Cabs',
+    lead: 'Book outstation round trips from Bangalore with professional drivers and comfortable Ertiga, Innova, Crysta, and Hycross cabs. Reliable trips to hill stations, temples and beyond.',
   },
   local: {
-    title: 'Local & Hourly Cabs',
-    lead: '8 hr, 12 hr or custom city rentals with a chauffeur.',
+    title: 'Innova Local & Hourly Cabs',
+    lead: 'Book local and hourly cab rentals in Bangalore with professional drivers and comfortable Ertiga, Innova, Crysta, and Hycross cabs. Flexible 8 hr, 12 hr and custom packages.',
   },
 };
 
 /** Hero heading that follows the tab. Server HTML always has the main (airport) heading for SEO. */
 export function HeroTitle() {
   const service = useHeroService();
-  return <>{COPY[service].title}</>;
+  return (
+    <>
+      {COPY[service].title} <span className="text-brand-700">Bangalore</span>
+    </>
+  );
 }
 
 export function HeroLead() {

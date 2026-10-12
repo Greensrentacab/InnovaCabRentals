@@ -9,7 +9,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { BreadcrumbJsonLd } from '@/components/seo/JsonLd';
-import { ArrowRight, ChevronRight, MapPin, MessageCircle, Phone, ShieldCheck, Star, Users } from 'lucide-react';
+import { ArrowRight, ChevronRight, MapPin, MessageCircle, Phone, ShieldCheck, Users, BadgeIndianRupee } from 'lucide-react';
 import PackageSelector from '@/components/PackageSelector';
 import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import FleetSection from '@/components/home/FleetSection';
@@ -181,8 +181,7 @@ export default function LandingTemplate({
 
             <ul className="mt-6 flex animate-fade-up flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-slate-600 [animation-delay:320ms]">
               <li className="flex items-center gap-1.5">
-                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                {siteConfig.trustClaims.googleRating.value}-Star Rated · {siteConfig.trustClaims.happyCustomers.value} customers
+                <BadgeIndianRupee className="h-4 w-4 text-brand-600" /> Transparent price
               </li>
               <li className="flex items-center gap-1.5">
                 <Users className="h-4 w-4 text-brand-600" /> Verified chauffeurs

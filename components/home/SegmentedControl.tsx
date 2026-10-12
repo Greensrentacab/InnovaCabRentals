@@ -43,7 +43,7 @@ export default function SegmentedControl<T extends string>({
     >
       <span
         aria-hidden="true"
-        className="absolute bottom-1 left-1 top-1 rounded-full bg-white shadow-[0_6px_16px_-6px_rgba(56,189,248,0.6)] ring-1 ring-sky-200 transition-transform duration-300 ease-[cubic-bezier(0.34,1.25,0.64,1)]"
+        className="absolute bottom-1 left-1 top-1 rounded-full bg-brand-600 shadow-[0_8px_18px_-6px_rgba(56,189,248,0.8)] ring-1 ring-sky-300 transition-transform duration-300 ease-[cubic-bezier(0.34,1.25,0.64,1)]"
         style={{
           width: `calc((100% - 8px - ${(n - 1) * 4}px) / ${n})`,
           transform: `translateX(calc(${activeIndex} * (100% + 4px)))`,
@@ -62,7 +62,7 @@ export default function SegmentedControl<T extends string>({
             className={cn(
               'relative min-w-0 flex-1 whitespace-nowrap rounded-full font-semibold transition-colors',
               size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-3 py-2 text-[13px]',
-              selected ? 'text-ink' : 'text-slate-500 hover:text-slate-800'
+              selected ? 'text-white' : 'text-slate-500 hover:text-slate-800'
             )}
           >
             <span className="relative flex items-center justify-center gap-1.5">

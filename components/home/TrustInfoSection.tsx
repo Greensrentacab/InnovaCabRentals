@@ -13,7 +13,7 @@ const trustPoints = [
   'Transparent pricing — no surge and no hidden charges',
   `Clear policy: ${siteConfig.policies.tolls.replace(/\.$/, '')}; outstation driver allowance is shown in your estimate`,
   `Registered business address: ${siteConfig.contact.address.full}`,
-  `${siteConfig.trustClaims.googleRating.value}★ Google rating from ${siteConfig.trustClaims.happyCustomers.value} customers`,
+  'Flight tracking for airport pickups, so delays never cost you extra',
 ];
 
 const bookingPoints = [

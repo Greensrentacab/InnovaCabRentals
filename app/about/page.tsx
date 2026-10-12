@@ -44,8 +44,8 @@ export default function AboutPage() {
 
   const stats = [
     { value: `${siteConfig.trustClaims.yearsExperience.value} yrs`, label: 'Industry legacy' },
-    { value: String(siteConfig.trustClaims.happyCustomers.value), label: 'Satisfied travelers' },
-    { value: `${siteConfig.trustClaims.googleRating.value}★`, label: 'Customer rating' },
+    { value: '₹0', label: 'Advance payment' },
+    { value: '4', label: 'Car models' },
     { value: '24/7', label: 'Always dispatched' },
   ];
 

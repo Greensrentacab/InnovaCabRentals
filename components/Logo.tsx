@@ -1,7 +1,7 @@
 /**
  * Logo.tsx
  *
- * Vector (inline SVG) wordmark for Innova Cabs Bangalore.
+ * Vector (inline SVG) wordmark for Innova Cab Rentals.
  * Stacked lockup: INNOVA (white) / CABS (orange) / BANGALORE (gray, letter-spaced).
  *
  * Rendered inline (not as an <img>) so it stays crisp at any size, inherits no
@@ -21,7 +21,7 @@ interface LogoProps {
 export default function Logo({
   variant = 'mark',
   className,
-  title = 'Innova Cabs Bangalore',
+  title = 'Innova Cab Rentals',
 }: LogoProps) {
   const content = (
     <>

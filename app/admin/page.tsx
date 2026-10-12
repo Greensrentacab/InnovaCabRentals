@@ -3,7 +3,7 @@
 /**
  * app/admin/page.tsx
  * 
- * Master Operations & Dispatch Console for Innova Cabs Bangalore.
+ * Master Operations & Dispatch Console for Innova Cab Rentals.
  * Handles:
  * - Real-time Booking Approval & Chauffeur Assignment
  * - Direct WhatsApp (wa.me) & Phone Customer Communication

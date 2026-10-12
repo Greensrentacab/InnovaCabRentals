@@ -13,7 +13,7 @@ import { formatTime12 } from '@/lib/time';
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const adminEmail = process.env.ADMIN_EMAIL || 'greensrentacab@gmail.com';
-const fromEmail = process.env.NOTIFICATION_EMAIL_FROM || 'Innova Cabs Bangalore <onboarding@resend.dev>';
+const fromEmail = process.env.NOTIFICATION_EMAIL_FROM || 'Innova Cab Rentals <onboarding@resend.dev>';
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
@@ -22,7 +22,7 @@ export async function sendNewBookingEmail(booking: Booking): Promise<{ success: 
   const cleanPhone = booking.customerPhone.replace(/\D/g, '');
   const waNumber = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
   const adminWaConfirmUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
-    `Hello ${booking.customerName},\n\nThis is Innova Cabs Bangalore regarding your booking #${booking.bookingId} for ${booking.pickupName} to ${booking.dropName}. We are pleased to confirm your vehicle!`
+    `Hello ${booking.customerName},\n\nThis is Innova Cab Rentals regarding your booking #${booking.bookingId} for ${booking.pickupName} to ${booking.dropName}. We are pleased to confirm your vehicle!`
   )}`;
 
   const htmlContent = `
@@ -53,7 +53,7 @@ export async function sendNewBookingEmail(booking: Booking): Promise<{ success: 
           <div class="header">
             <span class="badge">Status: PENDING Approval</span>
             <h1 class="title">New Booking Request #${booking.bookingId}</h1>
-            <p style="margin: 4px 0 0; font-size: 13px; color: #cbd5e1;">Innova Cabs Bangalore Dispatch Notification</p>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #cbd5e1;">Innova Cab Rentals Dispatch Notification</p>
           </div>
           <div class="content">
             <div class="card">

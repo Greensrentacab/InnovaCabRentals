@@ -65,7 +65,7 @@ export default async function OutstationCabsPage() {
       title="Outstation Innova Cabs from Bangalore"
       subtitle="Chauffeur-driven Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga rentals for scenic weekend getaways, family pilgrimages, and outstation holiday tours across South India."
       heroNotice="Verified Highway Chauffeurs • 300km/Day Minimum Allowance"
-      benefitsTitle="Why Travel Outstation with Innova Cabs Bangalore"
+      benefitsTitle="Why Travel Outstation with Innova Cab Rentals"
       benefitsSubtitle="Enjoy unmatched highway reliability, safety, and scenic road trip freedom."
       benefits={benefits}
       routesTitle="Top Outstation Destinations from Bangalore"

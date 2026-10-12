@@ -1,5 +1,5 @@
 /**
- * Firestore Database Seeder for Innova Cabs Bangalore
+ * Firestore Database Seeder for Innova Cab Rentals
  *
  * Sourced from PROJECT_CONTEXT.md.
  * Populates Firestore with:

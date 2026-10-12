@@ -3,17 +3,14 @@ import Link from 'next/link';
 import {
   ArrowRight,
   CalendarCheck,
-  Hourglass,
   Luggage,
   MessageCircle,
-  Mountain,
   Phone,
-  Plane,
   Radar,
   ShieldCheck,
   Star,
   Users,
-  Wallet,
+  BadgeIndianRupee,
 } from 'lucide-react';
 import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import ServicesSection from '@/components/home/ServicesSection';
@@ -71,7 +68,7 @@ const whyChooseUs = [
 
 const homeFaqs = [
   {
-    q: 'How do I book a cab with Innova Cabs Bangalore?',
+    q: 'How do I book a cab with Innova Cab Rentals?',
     a: 'Enter your trip in the booking widget above and tap "See Fares & Available Innovas". Pick a car and send the details to us on WhatsApp, or submit a booking request — our dispatch team confirms with driver details. You can also call us directly.',
   },
   {
@@ -118,17 +115,12 @@ export default async function HomePage() {
 
   const stats = [
     { value: `${siteConfig.trustClaims.yearsExperience.value} yrs`, label: 'Of premium Innova rentals' },
-    { value: String(siteConfig.trustClaims.happyCustomers.value), label: 'Happy customers' },
-    { value: `${siteConfig.trustClaims.googleRating.value}★`, label: 'Google rating' },
+    { value: '₹0', label: 'Advance payment' },
+    { value: '4', label: 'Car models to choose from' },
     { value: '24/7', label: 'Booking & dispatch' },
   ];
   const testimonials = siteConfig.testimonials;
 
-  const heroPills = [
-    { label: 'Airport', icon: Plane, service: 'airport' as const },
-    { label: 'Outstation', icon: Mountain, service: 'outstation' as const },
-    { label: 'Local & hourly', icon: Hourglass, service: 'local' as const },
-  ];
 
   return (
     <div className="ds-scope bg-porcelain">
@@ -142,78 +134,47 @@ export default async function HomePage() {
         <link rel="preload" as="image" href="/images/hero/hero-airport-960.webp" media="(max-width: 1023px)" />
         <link rel="preload" as="image" href="/images/hero/hero-airport-1920.webp" media="(min-width: 1024px)" />
         <HeroBackdrop className="-z-10 hidden lg:inset-x-0 lg:top-0 lg:block lg:aspect-[1920/1071]" />
-        {/* Mobile/tablet: picture band behind the header + heading, car bottom-right */}
-        <HeroBand className="inset-x-0 top-0 -z-10 h-[584px] sm:h-[740px] lg:hidden" />
 
         {/* Desktop: copy + widget stacked in a left column so the car stays visible on the right */}
         <div className="section grid items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,540px)_1fr] lg:gap-0">
           <div className="relative min-w-0 pt-2 lg:col-start-1 [text-shadow:0_1px_12px_rgba(255,255,255,0.95)] lg:pt-4">
-            <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-live-500/20 bg-white/80 px-3 py-1.5 text-xs font-bold text-live-600 shadow-sm backdrop-blur-md">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-live-500" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-live-500" />
-              </span>
-              Booking open now · 24 hours
-            </span>
+            {/* Mobile/tablet: picture band sized to the copy, car bottom-right */}
+            <div className="relative">
+              <HeroBand className="-inset-x-4 -top-28 bottom-0 -z-10 sm:-inset-x-6 sm:-top-36 lg:hidden" />
 
-            <h1 className="text-balance mt-4 animate-fade-up sm:mt-6 text-[1.95rem] font-extrabold leading-[1.05] tracking-tight text-ink [animation-delay:80ms] sm:text-5xl lg:text-[3.5rem]">
-              <HeroTitle /> <span className="block text-brand-700">in Bangalore</span>
-            </h1>
-
-            <p className="mt-3 max-w-[78%] animate-fade-up text-base sm:mt-5 sm:max-w-xl font-semibold leading-relaxed text-slate-700 [animation-delay:160ms] sm:text-lg">
-              <HeroLead />
-            </p>
-
-            <ul className="mt-4 flex animate-fade-up flex-wrap gap-1.5 [animation-delay:240ms] sm:mt-6 sm:gap-2">
-              {heroPills.map(({ label, icon: Icon, service }) => (
-                <li key={label}>
-                  <BookButton
-                    service={service}
-                    className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-sky-200 bg-white px-2.5 py-2 text-[12.5px] font-bold text-ink shadow-[0_8px_20px_-8px_rgba(56,189,248,0.7)] transition hover:-translate-y-0.5 hover:border-brand-300 hover:text-brand-700 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
-                  >
-                    <Icon className="h-3.5 w-3.5 text-brand-600 sm:h-4 sm:w-4" /> {label}
-                  </BookButton>
-                </li>
-              ))}
-            </ul>
-
-            <p className="mt-8 hidden animate-fade-up flex-wrap items-baseline gap-x-3 gap-y-1 [animation-delay:320ms]">
-              <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
-                {airportFrom ? 'Airport transfers from' : 'Airport transfers'}
-              </span>
-              {airportFrom ? (
-                <>
-                  <span className="text-4xl font-extrabold tracking-tight text-ink">{formatINR(airportFrom)}</span>
-                  <span className="text-sm text-slate-500">fixed, not metered</span>
-                </>
-              ) : (
-                <span className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">Fare quoted upfront · no meter</span>
-              )}
-            </p>
-
-            {/* Mobile/tablet: room for the car in the picture band */}
-            <div className="h-[205px] sm:h-[290px] lg:hidden" aria-hidden="true" />
-
-            {/* Trust strip — compact single row on mobile */}
-            <ul className="mt-4 grid animate-fade-up grid-cols-[1.25fr_1fr_1fr] divide-x divide-amber-200/70 rounded-2xl border border-amber-200/70 bg-amber-50/80 py-2 text-[11px] font-semibold leading-tight text-slate-700 shadow-sm backdrop-blur [animation-delay:400ms] sm:text-sm lg:mt-6 lg:flex lg:flex-wrap lg:gap-x-6 lg:gap-y-2 lg:divide-x-0 lg:border-0 lg:bg-transparent lg:py-0 lg:shadow-none lg:backdrop-blur-none">
-              <li className="flex items-center gap-1.5 px-2.5 lg:px-0">
-                <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" />
-                <span>
-                  {siteConfig.trustClaims.googleRating.value}-Star Rated
-                  <span className="block font-medium text-slate-500 sm:inline lg:text-slate-600"> · {siteConfig.trustClaims.happyCustomers.value} customers</span>
+              <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-live-500/20 bg-white/80 px-3 py-1.5 text-xs font-bold text-live-600 shadow-sm backdrop-blur-md">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-live-500" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-live-500" />
                 </span>
+                Booking open now · 24 hours
+              </span>
+
+              {/* Heading + subheading follow the selected tab (server HTML = Airport Taxi, the SEO default) */}
+              <h1 className="text-balance mt-4 animate-fade-up text-[1.9rem] font-extrabold leading-[1.08] tracking-tight text-ink [animation-delay:80ms] sm:mt-6 sm:text-5xl lg:text-[3.25rem]">
+                <HeroTitle />
+              </h1>
+
+              <p className="mt-3 max-w-xl animate-fade-up text-[15px] font-semibold leading-relaxed text-slate-700 [animation-delay:160ms] sm:mt-5 sm:text-lg">
+                <HeroLead />
+              </p>
+
+              {/* Mobile/tablet: room for the car in the picture band */}
+              <div className="h-[290px] sm:h-[380px] lg:hidden" aria-hidden="true" />
+            </div>
+
+            {/* Trust strip */}
+            <ul className="mt-4 grid animate-fade-up grid-cols-3 divide-x divide-amber-200/70 rounded-2xl border border-amber-200/70 bg-amber-50/80 py-2.5 text-[11px] font-semibold leading-tight text-slate-700 shadow-sm backdrop-blur [animation-delay:400ms] sm:text-sm lg:mt-6 lg:flex lg:flex-wrap lg:gap-x-6 lg:gap-y-2 lg:divide-x-0 lg:border-0 lg:bg-transparent lg:py-0 lg:shadow-none lg:backdrop-blur-none">
+              <li className="flex items-center justify-center gap-1.5 px-2 lg:justify-start lg:px-0">
+                <ShieldCheck className="h-4 w-4 shrink-0 text-live-600" /> Verified drivers
               </li>
-              <li className="flex items-center gap-1.5 px-2.5 lg:px-0">
-                <ShieldCheck className="h-4 w-4 shrink-0 text-live-600" /> Verified chauffeurs
+              <li className="flex items-center justify-center gap-1.5 px-2 lg:justify-start lg:px-0">
+                <Radar className="h-4 w-4 shrink-0 text-brand-600" /> Flight tracking
               </li>
-              <li className="flex items-center gap-1.5 px-2.5 lg:px-0">
-                <Radar className="h-4 w-4 shrink-0 text-brand-600" /> Flight tracked
-              </li>
-              <li className="hidden items-center gap-1.5 lg:flex">
-                <Wallet className="h-4 w-4 shrink-0 text-brand-600" /> UPI, cards &amp; cash accepted
+              <li className="flex items-center justify-center gap-1.5 px-2 lg:justify-start lg:px-0">
+                <BadgeIndianRupee className="h-4 w-4 shrink-0 text-brand-600" /> Transparent price
               </li>
             </ul>
-
           </div>
 
           <div className="min-w-0 lg:col-start-1 lg:mt-6">
@@ -279,7 +240,7 @@ export default async function HomePage() {
               <div>
                 <span className="eyebrow">Why travellers choose us</span>
                 <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
-                  Trusted by {siteConfig.trustClaims.happyCustomers.value} customers
+                  Comfortable cars. Reliable journeys.
                 </h2>
                 <p className="mt-3 text-slate-600">
                   {siteConfig.brand.closingLine} Fares are shared upfront and never change at the end of the trip.

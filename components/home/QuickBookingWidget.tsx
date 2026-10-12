@@ -558,7 +558,7 @@ export default function QuickBookingWidget({
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-extrabold tracking-tight text-ink">Quick Fare Estimate</h2>
-          <p className="text-xs font-medium text-slate-500">Instant estimate · Pay after the trip</p>
+          <p className="text-xs font-medium text-slate-500">Know your fare before you book</p>
         </div>
         <span className="chip-live">
           <span className="h-1.5 w-1.5 rounded-full bg-live-500" /> Live
@@ -569,7 +569,7 @@ export default function QuickBookingWidget({
       <div role="tablist" aria-label="Service" className="relative mb-4 grid grid-cols-3 gap-1 rounded-2xl bg-slate-100/80 p-1">
         <span
           aria-hidden="true"
-          className="absolute bottom-1 left-1 top-1 rounded-xl bg-white shadow-[0_6px_18px_-6px_rgba(56,189,248,0.6)] ring-1 ring-sky-200 transition-transform duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
+          className="absolute bottom-1 left-1 top-1 rounded-xl bg-brand-600 shadow-[0_8px_20px_-6px_rgba(56,189,248,0.8)] ring-1 ring-sky-300 transition-transform duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
           style={{
             width: 'calc((100% - 16px) / 3)',
             transform: `translateX(calc(${activeTabIndex} * (100% + 4px)))`,
@@ -587,7 +587,7 @@ export default function QuickBookingWidget({
               onClick={() => switchService(tab.value)}
               className={cn(
                 'relative flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 text-xs font-bold transition-colors sm:flex-row sm:justify-center sm:text-[13px]',
-                selected ? 'text-brand-700' : 'text-slate-500 hover:text-slate-800'
+                selected ? 'text-white' : 'text-slate-500 hover:text-slate-800'
               )}
             >
               <Icon className="relative h-4 w-4" />
@@ -718,7 +718,7 @@ export default function QuickBookingWidget({
                       }}
                       className={cn(
                         'flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200/80 bg-white py-1.5 pl-1.5 pr-3 text-left transition hover:border-brand-300',
-                        selected && 'border-brand-400 bg-brand-50 ring-2 ring-brand-500/15'
+                        selected && 'border-brand-600 bg-brand-600 shadow-[0_8px_18px_-6px_rgba(56,189,248,0.8)]'
                       )}
                     >
                       {d.photo && (
@@ -726,10 +726,10 @@ export default function QuickBookingWidget({
                         <img src={d.photo} alt="" width={40} height={40} loading="lazy" decoding="async" className="h-9 w-9 shrink-0 rounded-xl object-cover" />
                       )}
                       <span className="leading-tight">
-                        <span className={cn('block whitespace-nowrap text-xs font-bold', selected ? 'text-brand-700' : 'text-ink')}>
+                        <span className={cn('block whitespace-nowrap text-xs font-bold', selected ? 'text-white' : 'text-ink')}>
                           {d.destination.split(' (')[0].split(' / ')[0]}
                         </span>
-                        <span className="block text-[11px] font-medium text-slate-400">{d.distanceKm} km</span>
+                        <span className={cn('block text-[11px] font-medium', selected ? 'text-sky-100' : 'text-slate-400')}>{d.distanceKm} km</span>
                       </span>
                     </button>
                   );
@@ -762,7 +762,7 @@ export default function QuickBookingWidget({
                     className={cn(
                       'relative rounded-2xl border px-2.5 py-2.5 text-left transition-all',
                       selected
-                        ? 'border-brand-500 bg-brand-50 ring-4 ring-brand-500/10'
+                        ? 'border-brand-600 bg-brand-600 shadow-[0_10px_22px_-8px_rgba(56,189,248,0.85)]'
                         : 'border-slate-200/80 bg-white hover:border-brand-300'
                     )}
                   >
@@ -770,16 +770,16 @@ export default function QuickBookingWidget({
                       aria-hidden="true"
                       className={cn(
                         'absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full border-2',
-                        selected ? 'border-brand-600' : 'border-slate-300'
+                        selected ? 'border-white' : 'border-slate-300'
                       )}
                     >
-                      {selected && <span className="h-2 w-2 rounded-full bg-brand-600" />}
+                      {selected && <span className="h-2 w-2 rounded-full bg-white" />}
                     </span>
-                    <span className="block pr-5 text-[13px] font-extrabold text-ink">{pkg.label}</span>
-                    <span className="block text-[11px] font-semibold text-slate-500">{pkg.meta}</span>
+                    <span className={cn('block pr-5 text-[13px] font-extrabold', selected ? 'text-white' : 'text-ink')}>{pkg.label}</span>
+                    <span className={cn('block text-[11px] font-semibold', selected ? 'text-sky-100' : 'text-slate-500')}>{pkg.meta}</span>
                     {/* Price shown only once set in Admin → Pricing */}
                     {pkg.fareLabel !== 'On request' && (
-                      <span className="mt-1 block text-[11px] font-bold text-brand-700">{pkg.fareLabel}</span>
+                      <span className={cn('mt-1 block text-[11px] font-bold', selected ? 'text-white' : 'text-brand-700')}>{pkg.fareLabel}</span>
                     )}
                   </button>
                 );

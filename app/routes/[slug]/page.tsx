@@ -513,7 +513,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
           <div className="card-float p-6 sm:p-10">
             <SectionHeading
               eyebrow="Highway excellence"
-              title={`Why Book ${customDetails.h1} with Innova Cabs Bangalore`}
+              title={`Why Book ${customDetails.h1} with ${siteConfig.brand.name}`}
               subtitle="We ensure every kilometer of your highway trip is relaxing, punctual, and safe."
               centered={false}
             />

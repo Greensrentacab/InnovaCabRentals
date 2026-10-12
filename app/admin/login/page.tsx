@@ -3,7 +3,7 @@
 /**
  * app/admin/login/page.tsx
  *
- * Admin Authentication portal for Innova Cabs Bangalore (design.md tokens:
+ * Admin Authentication portal for Innova Cab Rentals (design.md tokens:
  * glass-strong card, .field/.label, btn-primary). Auth logic unchanged.
  * Official Admin Email: greensrentacab@gmail.com
  */

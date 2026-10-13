@@ -107,6 +107,7 @@ export default function AdminDashboardPage() {
   const [navOpen, setNavOpen] = useState(false);
   const [now, setNow] = useState<Date | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   // Bookings filter & search
   const [bookingSearch, setBookingSearch] = useState('');
@@ -154,9 +155,10 @@ export default function AdminDashboardPage() {
     async function init() {
       const isAuth = await verifyAdminSession();
       if (!isAuth) {
-        router.push('/admin/login');
+        router.replace('/admin/login');
         return;
       }
+      setAuthChecked(true);
       loadData();
     }
     init();
@@ -448,6 +450,16 @@ export default function AdminDashboardPage() {
       </div>
     </div>
   );
+
+  // Render nothing until the session is verified, so signed-out visitors never see the console
+  if (!authChecked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F3F5FA]" aria-busy="true">
+        <span className="h-8 w-8 animate-spin rounded-full border-[3px] border-brand-600 border-t-transparent" />
+        <span className="sr-only">Checking session…</span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F3F5FA] lg:pl-64">

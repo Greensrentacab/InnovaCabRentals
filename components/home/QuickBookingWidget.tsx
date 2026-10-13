@@ -18,7 +18,6 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   ArrowLeftRight,
   ArrowDownUp,
@@ -147,6 +146,7 @@ function LocationTrigger({
           <button
             type="button"
             role="combobox"
+            data-location-trigger
             aria-expanded={false}
             aria-invalid={!!error}
             aria-label={`${label}: ${value?.name ?? placeholder}`}
@@ -212,6 +212,7 @@ function LocationTrigger({
         <button
           type="button"
           role="combobox"
+          data-location-trigger
           aria-expanded={false}
           aria-invalid={!!error}
           onClick={onOpen}
@@ -313,7 +314,6 @@ export default function QuickBookingWidget({
   const [date, setDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
   const [time, setTime] = useState(DEFAULT_TIME);
-  const [portalReady, setPortalReady] = useState(false);
 
   useEffect(() => {
     const current = new Date();
@@ -321,7 +321,6 @@ export default function QuickBookingWidget({
     setDate(toDateKey(addDays(current, 1))); // tomorrow
     setReturnDate(toDateKey(addDays(current, 2))); // day after tomorrow
     setTime(DEFAULT_TIME); // 9:00 AM
-    setPortalReady(true);
   }, []);
 
   // Other homepage surfaces can preselect a tab (scrollToBook('outstation'))
@@ -434,6 +433,25 @@ export default function QuickBookingWidget({
     setActiveModal(null);
   };
 
+  // Location search as an inline dropdown under the field that opened it
+  const locationDropdown = (show: boolean) =>
+    show && activeModal ? (
+      <LocationAutocompleteModal
+        key={JSON.stringify(activeModal) + service}
+        variant="dropdown"
+        isOpen
+        onClose={handleModalClose}
+        title={modalTitle}
+        placeholder={
+          activeModal.kind === 'drop' && service === 'outstation'
+            ? 'Search a city, place, address or pincode...'
+            : 'Search area, landmark, street or pincode...'
+        }
+        initialValue={modalValue?.name || ''}
+        onSelect={handleModalSelect}
+      />
+    ) : null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -509,27 +527,36 @@ export default function QuickBookingWidget({
   };
 
   const airportRow = (
-    <div className="field flex h-full min-h-[76px] min-w-0 flex-col justify-start gap-1 border-brand-100 bg-brand-50/70 px-3 py-2.5">
+    <div className="field flex h-full min-h-[76px] min-w-0 flex-col justify-start gap-1.5 border-brand-100 bg-brand-50/70 px-2 py-2.5 sm:px-3">
       <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">
         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
           <Plane className="h-3 w-3" />
         </span>
         {airportFirst ? 'Pickup' : 'Drop'}
       </span>
-      <span className="truncate text-[13px] font-bold text-ink" title="Kempegowda Intl. Airport (BLR)">
-        BLR Airport
+      {/* "BLR Airport" with the terminal choice beside it */}
+      <span className="flex min-w-0 items-center justify-between gap-1">
+        <span className="whitespace-nowrap text-[12px] font-bold text-ink min-[400px]:text-[13px]" title="Kempegowda Intl. Airport (BLR)">
+          BLR Airport
+        </span>
+        <span role="radiogroup" aria-label="Terminal" className="flex shrink-0 rounded-full border border-slate-200/80 bg-white p-0.5">
+          {(['T1', 'T2'] as Terminal[]).map((t) => (
+            <button
+              key={t}
+              type="button"
+              role="radio"
+              aria-checked={terminal === t}
+              onClick={() => setTerminal(t)}
+              className={cn(
+                'rounded-full px-[5px] py-0.5 text-[10.5px] font-bold leading-none transition sm:px-2 sm:text-[11px]',
+                terminal === t ? 'bg-brand-600 text-white shadow-[0_4px_10px_-3px_rgba(56,189,248,0.8)]' : 'text-slate-500 hover:text-slate-800'
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </span>
       </span>
-      <SegmentedControl
-        size="sm"
-        ariaLabel="Terminal"
-        className="w-[84px] shrink-0"
-        value={terminal}
-        onChange={setTerminal}
-        options={[
-          { value: 'T1', label: 'T1' },
-          { value: 'T2', label: 'T2' },
-        ]}
-      />
     </div>
   );
 
@@ -598,7 +625,7 @@ export default function QuickBookingWidget({
       </div>
 
       {/* Service panel */}
-      <div key={service} role="tabpanel" className="animate-panel-in space-y-3">
+      <div key={service} role="tabpanel" className="relative z-20 animate-panel-in space-y-3">
         {service === 'airport' && (
           <>
             <SegmentedControl
@@ -635,6 +662,7 @@ export default function QuickBookingWidget({
                   setErrors({});
                 }}
               />
+              {locationDropdown(activeModal?.kind === 'city')}
             </div>
           </>
         )}
@@ -668,6 +696,7 @@ export default function QuickBookingWidget({
                 }}
               />
               <SwapButton horizontal label="Swap pickup and destination" onClick={swapOutstation} />
+              {locationDropdown(activeModal?.kind === 'pickup' || activeModal?.kind === 'drop')}
             </div>
 
             {outStops.some(Boolean) && (
@@ -688,7 +717,8 @@ export default function QuickBookingWidget({
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-2">
+            <div className="relative flex items-center justify-between gap-2">
+              {locationDropdown(activeModal?.kind === 'stop')}
               <button
                 type="button"
                 onClick={addStop}
@@ -741,14 +771,17 @@ export default function QuickBookingWidget({
 
         {service === 'local' && (
           <>
-            <LocationTrigger
-              value={cityLocation}
-              tone="pickup"
-              placeholder="Pickup address or pincode in Bangalore"
-              error={errors.pickup}
-              onOpen={() => setActiveModal({ kind: 'city' })}
-              onClear={() => setCityLocation(null)}
-            />
+            <div className="relative">
+              <LocationTrigger
+                value={cityLocation}
+                tone="pickup"
+                placeholder="Pickup address or pincode in Bangalore"
+                error={errors.pickup}
+                onOpen={() => setActiveModal({ kind: 'city' })}
+                onClear={() => setCityLocation(null)}
+              />
+              {locationDropdown(activeModal?.kind === 'city')}
+            </div>
             <div role="radiogroup" aria-label="Local package" className="grid grid-cols-3 gap-2">
               {localPackages.map((pkg) => {
                 const selected = pkg.id === selectedPackage?.id;
@@ -866,23 +899,6 @@ export default function QuickBookingWidget({
         </span>
       </div>
 
-      {/* Google Places picker, portalled so the hero's stacking context can't trap it */}
-      {portalReady &&
-        createPortal(
-          <LocationAutocompleteModal
-            isOpen={activeModal !== null}
-            onClose={handleModalClose}
-            title={modalTitle}
-            placeholder={
-              activeModal?.kind === 'drop' && service === 'outstation'
-                ? 'Search a city, place, address or pincode...'
-                : 'Search area, landmark, street or pincode...'
-            }
-            initialValue={modalValue?.name || ''}
-            onSelect={handleModalSelect}
-          />,
-          document.body
-        )}
     </form>
   );
 }

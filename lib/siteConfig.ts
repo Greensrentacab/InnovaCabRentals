@@ -24,6 +24,8 @@ export interface Testimonial {
 export const siteConfig = {
   brand: {
     name: 'Innova Cab Rentals',
+    /** Text beside the logo in the site header (client request) */
+    headerName: 'Innova Cabs Bangalore',
     tagline: 'Innova, Innova Crysta, Hycross & Ertiga cab rental in Bangalore',
     closingLine: 'Comfortable Cars. Experienced Drivers. Reliable Journeys.',
   },

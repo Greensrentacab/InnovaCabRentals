@@ -68,6 +68,16 @@ export default function FleetSection({ vehicles }: { vehicles: FleetCardData[] }
                   </span>
                 </Link>
               )}
+              {v.photo && !v.photo.own && v.photo.sourceUrl && (
+                <a
+                  href={v.photo.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-5 pt-2 text-[10px] text-slate-400 hover:text-brand-700 sm:px-6"
+                >
+                  Representative photo: {v.photo.author} / Wikimedia Commons, {v.photo.license}
+                </a>
+              )}
               <div className="flex flex-1 flex-col p-5 sm:p-6">
               <p className="w-fit rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-brand-700">{v.type}</p>
               <h3 className="mt-2 text-xl font-extrabold tracking-tight sm:text-2xl">{v.name}</h3>

@@ -169,6 +169,7 @@ export default function ContactEnquiryForm() {
                 <option value="Toyota Innova (7/8 Seater)">Toyota Innova (7/8 Seater)</option>
                 <option value="Toyota Innova Crysta">Toyota Innova Crysta (Luxury)</option>
                 <option value="Toyota Innova Hycross">Toyota Innova Hycross (Hybrid)</option>
+                <option value="Maruti Suzuki Ertiga">Maruti Suzuki Ertiga (6+1 Seater)</option>
               </select>
             </div>
           </div>
@@ -225,7 +226,7 @@ export default function ContactEnquiryForm() {
                 </>
               ) : (
                 <>
-                  Submit Request (Status: PENDING)
+                  Submit Request
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </>
               )}

@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { Check, Clock, MessageCircle, Navigation, Phone } from 'lucide-react';
 import { LocalPackage, Vehicle } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
+import { cn } from '@/lib/cn';
 import SegmentedControl from '@/components/home/SegmentedControl';
 
 interface PackageSelectorProps {
@@ -41,16 +42,33 @@ export default function PackageSelector({ packages, vehicles }: PackageSelectorP
             { value: 'point-to-point', label: 'Point-to-Point', icon: Navigation },
           ]}
         />
-        {activeTab === 'packages' && vehicles.length > 1 && (
-          <SegmentedControl
-            ariaLabel="Vehicle"
-            className="w-full max-w-sm"
-            value={selectedVehicle}
-            onChange={setSelectedVehicle}
-            options={vehicles.map((v) => ({ value: v.id, label: v.name.replace('Toyota ', '') }))}
-          />
-        )}
       </div>
+
+      {/* Car choice: wrapping chips so four names never overlap */}
+      {activeTab === 'packages' && vehicles.length > 1 && (
+        <div role="radiogroup" aria-label="Vehicle" className="mx-auto mt-4 grid max-w-2xl grid-cols-2 gap-2 sm:grid-cols-4">
+          {vehicles.map((v) => {
+            const on = v.id === selectedVehicle;
+            return (
+              <button
+                key={v.id}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                onClick={() => setSelectedVehicle(v.id)}
+                className={cn(
+                  'rounded-full border px-3 py-2 text-[13px] font-semibold leading-tight transition',
+                  on
+                    ? 'border-brand-600 bg-brand-600 text-white shadow-[0_8px_18px_-6px_rgba(56,189,248,0.8)]'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:text-brand-700'
+                )}
+              >
+                {v.name.replace(/^(Toyota|Maruti Suzuki) /, '')}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {activeTab === 'packages' ? (
         <div key="packages" className="mt-10 grid animate-panel-in gap-5 md:grid-cols-3">

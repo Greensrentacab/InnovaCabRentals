@@ -7,9 +7,8 @@
  *   Outstation → Toyota Innova on a hill highway
  *   Local      → Innova Crysta at Vidhana Soudha, Bangalore
  * AI-generated scenes supplied by the client. Shown clear — no wash over the car.
- *   HeroBackdrop: desktop, whole picture across the top of the hero (car on the right).
- *   HeroBand:     mobile/tablet, picture behind the heading with the car bottom-right.
- * Each variant only loads its pictures at its own screen width.
+ *   HeroBand: picture behind the heading with the car bottom-right (all sizes);
+ *   the booking form sits beside it on desktop.
  */
 
 import { useEffect, useState } from 'react';
@@ -58,42 +57,27 @@ function useHeroService() {
   return service;
 }
 
-/** true ≥1024px, false below, null until known (so nothing loads twice). */
-function useIsDesktop() {
-  const [wide, setWide] = useState<boolean | null>(null);
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)');
-    const update = () => setWide(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-  return wide;
-}
-
-function SceneImages({ service, desktop, imgClass }: { service: HomeService; desktop?: boolean; imgClass?: string }) {
+function SceneImages({ service, only }: { service: HomeService; only?: HomeService }) {
   return (
     <>
-      {ORDER.map((key) => {
+      {ORDER.filter((key) => !only || key === only).map((key) => {
         const s = SCENES[key];
         const on = key === service;
         return (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={key}
-            src={srcFor(s, desktop ? 1920 : 960)}
+            src={srcFor(s, 960)}
             srcSet={`${srcFor(s, 960)} 960w, ${srcFor(s, 1920)} 1920w`}
-            sizes="100vw"
+            sizes="(min-width: 1024px) 60vw, 160vw"
             alt={on ? s.alt : ''}
             aria-hidden={!on}
             width={1920}
             height={1071}
-            fetchPriority={key === 'airport' ? 'high' : 'low'}
+            fetchPriority={key === service ? 'high' : 'low'}
             decoding="async"
-            style={desktop ? { objectPosition: s.pos } : undefined}
             className={cn(
-              imgClass ?? 'absolute inset-0 h-full w-full object-cover',
-              'transition-opacity duration-700 ease-premium',
+              'absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-premium',
               on ? 'opacity-100' : 'opacity-0'
             )}
           />
@@ -103,32 +87,21 @@ function SceneImages({ service, desktop, imgClass }: { service: HomeService; des
   );
 }
 
-/** Desktop: full-bleed picture behind the hero. Light only behind the copy on the left. */
-export function HeroBackdrop({ className }: { className?: string }) {
-  const service = useHeroService();
-  const wide = useIsDesktop();
-  return (
-    <div className={cn('pointer-events-none absolute overflow-hidden bg-sky-100', className)}>
-      {wide === true && <SceneImages service={service} desktop />}
-      <div className="absolute inset-y-0 left-0 w-[46%] bg-gradient-to-r from-white/80 via-white/45 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-porcelain" />
-    </div>
-  );
-}
-
 /**
- * Mobile/tablet band behind the header and heading: soft sky on top for the
- * text, the picture anchored bottom-right so the car shows clearly below it.
+ * Picture band behind the hero copy (all screen sizes): soft sky on top for
+ * the text, the picture anchored bottom-right so the car shows clearly below
+ * it. On the homepage it follows the booking tab; landing pages pass `scene`.
  */
-export function HeroBand({ className }: { className?: string }) {
-  const service = useHeroService();
-  const wide = useIsDesktop();
+export function HeroBand({ className, scene }: { className?: string; scene?: HomeService }) {
+  const tab = useHeroService();
+  const service = scene ?? tab;
   return (
     <div className={cn('pointer-events-none absolute overflow-hidden bg-gradient-to-b from-sky-100 via-sky-50 to-sky-100', className)}>
-      <div className="absolute bottom-0 right-0 aspect-[1920/1071] w-[160%] max-w-none [mask-image:linear-gradient(to_bottom,transparent,#000_30%)] sm:w-[110%]">
-        {wide === false && <SceneImages service={service} />}
+      <div className="absolute bottom-0 right-0 aspect-[1920/1071] w-[160%] max-w-none [mask-image:linear-gradient(to_bottom,transparent,#000_30%)] sm:w-[110%] lg:w-full lg:[mask-image:linear-gradient(to_bottom,transparent,#000_28%)]">
+        <SceneImages service={service} only={scene} />
       </div>
       <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-b from-transparent to-porcelain" />
+      <div className="absolute inset-y-0 right-0 hidden w-16 bg-gradient-to-r from-transparent to-porcelain lg:block" />
     </div>
   );
 }

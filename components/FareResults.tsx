@@ -16,7 +16,8 @@ import { ArrowRight, Calendar, Check, ChevronDown, Clock, FileText, Info, Luggag
 import { cn } from '@/lib/cn';
 import { useBookingFlow, type FareResult, type TripParams } from '@/context/BookingFlowContext';
 import { siteConfig } from '@/lib/siteConfig';
-import { primaryPhoto } from '@/lib/fleetPhotos';
+import { fleetPhotos } from '@/lib/fleetPhotos';
+import PhotoCarousel from '@/components/home/PhotoCarousel';
 import { formatDateLong, formatTime12 } from '@/lib/time';
 import { scrollToBook } from '@/components/home/scrollToBook';
 
@@ -66,11 +67,25 @@ export function buildAdminWhatsAppMessage(
   return lines.join('\n');
 }
 
-function ResultCard({ car, trip, totalKm, days }: { car: FareResult; trip: TripParams; totalKm: number | null; days: number }) {
+function ResultCard({
+  car,
+  trip,
+  totalKm,
+  days,
+  index,
+}: {
+  car: FareResult;
+  trip: TripParams;
+  totalKm: number | null;
+  days: number;
+  index: number;
+}) {
   const { requestBooking } = useBookingFlow();
   const [showTerms, setShowTerms] = useState(false);
   const termsId = useId();
-  const photo = primaryPhoto(car.vehicleId);
+  // Car photo carousel (our own fleet photos where available)
+  const photos = (fleetPhotos[car.vehicleId] ?? []).slice(0, 5);
+  const credited = photos.filter((p) => !p.own && p.sourceUrl);
   const waUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
     buildAdminWhatsAppMessage(trip, car, { totalKm, days })
   )}`;
@@ -78,25 +93,14 @@ function ResultCard({ car, trip, totalKm, days }: { car: FareResult; trip: TripP
   // Same layout as the homepage "Our fleet" cards, plus the trip fare
   return (
     <article className="card-float card-float-hover flex h-full flex-col overflow-hidden">
-      {photo && (
-        <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={photo.src}
-            alt={photo.alt}
-            width={photo.width}
-            height={photo.height}
-            loading="lazy"
-            decoding="async"
-            style={{ objectPosition: photo.position }}
-            className="h-full w-full object-cover"
-          />
+      {photos.length > 0 && (
+        <PhotoCarousel photos={photos} label={`${car.vehicleName} photos`} delay={index * 900} className="aspect-[16/10]">
           {car.seats ? (
-            <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-ink shadow-sm backdrop-blur">
+            <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-ink shadow-sm backdrop-blur">
               {car.seats} + driver
             </span>
           ) : null}
-        </div>
+        </PhotoCarousel>
       )}
 
       <div className="flex flex-1 flex-col p-5 sm:p-6">
@@ -190,6 +194,21 @@ function ResultCard({ car, trip, totalKm, days }: { car: FareResult; trip: TripP
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
           </div>
+          {/* Stock photos (Wikimedia Commons) need a credit; our own photos don't */}
+          {credited.length > 0 && (
+            <p className="mt-3 text-[10px] leading-relaxed text-slate-400">
+              Representative photos:{' '}
+              {credited.map((p, k) => (
+                <span key={p.src}>
+                  {k > 0 && '; '}
+                  <a href={p.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-700">
+                    {p.author}
+                  </a>{' '}
+                  / Wikimedia Commons, {p.license}
+                </span>
+              ))}
+            </p>
+          )}
         </div>
       </div>
     </article>
@@ -283,9 +302,9 @@ export default function FareResults() {
 
       {search.status === 'done' && (
         <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {search.results.map((car) => (
+          {search.results.map((car, i) => (
             <div key={car.vehicleId} className="min-w-0 animate-fade-up">
-              <ResultCard car={car} trip={trip} totalKm={search.totalKm} days={search.days} />
+              <ResultCard car={car} trip={trip} totalKm={search.totalKm} days={search.days} index={i} />
             </div>
           ))}
           {search.results.length === 0 && (

@@ -4,9 +4,10 @@ import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
+  alternates: { canonical: '/airport-taxi' },
   title: `Innova Airport Taxi Bangalore | BLR Airport Pickup & Drop | ${siteConfig.brand.name}`,
   description:
-    'Book Toyota Innova, Innova Crysta & Ertiga airport taxi in Bangalore. Reliable 24/7 Kempegowda International Airport pickup and drop with zero surge charges and flight tracking.',
+    'Book Toyota Innova, Innova Crysta, Hycross & Ertiga airport taxi in Bangalore. Reliable 24/7 Kempegowda International Airport pickup and drop with zero surge charges and flight tracking.',
 };
 
 export default async function AirportTaxiPage() {

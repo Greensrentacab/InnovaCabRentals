@@ -10,6 +10,8 @@ import type { LocalPackage, Route, Vehicle } from '@/lib/types';
 import type { WidgetDestination, WidgetLocalPackage } from '@/components/home/QuickBookingWidget';
 import type { FleetCardData } from '@/components/home/FleetSection';
 import type { SliderRoute } from '@/components/home/RouteCard';
+import { routePhoto } from '@/lib/routePhotos';
+import { primaryPhoto } from '@/lib/fleetPhotos';
 
 export const formatINR = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
 
@@ -29,14 +31,15 @@ const VEHICLE_COPY: Record<string, { shortName: string; tagline: string }> = {
   innova: { shortName: 'Innova', tagline: 'The dependable family & corporate workhorse.' },
   'innova-crysta': { shortName: 'Crysta', tagline: 'Plush captain seats for long highway miles.' },
   ertiga: { shortName: 'Ertiga', tagline: 'Compact, economical 7-seater for small groups.' },
+  'innova-hycross': { shortName: 'Hycross', tagline: 'Premium hybrid comfort for airport, city and outstation journeys.' },
 };
 
 export const vehicleShortName = (v: Pick<Vehicle, 'id' | 'name'>) =>
   VEHICLE_COPY[v.id]?.shortName ?? v.name.replace(/^(Toyota|Maruti Suzuki) /, '');
 
-/** Confirmed models only (Toyota Innova, Innova Crysta & Maruti Suzuki Ertiga). */
+/** Confirmed models only (Innova, Innova Crysta, Innova Hycross & Ertiga). */
 export const confirmedFleet = (vehicles: Vehicle[]) =>
-  vehicles.filter((v) => v.confirmed !== false && !v.id.includes('hycross'));
+  vehicles.filter((v) => v.confirmed !== false);
 
 export const findAirportRoute = (routes: Route[]) => routes.find((r) => r.slug.includes('airport'));
 
@@ -68,7 +71,7 @@ export function buildWidgetData(routes: Route[], packages: LocalPackage[], fleet
 
   const destinations: WidgetDestination[] = routes
     .filter((r) => r !== airportRoute)
-    .map((r) => ({ slug: r.slug, destination: r.destination, distanceKm: r.distanceKm }));
+    .map((r) => ({ slug: r.slug, destination: r.destination, distanceKm: r.distanceKm, photo: routePhoto(r.slug)?.src }));
 
   const localPackages: WidgetLocalPackage[] = sortPackages(packages).map((p) => {
     const from = minFare(fleetIds.map((id) => p.fares?.[id]));
@@ -105,6 +108,7 @@ export function buildRouteCards(routes: Route[], fleet: Vehicle[]): SliderRoute[
           ? 'Fixed fare, each way · tolls extra'
           : 'Same-day estimate · tolls paid by customer'
         : 'Price on request · quick quote on WhatsApp',
+      photo: routePhoto(r.slug),
     };
   });
 }
@@ -121,6 +125,8 @@ export function buildFleetCards(fleet: Vehicle[]): FleetCardData[] {
     luggage: v.luggage,
     features: v.features,
     href: `/${v.id}-rental-bangalore`,
+    photo: primaryPhoto(v.id),
+    rates: v.rates,
     fares: [
       { label: 'Airport', value: fareOrRequest(v.rates?.airportFare) },
       { label: 'Per km', value: fareOrRequest(v.rates?.outstationPerKm) },

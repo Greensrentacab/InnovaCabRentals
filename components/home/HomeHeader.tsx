@@ -74,6 +74,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Toyota Innova', hint: 'Standard 7-seater', href: '/innova-rental-bangalore', icon: Car },
       { label: 'Toyota Innova Crysta', hint: 'Luxury 7-seater', href: '/innova-crysta-rental-bangalore', icon: Crown },
+      { label: 'Toyota Innova Hycross', hint: 'Premium hybrid 7-seater', href: '/innova-hycross-rental-bangalore', icon: Sparkles },
       { label: 'Maruti Suzuki Ertiga', hint: 'Compact 7-seater', href: '/ertiga-rental-bangalore', icon: Car },
       { label: 'Compare Fleet', hint: 'Seats, luggage & comfort side by side', href: '/vehicles#compare', icon: LayoutGrid },
     ],
@@ -217,14 +218,7 @@ export default function HomeHeader() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 text-white shadow-glow">
               <Car className="h-5 w-5" strokeWidth={2.2} />
             </span>
-            <span className="leading-none">
-              <span className="block text-[15px] font-extrabold tracking-tight text-ink">
-                {siteConfig.brand.name}
-              </span>
-              <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-700">
-                <Crown className="h-2.5 w-2.5" /> Premium · Bangalore
-              </span>
-            </span>
+            <span className="text-[16px] font-extrabold leading-none tracking-tight text-ink">{siteConfig.brand.headerName}</span>
           </Link>
 
           {/* Desktop nav */}

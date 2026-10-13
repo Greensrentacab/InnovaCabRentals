@@ -8,6 +8,7 @@ import { cn } from '@/lib/cn';
 import { photoCredit, type FleetPhoto } from '@/lib/fleetPhotos';
 
 export function PhotoCredit({ photo, className }: { photo: FleetPhoto; className?: string }) {
+  if (photo.own || !photo.sourceUrl) return null; // our own fleet photos need no credit
   return (
     <a
       href={photo.sourceUrl}
@@ -52,6 +53,7 @@ export default function VehiclePhotoCard({
           height={photo.height}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
+          style={{ objectPosition: photo.position }}
           className="h-full w-full object-cover transition-transform duration-700 ease-premium hover:scale-[1.03]"
         />
         {(eyebrow || title || badge) && (
@@ -75,7 +77,9 @@ export default function VehiclePhotoCard({
         {showNote && (
           <p className="flex items-start gap-2 text-[11px] leading-relaxed text-slate-500">
             <Info className="mt-px h-3.5 w-3.5 shrink-0 text-slate-400" />
-            Representative photo. The car assigned to your trip may differ in colour, model year, trim and features.
+            {photo.own
+              ? 'Actual photo from our fleet. The car assigned to your trip may differ in colour and model year.'
+              : 'Representative photo. The car assigned to your trip may differ in colour, model year, trim and features.'}
           </p>
         )}
         <PhotoCredit photo={photo} className={cn('block', showNote && 'pl-[22px]')} />

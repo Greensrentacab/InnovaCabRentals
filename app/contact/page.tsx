@@ -4,6 +4,7 @@ import PageHero from '@/components/ds/PageHero';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
+  alternates: { canonical: '/contact' },
   title: `Contact Us & Booking Request | 24/7 Innova Cab Service | ${siteConfig.brand.name}`,
   description: `Contact ${siteConfig.brand.name} in Bangalore. 24/7 phone ${siteConfig.contact.phone.display}, WhatsApp quick quotes, and instant booking requests for Toyota Innova and Innova Crysta rentals.`,
   keywords: [

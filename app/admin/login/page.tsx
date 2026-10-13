@@ -3,7 +3,7 @@
 /**
  * app/admin/login/page.tsx
  *
- * Admin Authentication portal for Innova Cabs Bangalore (design.md tokens:
+ * Admin Authentication portal for Innova Cab Rentals (design.md tokens:
  * glass-strong card, .field/.label, btn-primary). Auth logic unchanged.
  * Official Admin Email: greensrentacab@gmail.com
  */
@@ -132,12 +132,14 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          {/* Quick demo access for immediate evaluation */}
+          {/* One-click access exists only in local development (never in production builds) */}
+          {process.env.NODE_ENV === 'development' && (
           <div className="mt-5 border-t border-slate-100 pt-5">
             <button type="button" onClick={handleQuickDemoAccess} disabled={loading} className="btn-ghost w-full text-xs">
               <KeyRound className="h-3.5 w-3.5 text-brand-600" /> One-Click Quick Admin Access (Development)
             </button>
           </div>
+          )}
         </div>
 
         <p className="text-center text-[11px] text-slate-500">

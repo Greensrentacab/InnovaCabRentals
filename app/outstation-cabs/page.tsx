@@ -4,6 +4,7 @@ import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
+  alternates: { canonical: '/outstation-cabs' },
   title: `Outstation Innova Cabs Bangalore | Mysore, Coorg, Ooty, Wayanad | ${siteConfig.brand.name}`,
   description:
     'Book outstation round-trip Innova, Crysta and Ertiga cabs from Bangalore with up to 3 stops on the way. Seasoned highway drivers and transparent per-km billing; tolls paid by customer.',
@@ -64,7 +65,7 @@ export default async function OutstationCabsPage() {
       title="Outstation Innova Cabs from Bangalore"
       subtitle="Chauffeur-driven Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga rentals for scenic weekend getaways, family pilgrimages, and outstation holiday tours across South India."
       heroNotice="Verified Highway Chauffeurs • 300km/Day Minimum Allowance"
-      benefitsTitle="Why Travel Outstation with Innova Cabs Bangalore"
+      benefitsTitle="Why Travel Outstation with Innova Cab Rentals"
       benefitsSubtitle="Enjoy unmatched highway reliability, safety, and scenic road trip freedom."
       benefits={benefits}
       routesTitle="Top Outstation Destinations from Bangalore"

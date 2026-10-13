@@ -8,7 +8,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, ChevronRight, MapPin, MessageCircle, Phone, ShieldCheck, Star, Users } from 'lucide-react';
+import { BreadcrumbJsonLd } from '@/components/seo/JsonLd';
+import { HeroBand } from '@/components/home/HeroScene';
+import { ArrowRight, ChevronRight, MapPin, MessageCircle, Phone, ShieldCheck, Users, BadgeIndianRupee } from 'lucide-react';
 import PackageSelector from '@/components/PackageSelector';
 import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import FleetSection from '@/components/home/FleetSection';
@@ -127,13 +129,15 @@ export default function LandingTemplate({
       {/*    extend past it (design.md §3.2.1).                            */}
       {/* ================================================================ */}
       <section className="relative isolate z-10 pb-12 pt-28 sm:pt-32">
-        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-          <div className="absolute inset-0 bg-grid-slate [background-size:44px_44px] [mask-image:radial-gradient(ellipse_at_top,#000_30%,transparent_70%)]" />
-          <div className="absolute -top-40 left-1/2 h-[480px] w-[860px] -translate-x-1/2 rounded-full bg-brand-400/20 blur-[120px]" />
-        </div>
+        {/* Soft sky behind the hero */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-20 h-[760px] bg-gradient-to-b from-sky-100 via-sky-50 to-porcelain" aria-hidden="true" />
 
         <div className="section grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-10">
-          <div className="lg:pt-6">
+          <div className="min-w-0 [text-shadow:0_1px_12px_rgba(255,255,255,0.95)] lg:pt-6">
+            <BreadcrumbJsonLd items={[{ label: breadcrumb }]} />
+            {/* Copy over the service picture (car bottom-right) */}
+            <div className="relative">
+            <HeroBand scene={serviceType} className="-inset-x-4 -top-32 bottom-0 -z-10 sm:-inset-x-6 sm:-top-36 lg:-left-8 lg:-right-2 lg:rounded-br-[2.5rem]" />
             <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-1 text-xs font-semibold text-slate-500">
               <Link href="/" className="hover:text-brand-700">
                 Home
@@ -168,6 +172,10 @@ export default function LandingTemplate({
               </p>
             )}
 
+            {/* Room for the car in the picture */}
+            <div className="h-[260px] sm:h-[360px] lg:h-[340px] xl:h-[380px]" aria-hidden="true" />
+            </div>
+
             <div className="mt-7 flex animate-fade-up flex-col gap-2 [animation-delay:240ms] sm:flex-row sm:flex-wrap">
               <a href={siteConfig.contact.phone.tel} className="btn-primary">
                 <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
@@ -179,8 +187,7 @@ export default function LandingTemplate({
 
             <ul className="mt-6 flex animate-fade-up flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-slate-600 [animation-delay:320ms]">
               <li className="flex items-center gap-1.5">
-                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                {siteConfig.trustClaims.googleRating.value}-Star Rated · {siteConfig.trustClaims.happyCustomers.value} customers
+                <BadgeIndianRupee className="h-4 w-4 text-brand-600" /> Transparent price
               </li>
               <li className="flex items-center gap-1.5">
                 <Users className="h-4 w-4 text-brand-600" /> Verified chauffeurs

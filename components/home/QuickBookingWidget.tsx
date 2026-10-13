@@ -18,8 +18,8 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
+  ArrowLeftRight,
   ArrowDownUp,
   ArrowRight,
   Clock,
@@ -38,7 +38,7 @@ import {
 import LocationAutocompleteModal from '@/components/LocationAutocompleteModal';
 import SegmentedControl from '@/components/home/SegmentedControl';
 import DatePickerField, { addDays, fromDateKey, toDateKey } from '@/components/home/DatePickerField';
-import { BOOK_EVENT, type HomeService } from '@/components/home/scrollToBook';
+import { BOOK_EVENT, SERVICE_EVENT, type HomeService } from '@/components/home/scrollToBook';
 import { useBookingFlow } from '@/context/BookingFlowContext';
 import { LocationData } from '@/lib/googlePlaces';
 import { cn } from '@/lib/cn';
@@ -47,6 +47,7 @@ export interface WidgetDestination {
   slug: string;
   destination: string;
   distanceKm: number;
+  photo?: string;
 }
 
 export interface WidgetLocalPackage {
@@ -125,6 +126,7 @@ function LocationTrigger({
   onOpen,
   onClear,
   clearLabel = 'Clear location',
+  label,
 }: {
   value: LocationData | null;
   placeholder: string;
@@ -133,8 +135,67 @@ function LocationTrigger({
   onOpen: () => void;
   onClear: () => void;
   clearLabel?: string;
+  /** Compact tile with a small label inside (pickup & drop side by side) */
+  label?: string;
 }) {
   const Icon = tone === 'pickup' ? Navigation : MapPin;
+  if (label) {
+    return (
+      <div className="flex h-full min-w-0 flex-col">
+        <div className="relative flex-1">
+          <button
+            type="button"
+            role="combobox"
+            data-location-trigger
+            aria-expanded={false}
+            aria-invalid={!!error}
+            aria-label={`${label}: ${value?.name ?? placeholder}`}
+            onClick={onOpen}
+            className={cn(
+              'field flex h-full min-h-[76px] flex-col justify-start gap-1 px-3 py-2.5 text-left',
+              value && 'pr-8',
+              error && 'field-error'
+            )}
+          >
+            <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">
+              <span
+                className={cn(
+                  'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
+                  tone === 'pickup' && 'bg-brand-50 text-brand-700',
+                  tone === 'drop' && 'bg-live-500/10 text-live-600',
+                  tone === 'stop' && 'bg-amber-100 text-amber-700'
+                )}
+              >
+                <Icon className="h-3 w-3" strokeWidth={2.5} />
+              </span>
+              {label}
+            </span>
+            {value ? (
+              <span className="block min-w-0">
+                <span className="block truncate text-[13px] font-bold">{value.name}</span>
+                {value.address && value.address !== value.name && (
+                  <span className="block truncate text-[11px] font-normal text-slate-500">{value.address}</span>
+                )}
+              </span>
+            ) : (
+              <span className="line-clamp-2 text-[13px] leading-snug text-slate-400">{placeholder}</span>
+            )}
+          </button>
+          {value && (
+            <button
+              type="button"
+              onClick={onClear}
+              aria-label={clearLabel}
+              className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        {error && <p className="mt-1 pl-1 text-[11px] font-medium text-rose-600">{error}</p>}
+      </div>
+    );
+  }
   return (
     <div>
       <div className="relative">
@@ -151,6 +212,7 @@ function LocationTrigger({
         <button
           type="button"
           role="combobox"
+          data-location-trigger
           aria-expanded={false}
           aria-invalid={!!error}
           onClick={onOpen}
@@ -183,7 +245,19 @@ function LocationTrigger({
   );
 }
 
-function SwapButton({ onClick, label, className }: { onClick: () => void; label: string; className?: string }) {
+function SwapButton({
+  onClick,
+  label,
+  className,
+  horizontal = false,
+}: {
+  onClick: () => void;
+  label: string;
+  className?: string;
+  /** Between two side-by-side fields (⇄) instead of stacked ones (⇅) */
+  horizontal?: boolean;
+}) {
+  const Icon = horizontal ? ArrowLeftRight : ArrowDownUp;
   return (
     <button
       type="button"
@@ -191,11 +265,12 @@ function SwapButton({ onClick, label, className }: { onClick: () => void; label:
       title={label}
       onClick={onClick}
       className={cn(
-        'absolute -right-2.5 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-brand-700 shadow-float transition duration-300 hover:rotate-180 hover:border-brand-300',
-        className ?? 'top-1/2'
+        'absolute z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-sky-200 bg-white text-brand-700 shadow-[0_6px_16px_-4px_rgba(56,189,248,0.55)] transition duration-300 hover:rotate-180 hover:border-brand-300',
+        horizontal ? 'left-1/2 top-[38px] -translate-x-1/2' : '-right-2.5',
+        !horizontal && (className ?? 'top-1/2')
       )}
     >
-      <ArrowDownUp className="h-4 w-4" />
+      <Icon className="h-4 w-4" />
     </button>
   );
 }
@@ -210,7 +285,15 @@ export default function QuickBookingWidget({
   const { searchFares, search } = useBookingFlow();
 
   const [service, setService] = useState<HomeService>(initialService);
+
+  // Let the homepage hero backdrop follow the selected service
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent<HomeService>(SERVICE_EVENT, { detail: service }));
+  }, [service]);
   const [airportMode, setAirportMode] = useState<AirportMode>('pickup');
+  // Round trips can start at the airport or at the customer's address (swap button)
+  const [roundFromAirport, setRoundFromAirport] = useState(false);
+  const airportFirst = airportMode === 'pickup' || (airportMode === 'round' && roundFromAirport);
   const [terminal, setTerminal] = useState<Terminal>('T1');
   const [localPackageId, setLocalPackageId] = useState(
     () => localPackages.find((p) => p.label === 'Full-day')?.id ?? localPackages[0]?.id ?? ''
@@ -231,7 +314,6 @@ export default function QuickBookingWidget({
   const [date, setDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
   const [time, setTime] = useState(DEFAULT_TIME);
-  const [portalReady, setPortalReady] = useState(false);
 
   useEffect(() => {
     const current = new Date();
@@ -239,7 +321,6 @@ export default function QuickBookingWidget({
     setDate(toDateKey(addDays(current, 1))); // tomorrow
     setReturnDate(toDateKey(addDays(current, 2))); // day after tomorrow
     setTime(DEFAULT_TIME); // 9:00 AM
-    setPortalReady(true);
   }, []);
 
   // Other homepage surfaces can preselect a tab (scrollToBook('outstation'))
@@ -319,7 +400,7 @@ export default function QuickBookingWidget({
       ? `Add Stop ${activeModal.index + 1}`
       : activeModal.kind === 'drop' && service === 'outstation'
         ? 'Select Destination'
-        : activeModal.kind === 'drop' || (service === 'airport' && airportMode === 'pickup')
+        : activeModal.kind === 'drop' || (service === 'airport' && airportFirst)
           ? 'Select Drop Location'
           : 'Select Pickup Location';
 
@@ -352,6 +433,25 @@ export default function QuickBookingWidget({
     setActiveModal(null);
   };
 
+  // Location search as an inline dropdown under the field that opened it
+  const locationDropdown = (show: boolean) =>
+    show && activeModal ? (
+      <LocationAutocompleteModal
+        key={JSON.stringify(activeModal) + service}
+        variant="dropdown"
+        isOpen
+        onClose={handleModalClose}
+        title={modalTitle}
+        placeholder={
+          activeModal.kind === 'drop' && service === 'outstation'
+            ? 'Search a city, place, address or pincode...'
+            : 'Search area, landmark, street or pincode...'
+        }
+        initialValue={modalValue?.name || ''}
+        onSelect={handleModalSelect}
+      />
+    ) : null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -360,7 +460,7 @@ export default function QuickBookingWidget({
 
     if (service === 'airport') {
       if (!cityLocation) {
-        const field = airportMode === 'pickup' ? 'drop' : 'pickup';
+        const field = airportFirst ? 'drop' : 'pickup';
         setErrors({ [field]: `Enter a ${field} address in Bangalore` });
         setActiveModal({ kind: 'city' });
         return;
@@ -369,8 +469,8 @@ export default function QuickBookingWidget({
       await searchFares({
         serviceType: 'airport',
         tripType: airportMode === 'round' ? 'round' : 'oneway',
-        pickup: airportMode === 'pickup' ? airport : cityLocation,
-        drop: airportMode === 'pickup' ? cityLocation : airport,
+        pickup: airportFirst ? airport : cityLocation,
+        drop: airportFirst ? cityLocation : airport,
         date: travelDate,
         time: travelTime,
         routeSlug: airportRouteSlug,
@@ -427,34 +527,46 @@ export default function QuickBookingWidget({
   };
 
   const airportRow = (
-    <div className="flex items-center gap-3 rounded-2xl border border-brand-100 bg-brand-50/70 px-3 py-2.5">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
-        <Plane className="h-3.5 w-3.5" />
+    <div className="field flex h-full min-h-[76px] min-w-0 flex-col justify-start gap-1.5 border-brand-100 bg-brand-50/70 px-2 py-2.5 sm:px-3">
+      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
+          <Plane className="h-3 w-3" />
+        </span>
+        {airportFirst ? 'Pickup' : 'Drop'}
       </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-ink">Kempegowda Intl. Airport (BLR)</p>
-        <p className="truncate text-[11px] font-medium text-slate-500">{TERMINALS[terminal]}</p>
-      </div>
-      <SegmentedControl
-        size="sm"
-        ariaLabel="Terminal"
-        className="mr-5 w-[92px] shrink-0"
-        value={terminal}
-        onChange={setTerminal}
-        options={[
-          { value: 'T1', label: 'T1' },
-          { value: 'T2', label: 'T2' },
-        ]}
-      />
+      {/* "BLR Airport" with the terminal choice beside it */}
+      <span className="flex min-w-0 items-center justify-between gap-1">
+        <span className="whitespace-nowrap text-[12px] font-bold text-ink min-[400px]:text-[13px]" title="Kempegowda Intl. Airport (BLR)">
+          BLR Airport
+        </span>
+        <span role="radiogroup" aria-label="Terminal" className="flex shrink-0 rounded-full border border-slate-200/80 bg-white p-0.5">
+          {(['T1', 'T2'] as Terminal[]).map((t) => (
+            <button
+              key={t}
+              type="button"
+              role="radio"
+              aria-checked={terminal === t}
+              onClick={() => setTerminal(t)}
+              className={cn(
+                'rounded-full px-[5px] py-0.5 text-[10.5px] font-bold leading-none transition sm:px-2 sm:text-[11px]',
+                terminal === t ? 'bg-brand-600 text-white shadow-[0_4px_10px_-3px_rgba(56,189,248,0.8)]' : 'text-slate-500 hover:text-slate-800'
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </span>
+      </span>
     </div>
   );
 
   const airportAddressField = (
     <LocationTrigger
       value={cityLocation}
-      tone={airportMode === 'pickup' ? 'drop' : 'pickup'}
-      placeholder={airportMode === 'pickup' ? 'Drop address or pincode in Bangalore' : 'Pickup address or pincode in Bangalore'}
-      error={airportMode === 'pickup' ? errors.drop : errors.pickup}
+      label={airportFirst ? 'Drop' : 'Pickup'}
+      tone={airportFirst ? 'drop' : 'pickup'}
+      placeholder="Address or pincode in Bangalore"
+      error={airportFirst ? errors.drop : errors.pickup}
       onOpen={() => setActiveModal({ kind: 'city' })}
       onClear={() => setCityLocation(null)}
     />
@@ -468,12 +580,12 @@ export default function QuickBookingWidget({
       id="book"
       onSubmit={handleSubmit}
       noValidate
-      className="glass-strong relative animate-fade-up scroll-mt-28 rounded-4xl p-4 shadow-float-lg [animation-delay:150ms] sm:p-6"
+      className="glass-strong relative animate-fade-up scroll-mt-28 rounded-4xl p-4 shadow-[0_24px_60px_-18px_rgba(56,189,248,0.55),0_0_0_1px_rgba(186,230,253,0.9)] [animation-delay:150ms] sm:p-6"
     >
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-extrabold tracking-tight text-ink">Quick Fare Estimate</h2>
-          <p className="text-xs font-medium text-slate-500">Instant estimate · ₹0 advance · Pay after the trip</p>
+          <p className="text-xs font-medium text-slate-500">Know your fare before you book</p>
         </div>
         <span className="chip-live">
           <span className="h-1.5 w-1.5 rounded-full bg-live-500" /> Live
@@ -484,7 +596,7 @@ export default function QuickBookingWidget({
       <div role="tablist" aria-label="Service" className="relative mb-4 grid grid-cols-3 gap-1 rounded-2xl bg-slate-100/80 p-1">
         <span
           aria-hidden="true"
-          className="absolute bottom-1 left-1 top-1 rounded-xl bg-white shadow-float ring-1 ring-slate-200/80 transition-transform duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
+          className="absolute bottom-1 left-1 top-1 rounded-xl bg-brand-600 shadow-[0_8px_20px_-6px_rgba(56,189,248,0.8)] ring-1 ring-sky-300 transition-transform duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
           style={{
             width: 'calc((100% - 16px) / 3)',
             transform: `translateX(calc(${activeTabIndex} * (100% + 4px)))`,
@@ -502,7 +614,7 @@ export default function QuickBookingWidget({
               onClick={() => switchService(tab.value)}
               className={cn(
                 'relative flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 text-xs font-bold transition-colors sm:flex-row sm:justify-center sm:text-[13px]',
-                selected ? 'text-brand-700' : 'text-slate-500 hover:text-slate-800'
+                selected ? 'text-white' : 'text-slate-500 hover:text-slate-800'
               )}
             >
               <Icon className="relative h-4 w-4" />
@@ -513,7 +625,7 @@ export default function QuickBookingWidget({
       </div>
 
       {/* Service panel */}
-      <div key={service} role="tabpanel" className="animate-panel-in space-y-3">
+      <div key={service} role="tabpanel" className="relative z-20 animate-panel-in space-y-3">
         {service === 'airport' && (
           <>
             <SegmentedControl
@@ -529,8 +641,8 @@ export default function QuickBookingWidget({
                 { value: 'round', label: 'Round', icon: Repeat },
               ]}
             />
-            <div className="relative space-y-2">
-              {airportMode === 'pickup' ? (
+            <div className="relative grid grid-cols-2 items-stretch gap-2">
+              {airportFirst ? (
                 <>
                   {airportRow}
                   {airportAddressField}
@@ -541,12 +653,16 @@ export default function QuickBookingWidget({
                   {airportRow}
                 </>
               )}
-              {airportMode !== 'round' && (
-                <SwapButton
-                  label="Swap pickup and drop"
-                  onClick={() => setAirportMode(airportMode === 'pickup' ? 'drop' : 'pickup')}
-                />
-              )}
+              <SwapButton
+                horizontal
+                label="Swap pickup and drop"
+                onClick={() => {
+                  if (airportMode === 'round') setRoundFromAirport((v) => !v);
+                  else setAirportMode(airportMode === 'pickup' ? 'drop' : 'pickup');
+                  setErrors({});
+                }}
+              />
+              {locationDropdown(activeModal?.kind === 'city')}
             </div>
           </>
         )}
@@ -557,33 +673,21 @@ export default function QuickBookingWidget({
               <Repeat className="h-3.5 w-3.5 text-brand-600" /> Round trip · we drive you there and back
             </p>
 
-            <div className="relative space-y-2">
-              <div className="pointer-events-none absolute left-[25px] top-[40px] z-[1] h-[calc(100%-80px)] border-l-2 border-dashed border-slate-300" />
+            <div className="relative grid grid-cols-2 items-stretch gap-2">
               <LocationTrigger
                 value={outPickup}
+                label="Pickup"
                 tone="pickup"
-                placeholder="Pickup address or pincode"
+                placeholder="Address or pincode"
                 error={errors.pickup}
                 onOpen={() => setActiveModal({ kind: 'pickup' })}
                 onClear={() => setOutPickup(null)}
               />
-              {outStops.map((stop, i) =>
-                stop ? (
-                  <LocationTrigger
-                    key={`stop-${i}`}
-                    value={stop}
-                    tone="stop"
-                    placeholder={`Stop ${i + 1}`}
-                    onOpen={() => setActiveModal({ kind: 'stop', index: i })}
-                    onClear={() => removeStop(i)}
-                    clearLabel={`Remove stop ${i + 1}`}
-                  />
-                ) : null
-              )}
               <LocationTrigger
                 value={outDrop}
+                label="Destination"
                 tone="drop"
-                placeholder="Destination city or address"
+                placeholder="City or address"
                 error={errors.drop}
                 onOpen={() => setActiveModal({ kind: 'drop' })}
                 onClear={() => {
@@ -591,10 +695,30 @@ export default function QuickBookingWidget({
                   setRouteSlug(undefined);
                 }}
               />
-              <SwapButton label="Swap pickup and destination" onClick={swapOutstation} className="top-[56px]" />
+              <SwapButton horizontal label="Swap pickup and destination" onClick={swapOutstation} />
+              {locationDropdown(activeModal?.kind === 'pickup' || activeModal?.kind === 'drop')}
             </div>
 
-            <div className="flex items-center justify-between gap-2">
+            {outStops.some(Boolean) && (
+              <div className="space-y-2">
+                {outStops.map((stop, i) =>
+                  stop ? (
+                    <LocationTrigger
+                      key={`stop-${i}`}
+                      value={stop}
+                      tone="stop"
+                      placeholder={`Stop ${i + 1}`}
+                      onOpen={() => setActiveModal({ kind: 'stop', index: i })}
+                      onClear={() => removeStop(i)}
+                      clearLabel={`Remove stop ${i + 1}`}
+                    />
+                  ) : null
+                )}
+              </div>
+            )}
+
+            <div className="relative flex items-center justify-between gap-2">
+              {locationDropdown(activeModal?.kind === 'stop')}
               <button
                 type="button"
                 onClick={addStop}
@@ -623,12 +747,20 @@ export default function QuickBookingWidget({
                         clearError('drop');
                       }}
                       className={cn(
-                        'pill shrink-0 transition hover:border-brand-300 hover:text-brand-700',
-                        selected && 'border-brand-300 bg-brand-50 text-brand-700'
+                        'flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200/80 bg-white py-1.5 pl-1.5 pr-3 text-left transition hover:border-brand-300',
+                        selected && 'border-brand-600 bg-brand-600 shadow-[0_8px_18px_-6px_rgba(56,189,248,0.8)]'
                       )}
                     >
-                      {d.destination}
-                      <span className="text-slate-400">{d.distanceKm} km</span>
+                      {d.photo && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={d.photo} alt="" width={40} height={40} loading="lazy" decoding="async" className="h-9 w-9 shrink-0 rounded-xl object-cover" />
+                      )}
+                      <span className="leading-tight">
+                        <span className={cn('block whitespace-nowrap text-xs font-bold', selected ? 'text-white' : 'text-ink')}>
+                          {d.destination.split(' (')[0].split(' / ')[0]}
+                        </span>
+                        <span className={cn('block text-[11px] font-medium', selected ? 'text-sky-100' : 'text-slate-400')}>{d.distanceKm} km</span>
+                      </span>
                     </button>
                   );
                 })}
@@ -639,14 +771,17 @@ export default function QuickBookingWidget({
 
         {service === 'local' && (
           <>
-            <LocationTrigger
-              value={cityLocation}
-              tone="pickup"
-              placeholder="Pickup address or pincode in Bangalore"
-              error={errors.pickup}
-              onOpen={() => setActiveModal({ kind: 'city' })}
-              onClear={() => setCityLocation(null)}
-            />
+            <div className="relative">
+              <LocationTrigger
+                value={cityLocation}
+                tone="pickup"
+                placeholder="Pickup address or pincode in Bangalore"
+                error={errors.pickup}
+                onOpen={() => setActiveModal({ kind: 'city' })}
+                onClear={() => setCityLocation(null)}
+              />
+              {locationDropdown(activeModal?.kind === 'city')}
+            </div>
             <div role="radiogroup" aria-label="Local package" className="grid grid-cols-3 gap-2">
               {localPackages.map((pkg) => {
                 const selected = pkg.id === selectedPackage?.id;
@@ -658,15 +793,27 @@ export default function QuickBookingWidget({
                     aria-checked={selected}
                     onClick={() => setLocalPackageId(pkg.id)}
                     className={cn(
-                      'rounded-2xl border px-2 py-2.5 text-left transition-all',
+                      'relative rounded-2xl border px-2.5 py-2.5 text-left transition-all',
                       selected
-                        ? 'border-brand-500 bg-brand-50 ring-4 ring-brand-500/10'
+                        ? 'border-brand-600 bg-brand-600 shadow-[0_10px_22px_-8px_rgba(56,189,248,0.85)]'
                         : 'border-slate-200/80 bg-white hover:border-brand-300'
                     )}
                   >
-                    <span className="block text-[13px] font-extrabold text-ink">{pkg.label}</span>
-                    <span className="block text-[11px] font-semibold text-slate-500">{pkg.meta}</span>
-                    <span className="mt-1 block text-[11px] font-bold text-brand-700">{pkg.fareLabel}</span>
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full border-2',
+                        selected ? 'border-white' : 'border-slate-300'
+                      )}
+                    >
+                      {selected && <span className="h-2 w-2 rounded-full bg-white" />}
+                    </span>
+                    <span className={cn('block pr-5 text-[13px] font-extrabold', selected ? 'text-white' : 'text-ink')}>{pkg.label}</span>
+                    <span className={cn('block text-[11px] font-semibold', selected ? 'text-sky-100' : 'text-slate-500')}>{pkg.meta}</span>
+                    {/* Price shown only once set in Admin → Pricing */}
+                    {pkg.fareLabel !== 'On request' && (
+                      <span className={cn('mt-1 block text-[11px] font-bold', selected ? 'text-white' : 'text-brand-700')}>{pkg.fareLabel}</span>
+                    )}
                   </button>
                 );
               })}
@@ -675,11 +822,12 @@ export default function QuickBookingWidget({
         )}
       </div>
 
-      {/* Dates + time */}
-      <div className="mt-4 space-y-3">
+      {/* Dates + time — one compact row (design: mobile compact) */}
+      <div className={cn('mt-4 grid gap-2', showReturn ? 'grid-cols-3' : 'grid-cols-2')}>
         {today && minDate && maxDate ? (
-          <div className={cn('grid gap-3', showReturn && 'sm:grid-cols-2')}>
+          <>
             <DatePickerField
+              compact
               value={date}
               onChange={changePickupDate}
               minDate={minDate}
@@ -689,6 +837,8 @@ export default function QuickBookingWidget({
             />
             {showReturn && (
               <DatePickerField
+                compact
+                popupAlign="center"
                 value={returnDate}
                 onChange={setReturnDate}
                 minDate={date ? fromDateKey(date) : minDate}
@@ -697,25 +847,20 @@ export default function QuickBookingWidget({
                 label="Return date"
               />
             )}
-          </div>
+          </>
         ) : (
-          <div>
-            <span className="label">Travel date</span>
-            <div className="shimmer h-[46px] rounded-2xl" />
-          </div>
+          <div className={cn('shimmer h-[56px] rounded-2xl', showReturn && 'col-span-2')} />
         )}
 
-        <div>
-          <label htmlFor="pickup-time" className="label">
-            Pickup time
-          </label>
-          <div className="relative">
-            <Clock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <label className="field relative flex min-h-[56px] cursor-pointer items-center gap-2 px-2.5 py-2 focus-within:border-brand-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-500/10 sm:px-3">
+          
+          <span className="min-w-0 flex-1 leading-tight">
+            <span className="block truncate text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">Pickup time</span>
             <select
               id="pickup-time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="field block appearance-none pl-11 pr-10"
+              className="block w-full cursor-pointer appearance-none truncate bg-transparent p-0 text-[13px] font-bold text-ink focus:outline-none"
             >
               {timeSlots.length === 0 && <option value={DEFAULT_TIME}>9:00 AM</option>}
               {timeSlots.map((slot) => (
@@ -724,15 +869,14 @@ export default function QuickBookingWidget({
                 </option>
               ))}
             </select>
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">▾</span>
-          </div>
-        </div>
+          </span>
+        </label>
       </div>
 
       <button
         type="submit"
         disabled={search.status === 'loading'}
-        className="btn-primary group mt-5 w-full py-3.5 text-[15px]"
+        className="btn-primary group mt-5 w-full py-3.5 text-[15px] shadow-[0_14px_30px_-8px_rgba(56,189,248,0.75)]"
       >
         {search.status === 'loading' ? (
           <>
@@ -755,23 +899,6 @@ export default function QuickBookingWidget({
         </span>
       </div>
 
-      {/* Google Places picker, portalled so the hero's stacking context can't trap it */}
-      {portalReady &&
-        createPortal(
-          <LocationAutocompleteModal
-            isOpen={activeModal !== null}
-            onClose={handleModalClose}
-            title={modalTitle}
-            placeholder={
-              activeModal?.kind === 'drop' && service === 'outstation'
-                ? 'Search a city, place, address or pincode...'
-                : 'Search area, landmark, street or pincode...'
-            }
-            initialValue={modalValue?.name || ''}
-            onSelect={handleModalSelect}
-          />,
-          document.body
-        )}
     </form>
   );
 }

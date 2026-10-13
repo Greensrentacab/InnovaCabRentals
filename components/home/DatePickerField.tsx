@@ -41,6 +41,10 @@ interface DatePickerFieldProps {
   /** Local midnight of "today", used for the Today/Tomorrow badges. */
   today: Date;
   label?: string;
+  /** Compact tile: label inside the field (date + time in one row) */
+  compact?: boolean;
+  /** Where the calendar pop-up anchors (centre for a middle column) */
+  popupAlign?: 'left' | 'center' | 'right';
 }
 
 export default function DatePickerField({
@@ -50,6 +54,8 @@ export default function DatePickerField({
   maxDate,
   today,
   label = 'Travel date',
+  compact = false,
+  popupAlign = 'left',
 }: DatePickerFieldProps) {
   const id = useId();
   const [open, setOpen] = useState(false);
@@ -151,31 +157,60 @@ export default function DatePickerField({
 
   return (
     <div ref={wrapRef} className="relative">
-      <label htmlFor={id} className="label">
-        {label}
-      </label>
-      <button
-        ref={triggerRef}
-        id={id}
-        type="button"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => (open ? close() : openPicker())}
-        className={cn('field flex items-center gap-3 text-left', open && 'border-brand-500 bg-white ring-4 ring-brand-500/10')}
-      >
-        <CalendarDays className="h-4 w-4 shrink-0 text-brand-600" />
-        <span className={cn('flex-1 truncate', !selected && 'text-slate-400')}>{display}</span>
-        {badge && (
-          <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-bold text-brand-700">{badge}</span>
-        )}
-        <ChevronDown className={cn('h-4 w-4 shrink-0 text-slate-400 transition-transform', open && 'rotate-180')} />
-      </button>
+      {!compact && (
+        <label htmlFor={id} className="label">
+          {label}
+        </label>
+      )}
+      {compact ? (
+        <button
+          ref={triggerRef}
+          id={id}
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-label={`${label}: ${display}`}
+          onClick={() => (open ? close() : openPicker())}
+          className={cn(
+            'field flex min-h-[56px] items-center gap-2 px-2.5 py-2 text-left sm:px-3',
+            open && 'border-brand-500 bg-white ring-4 ring-brand-500/10'
+          )}
+        >
+          
+          <span className="min-w-0 flex-1 leading-tight">
+            <span className="block truncate text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">{label}</span>
+            <span className={cn('block truncate text-[13px] font-bold', !selected && 'text-slate-400')}>{display}</span>
+          </span>
+        </button>
+      ) : (
+        <button
+          ref={triggerRef}
+          id={id}
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          onClick={() => (open ? close() : openPicker())}
+          className={cn('field flex items-center gap-3 text-left', open && 'border-brand-500 bg-white ring-4 ring-brand-500/10')}
+        >
+          <CalendarDays className="h-4 w-4 shrink-0 text-brand-600" />
+          <span className={cn('flex-1 truncate', !selected && 'text-slate-400')}>{display}</span>
+          {badge && (
+            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-bold text-brand-700">{badge}</span>
+          )}
+          <ChevronDown className={cn('h-4 w-4 shrink-0 text-slate-400 transition-transform', open && 'rotate-180')} />
+        </button>
+      )}
 
       {open && (
         <div
           role="dialog"
           aria-label="Choose travel date"
-          className="glass-strong absolute left-0 top-[calc(100%+8px)] z-40 bg-white/95 w-full min-w-[288px] max-w-[340px] animate-pop-in rounded-3xl p-4 shadow-float-lg"
+          className={cn(
+            'glass-strong absolute top-[calc(100%+8px)] z-40 w-full min-w-[288px] max-w-[340px] animate-pop-in rounded-3xl bg-white/95 p-4 shadow-float-lg',
+            popupAlign === 'left' && 'left-0',
+            popupAlign === 'right' && 'right-0',
+            popupAlign === 'center' && 'left-1/2 -ml-[144px]'
+          )}
         >
           <div className="flex items-center justify-between">
             <button

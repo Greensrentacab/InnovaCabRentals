@@ -6,6 +6,7 @@ import { siteConfig } from '@/lib/siteConfig';
 export const revalidate = 60;
 
 export const metadata = {
+  alternates: { canonical: '/ertiga-rental-bangalore' },
   title: `Ertiga Rental Bangalore | Maruti Suzuki Ertiga Cab with Driver | ${siteConfig.brand.name}`,
   description:
     'Rent a Maruti Suzuki Ertiga with driver in Bangalore. Economical, comfortable 7 seater for airport transfers, local city hire and outstation round trips. No advance payment; tolls paid by customer.',

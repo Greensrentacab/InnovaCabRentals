@@ -3,7 +3,7 @@
 /**
  * app/admin/page.tsx
  * 
- * Master Operations & Dispatch Console for Innova Cabs Bangalore.
+ * Master Operations & Dispatch Console for Innova Cab Rentals.
  * Handles:
  * - Real-time Booking Approval & Chauffeur Assignment
  * - Direct WhatsApp (wa.me) & Phone Customer Communication
@@ -317,6 +317,16 @@ export default function AdminDashboardPage() {
       </header>
 
       <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        {data && !data.persistent && (
+          <div role="alert" className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <p>
+              <strong>Database not connected.</strong> Bookings, enquiries and price changes are kept in temporary server
+              memory and will be lost on restart/redeploy. Add the Firebase environment variables (FIREBASE_PROJECT_ID,
+              FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) to save them permanently.
+            </p>
+          </div>
+        )}
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="animate-panel-in space-y-6">
@@ -625,7 +635,7 @@ export default function AdminDashboardPage() {
             <div>
               <h2 className={panelTitle}>Fleet &amp; Vehicle Confirmation</h2>
               <p className="text-sm text-slate-600">
-                Vehicles flagged as unconfirmed (such as Hycross) remain hidden from customer vehicle selection until toggled active.
+                Vehicles switched off here are hidden from the website and fare results until toggled active again.
               </p>
             </div>
 

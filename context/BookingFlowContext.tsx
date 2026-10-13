@@ -20,6 +20,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import { LocationData } from '@/lib/googlePlaces';
 import { Vehicle, ServiceType, TripType, Booking } from '@/lib/types';
 import { formatTime12 } from '@/lib/time';
+import { siteConfig } from '@/lib/siteConfig';
 import { useAuth } from '@/context/AuthContext';
 
 export type BookingStep =
@@ -313,7 +314,7 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
         const cleanPhone = bk.customerPhone.replace(/\D/g, '');
         const waNumber = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
         const whatsAppUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
-          `Hello ${bk.customerName},\n\nThis is Innova Cabs Bangalore. We have received your booking request #${bk.bookingId}:\n• Route: ${bk.pickupName} ➔ ${bk.dropName}\n• Date & Time: ${bk.pickupDate} at ${formatTime12(bk.pickupTime)}\n• Vehicle: ${bk.vehicleName}\n\nOur operations desk will confirm your vehicle shortly!`
+          `Hello ${bk.customerName},\n\nThis is ${siteConfig.brand.name}. We have received your booking request #${bk.bookingId}:\n• Route: ${bk.pickupName} ➔ ${bk.dropName}\n• Date & Time: ${bk.pickupDate} at ${formatTime12(bk.pickupTime)}\n• Vehicle: ${bk.vehicleName}\n\nOur operations desk will confirm your vehicle shortly!`
         )}`;
 
         setState((prev) => ({ ...prev, step: 'success', confirmedBooking: bk, adminWhatsAppUrl: whatsAppUrl }));

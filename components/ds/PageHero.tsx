@@ -10,6 +10,7 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { BreadcrumbJsonLd } from '@/components/seo/JsonLd';
 
 export interface Crumb {
   label: string;
@@ -29,6 +30,7 @@ interface PageHeroProps {
 export default function PageHero({ breadcrumbs, eyebrow, title, lead, children, aside, className }: PageHeroProps) {
   const copy = (
     <div className={cn(aside ? 'lg:pt-6' : 'max-w-3xl')}>
+      <BreadcrumbJsonLd items={breadcrumbs} />
       <nav aria-label="Breadcrumb" className="mb-5 flex flex-wrap items-center gap-1 text-xs font-semibold text-slate-500">
         <Link href="/" className="hover:text-brand-700">
           Home

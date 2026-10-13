@@ -1,11 +1,11 @@
 /**
- * Firestore Database Seeder for Innova Cabs Bangalore
+ * Firestore Database Seeder for Innova Cab Rentals
  *
  * Sourced from PROJECT_CONTEXT.md.
  * Populates Firestore with:
  *  - Vehicles: Toyota Innova, Toyota Innova Crysta, Maruti Suzuki Ertiga,
- *    Toyota Innova Hycross (confirmed: false)
- *  - Routes: Bangalore Airport ↔ City + 30 outstation routes from Bangalore
+ *    Toyota Innova Hycross
+ *  - Routes: Bangalore Airport ↔ City + 33 outstation routes from Bangalore
  *
  * PRICING NOTICE:
  * Prices are admin-editable per car (Vehicle.rates) and start as null.
@@ -32,7 +32,6 @@ export const emptyRates = (): VehicleRates => ({
 /**
  * Vehicle Seed Data
  * Seats, luggage, and features are placeholders until verified with client fleet.
- * Innova Hycross is flagged with confirmed: false.
  */
 export const seedVehicles: Vehicle[] = [
   {
@@ -86,23 +85,23 @@ export const seedVehicles: Vehicle[] = [
   {
     id: 'innova-hycross',
     name: 'Toyota Innova Hycross',
-    type: 'Premium Hybrid MPV',
+    type: 'Premium Hybrid 7 Seater MPV',
     seats: 7, // PLACEHOLDER
     luggage: 4, // PLACEHOLDER
     features: [
-      'Hybrid Ultra-Quiet Drive',
-      'Ottoman Lounge Seating',
-      'Panoramic Roof Experience',
-      'Executive Chauffeur Service',
+      'Hybrid Powertrain',
+      'Dual-Zone Climate Control',
+      'Spacious Premium Cabin',
+      'Advanced Safety Features',
     ], // PLACEHOLDER
-    confirmed: false, // Hycross is UNCONFIRMED per PROJECT_CONTEXT.md
+    confirmed: true, // confirmed by the client (Oct 2026)
     baseFare: null, // REPLACE WITH CLIENT PRICING
     rates: emptyRates(),
   },
 ];
 
 /**
- * Travel routes: Airport ↔ City plus 30 outstation routes (lib/routeCatalog.ts).
+ * Travel routes: Airport ↔ City plus 33 outstation routes (lib/routeCatalog.ts).
  */
 export const seedRoutes: Route[] = catalogRoutes;
 

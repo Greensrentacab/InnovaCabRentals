@@ -4,6 +4,7 @@ import { getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
+  alternates: { canonical: '/innova-rental-bangalore' },
   title: `Innova Rental Bangalore | 7 & 8 Seater Toyota Innova Cab Hire | ${siteConfig.brand.name}`,
   description:
     'Book Toyota Innova cab rental in Bangalore with experienced driver for outstation road trips, Kempegowda Airport transfers, and local city use. Clean, comfortable 7 and 8 seater Innova taxi.',

@@ -219,6 +219,7 @@ export default function TourEnquiryForm() {
                 <option>Toyota Innova (7/8 Seater)</option>
                 <option>Toyota Innova Crysta</option>
                 <option>Toyota Innova Hycross</option>
+                <option>Maruti Suzuki Ertiga</option>
               </select>
             </div>
           </div>

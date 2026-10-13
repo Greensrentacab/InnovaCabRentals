@@ -1,12 +1,22 @@
 /**
- * ServicesSection.tsx — "Our services" grid (design.md §3.3) with real car photos.
+ * ServicesSection.tsx — "Our services" grid (design.md §3.3). Each card header is a
+ * photo carousel: the matching hero scene plus our own fleet photos.
  */
 
 import Link from 'next/link';
 import { ArrowRight, Check, Hourglass, Mountain, Plane, type LucideIcon } from 'lucide-react';
 import Reveal from '@/components/home/Reveal';
-import { PhotoCredit } from '@/components/ds/VehiclePhotoCard';
+import PhotoCarousel, { type CarouselPhoto } from '@/components/home/PhotoCarousel';
 import { fleetPhotos, type FleetPhoto } from '@/lib/fleetPhotos';
+
+const scene = (name: string, alt: string): CarouselPhoto => ({
+  src: `/images/hero/hero-${name}-960.webp`,
+  alt,
+  width: 960,
+  height: 536,
+  position: '75% 60%',
+});
+const own = (p: FleetPhoto): CarouselPhoto => p;
 
 export interface ServiceFares {
   airport: string | null;
@@ -17,8 +27,8 @@ export interface ServiceFares {
 interface ServiceCard {
   title: string;
   icon: LucideIcon;
-  /** Real car photo (Wikimedia Commons, credited) */
-  photo: FleetPhoto;
+  /** Carousel photos: hero scene + our own fleet photos */
+  photos: CarouselPhoto[];
   badges: { label: string; tone: 'amber' | 'glass' }[];
   description: string;
   bullets: string[];
@@ -33,7 +43,12 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
     {
       title: 'Airport Transfers',
       icon: Plane,
-      photo: fleetPhotos['innova-crysta'][0], // white Innova Crysta
+      photos: [
+        scene('airport', 'Innova Hycross waiting at the Bangalore airport terminal'),
+        own(fleetPhotos['innova-hycross'][0]),
+        own(fleetPhotos['innova-crysta'][0]),
+        own(fleetPhotos['innova-hycross'][4]),
+      ],
       badges: [
         { label: '24/7', tone: 'amber' },
         { label: 'Flight Tracked', tone: 'glass' },
@@ -48,7 +63,12 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
     {
       title: 'Outstation Trips',
       icon: Mountain,
-      photo: fleetPhotos.innova[0], // white Toyota Innova
+      photos: [
+        scene('outstation', 'Toyota Innova on a hill highway through tea plantations'),
+        own(fleetPhotos.innova[0]),
+        own(fleetPhotos['innova-hycross'][1]),
+        own(fleetPhotos['innova-crysta'][1]),
+      ],
       badges: [{ label: 'Per-km billing', tone: 'glass' }],
       description: 'Weekend escapes to Mysore, Coorg, Ooty, Wayanad & beyond.',
       bullets: ['Transparent per-km fares, tolls paid by customer', 'Experienced hill-station chauffeurs', 'Multi-day round trips, up to 3 stops'],
@@ -60,7 +80,12 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
     {
       title: 'Local Hourly Rentals',
       icon: Hourglass,
-      photo: fleetPhotos.ertiga[0], // white Maruti Suzuki Ertiga
+      photos: [
+        scene('local', 'Innova Crysta parked near Vidhana Soudha, Bangalore'),
+        own(fleetPhotos['innova-hycross'][2]),
+        own(fleetPhotos.innova[1]),
+        own(fleetPhotos['innova-crysta'][2]),
+      ],
       badges: [{ label: '8 hr · 12 hr · custom', tone: 'glass' }],
       description: 'An Innova, Crysta or Ertiga with chauffeur on standby for your day in the city.',
       bullets: ['8 hr full-day & 12 hr extended hire', 'Business meetings, errands & shopping', 'Multiple stops, no re-booking'],
@@ -77,7 +102,7 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
         <span className="eyebrow">Our services</span>
         <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">One fleet. Every kind of trip.</h2>
         <p className="mt-3 text-slate-600">
-          Chauffeur-driven Innova, Crysta &amp; Ertiga for every journey — whether you&apos;re catching a 5 AM flight or heading to the hills.
+          Chauffeur-driven Innova, Crysta, Hycross &amp; Ertiga for every journey — whether you&apos;re catching a 5 AM flight or heading to the hills.
         </p>
       </div>
 
@@ -87,18 +112,8 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
           return (
             <Reveal key={card.title} delay={i * 0.1} className="h-full">
               <article className="card-float card-float-hover group flex h-full flex-col overflow-hidden">
-                <div className="relative h-44 overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={card.photo.src}
-                    alt={card.photo.alt}
-                    width={card.photo.width}
-                    height={card.photo.height}
-                    loading="lazy"
-                    decoding="async"
-                    className="h-full w-full object-cover transition-transform duration-700 ease-premium group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-900/5 to-transparent" />
+                <PhotoCarousel photos={card.photos} label={`${card.title} photos`} delay={i * 1300} className="h-48">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-900/5 to-transparent" />
                   <div className="absolute left-4 top-4 flex flex-wrap gap-1.5">
                     {card.badges.map((badge) =>
                       badge.tone === 'amber' ? (
@@ -118,7 +133,7 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
                     </span>
                     <h3 className="text-xl font-extrabold tracking-tight">{card.title}</h3>
                   </div>
-                </div>
+                </PhotoCarousel>
 
                 <div className="flex flex-1 flex-col p-5">
                   <p className="text-sm text-slate-600">{card.description}</p>
@@ -151,7 +166,6 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
                       <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" />
                     </Link>
                   </div>
-                  <PhotoCredit photo={card.photo} className="mt-3 block" />
                 </div>
               </article>
             </Reveal>

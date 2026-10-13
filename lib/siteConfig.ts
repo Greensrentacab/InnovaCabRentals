@@ -1,5 +1,5 @@
 /**
- * siteConfig.ts - Single Source of Truth for Innova Cabs Bangalore.
+ * siteConfig.ts - Single Source of Truth for Innova Cab Rentals.
  * 
  * Sourced directly from PROJECT_CONTEXT.md.
  * Every component across the application MUST import and consume contact info,
@@ -23,8 +23,10 @@ export interface Testimonial {
 
 export const siteConfig = {
   brand: {
-    name: 'Innova Cabs Bangalore',
-    tagline: 'Innova Cabs Bangalore | Innova Crysta and Hycross Rental',
+    name: 'Innova Cab Rentals',
+    /** Text beside the logo in the site header (client request) */
+    headerName: 'Innova Cabs Bangalore',
+    tagline: 'Innova, Innova Crysta, Hycross & Ertiga cab rental in Bangalore',
     closingLine: 'Comfortable Cars. Experienced Drivers. Reliable Journeys.',
   },
 
@@ -45,6 +47,20 @@ export const siteConfig = {
       full: '25, 2nd Cross St, Muniyappa Layout, Nagenahalli, Narayanapura, Bengaluru, Karnataka 560077',
     },
     hours: 'Open 24/7',
+  },
+
+  /** Accepted payment methods (client confirmed: all types accepted). */
+  payments: {
+    methods: ['UPI (GPay, PhonePe, Paytm)', 'Cash', 'Debit & credit cards', 'Bank transfer (NEFT / IMPS)'],
+    schema: 'Cash, UPI, Credit Card, Debit Card, Bank Transfer',
+    advance: 'No advance payment needed to book. Pay after the trip.',
+  },
+
+  /** Booking policies shown in fare T&Cs and the trust section. */
+  policies: {
+    cancellation: 'Free cancellation or rescheduling up to 4 hours before pickup.',
+    confirmation: 'Every booking is confirmed by our team on call or WhatsApp before the car is dispatched.',
+    tolls: 'Tolls, parking, state permits and entry taxes are paid by the customer.',
   },
 
   services: [
@@ -111,16 +127,6 @@ export const siteConfig = {
       label: '15 Years of Experience',
       verified: false,
     } as TrustClaim<number>,
-    happyCustomers: {
-      value: '5000+',
-      label: '5000+ Happy Customers',
-      verified: false,
-    } as TrustClaim<string>,
-    googleRating: {
-      value: 5.0,
-      label: '5 Star Google Rating',
-      verified: false,
-    } as TrustClaim<number>,
   },
 
   /**
@@ -131,10 +137,10 @@ export const siteConfig = {
   testimonials: [] as Testimonial[],
 
   seo: {
-    title: 'Innova Cabs Bangalore | Innova & Innova Crysta Rental',
-    h1: 'Innova Cabs Bangalore – Innova & Innova Crysta Rental',
+    title: 'Innova Cab Rentals Bangalore | Innova Crysta & Hycross Rental',
+    h1: 'Innova Airport Taxi Bangalore',
     metaDescription:
-      'Book Toyota Innova, Innova Crysta, and Hycross car rentals in Bangalore with experienced drivers. Airport transfers, local city use, and outstation trips available 24/7.',
+      'Book Innova, Innova Crysta, Hycross and Ertiga cabs in Bangalore for airport transfers, local rentals and outstation trips. Call or WhatsApp for fares.',
     primaryKeywords: [
       'Innova Cabs Bangalore',
       'Innova Rental Bangalore',

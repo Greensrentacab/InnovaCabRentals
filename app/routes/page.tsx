@@ -7,6 +7,7 @@ import { confirmedFleet, formatINR, routeFromFare } from '@/lib/storefrontData';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
+  alternates: { canonical: '/routes' },
   title: `Popular Innova Cab Routes from Bangalore | Outstation Taxi | ${siteConfig.brand.name}`,
   description:
     'Search 30+ outstation round-trip routes from Bangalore — Coorg, Ooty, Mysore, Tirupati, Munnar, Gokarna, Kochi and more — in Innova, Crysta or Ertiga with seasoned chauffeurs.',

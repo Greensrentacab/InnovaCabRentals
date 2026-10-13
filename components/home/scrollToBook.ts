@@ -7,6 +7,8 @@
 export type HomeService = 'airport' | 'outstation' | 'local';
 
 export const BOOK_EVENT = 'home:book';
+/** Fired by the booking widget whenever its service tab changes (hero scene follows it). */
+export const SERVICE_EVENT = 'home:service';
 const HEADER_OFFSET = 88;
 
 const prefersReducedMotion = () =>

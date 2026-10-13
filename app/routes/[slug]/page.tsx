@@ -13,6 +13,7 @@ import { getLocalPackages, getRoutes, getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
 import { LocationData } from '@/lib/googlePlaces';
 import { primaryPhoto } from '@/lib/fleetPhotos';
+import { routePhoto } from '@/lib/routePhotos';
 import { buildWidgetData, confirmedFleet, fareOrRequest, formatINR, routeFromFare, routeRoundTripFare } from '@/lib/storefrontData';
 import FareResults from '@/components/FareResults';
 
@@ -347,7 +348,8 @@ export async function generateMetadata({ params }: RoutePageProps): Promise<Meta
 
   return {
     title: `${h1} | Innova & Crysta Rental Bangalore | ${siteConfig.brand.name}`,
-    description: `Book ${h1} with experienced driver. Clean Toyota Innova, Innova Crysta & Ertiga round-trip rental for travel between ${route.origin} and ${destination} (${route.distanceKm} km, ${route.durationText}). Zero surge, transparent pricing.`,
+    alternates: { canonical: `/routes/${route.slug}` },
+    description: `Book ${h1} with experienced driver. Clean Toyota Innova, Innova Crysta, Hycross & Ertiga round-trip rental for travel between ${route.origin} and ${destination} (${route.distanceKm} km, ${route.durationText}). Zero surge, transparent pricing.`,
     keywords: [
       `${h1} Bangalore`,
       `Innova Cab Bangalore to ${destination}`,
@@ -410,6 +412,8 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
       },
     ],
   };
+
+  const destPhoto = routePhoto(route.slug);
 
   const whatsappRouteUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
     `Hello ${siteConfig.brand.name}, I would like to book the ${customDetails.h1} (${route.distanceKm} km) in Toyota Innova. Please share current quote.`
@@ -477,6 +481,27 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
             <dd className="text-[11px] text-slate-500">Round trip · tolls extra</dd>
           </div>
         </dl>
+
+        {destPhoto && (
+          <figure className="mt-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-float">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={destPhoto.src}
+              alt={destPhoto.alt}
+              width={800}
+              height={500}
+              loading="lazy"
+              decoding="async"
+              className="aspect-[16/9] w-full object-cover"
+            />
+            <figcaption className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 text-[11px] text-slate-500">
+              <span className="font-semibold text-slate-700">{destPhoto.alt}</span>
+              <a href={destPhoto.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-700">
+                Photo: {destPhoto.author} / Wikimedia Commons, {destPhoto.license}
+              </a>
+            </figcaption>
+          </figure>
+        )}
       </PageHero>
 
       {/* Available cars, prices & T&Cs (after "See Fares") */}
@@ -488,7 +513,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
           <div className="card-float p-6 sm:p-10">
             <SectionHeading
               eyebrow="Highway excellence"
-              title={`Why Book ${customDetails.h1} with Innova Cabs Bangalore`}
+              title={`Why Book ${customDetails.h1} with ${siteConfig.brand.name}`}
               subtitle="We ensure every kilometer of your highway trip is relaxing, punctual, and safe."
               centered={false}
             />
@@ -537,6 +562,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
                           height={photo.height}
                           loading="lazy"
                           decoding="async"
+                          style={{ objectPosition: photo.position }}
                           className="h-full w-full object-cover transition-transform duration-700 ease-premium hover:scale-[1.03]"
                         />
                         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-950/60 to-transparent" />

@@ -4,6 +4,7 @@ import { getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
+  alternates: { canonical: '/innova-crysta-rental-bangalore' },
   title: `Innova Crysta Rental Bangalore | Luxury 7 Seater Innova Crysta Cab Hire | ${siteConfig.brand.name}`,
   description:
     'Rent Toyota Innova Crysta in Bangalore with chauffeur. Premium executive captain seats, automatic climate control, and unmatched luxury for corporate delegations, airport VIP transfers, and family outstation trips.',

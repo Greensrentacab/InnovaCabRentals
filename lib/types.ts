@@ -1,5 +1,5 @@
 /**
- * Core Type Definitions for Innova Cabs Bangalore
+ * Core Type Definitions for Innova Cab Rentals
  * Sourced from PROJECT_CONTEXT.md and business requirements.
  */
 
@@ -44,7 +44,7 @@ export interface Vehicle {
   seats: number;
   luggage: number;
   features: string[];
-  confirmed: boolean; // Hycross is unconfirmed/false
+  confirmed: boolean; // false = hidden from the website (Admin → Fleet)
   imageUrl?: string;
   baseFare?: number | null;
   rates?: VehicleRates;

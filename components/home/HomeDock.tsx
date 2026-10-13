@@ -58,7 +58,7 @@ export default function HomeDock() {
             </span>
             WhatsApp
           </a>
-          <button type="button" onClick={() => scrollToId('fleet')} className={itemClass} tabIndex={dockVisible ? 0 : -1}>
+          <button type="button" onClick={() => scrollToId('fleet') || (window.location.href = '/vehicles#compare')} className={itemClass} tabIndex={dockVisible ? 0 : -1}>
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-700">
               <ReceiptText className="h-4 w-4" />
             </span>

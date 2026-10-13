@@ -13,6 +13,7 @@
  * Always recalculated on the server — never trust a browser-sent fare.
  */
 
+import { siteConfig } from '@/lib/siteConfig';
 import { ServiceType, TripType, Vehicle, Route, VehicleRates } from '@/lib/types';
 import { getRoutes, getVehicles } from '@/lib/dataService';
 
@@ -97,10 +98,10 @@ export function tripDays(pickupDate?: string | null, returnDate?: string | null)
 }
 
 const COMMON_TERMS = [
-  'Tolls, parking, state permits and entry taxes are paid by the customer.',
+  siteConfig.policies.tolls,
   'Fare is an estimate; final fare is confirmed by our dispatch team before the trip.',
   'No advance payment. Pay after the trip.',
-  'Free cancellation or rescheduling up to 4 hours before pickup.',
+  siteConfig.policies.cancellation,
 ];
 
 function outstationQuote(rates: VehicleRates, totalKm: number | null, days: number) {
@@ -168,7 +169,7 @@ function localQuote(rates: VehicleRates, hours: number) {
 export async function calculateServerFare(input: FareCalculationInput): Promise<FareCalculationResponse> {
   const [allRoutes, allVehicles] = await Promise.all([getRoutes(), getVehicles()]);
 
-  // Confirmed cars only (Hycross stays hidden until confirmed)
+  // Active cars only (switched off in Admin → Fleet = hidden)
   const confirmedVehicles = allVehicles.filter((v) => v.confirmed !== false);
   const vehiclesToCalculate: Vehicle[] = input.vehicleId
     ? confirmedVehicles.filter((v) => v.id === input.vehicleId)

@@ -8,6 +8,7 @@ import Reveal from '@/components/home/Reveal';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
+  alternates: { canonical: '/tour-packages' },
   title: `Custom Tour Packages from Bangalore | Innova Cab Hire | ${siteConfig.brand.name}`,
   description:
     'Customised enquiry-based tour packages from Bangalore to Coorg, Ooty, Mysore, Wayanad, Chikmagalur, and Kodaikanal with Toyota Innova Crysta. Experienced chauffeurs and flexible itineraries.',

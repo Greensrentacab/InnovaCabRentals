@@ -1,7 +1,8 @@
 /**
- * fleetPhotos.ts — representative vehicle photography (design.md §3.3
- * "Representative photo card"). All images are from Wikimedia Commons under
- * CC BY-SA, CC0 or public domain; every use shows a credit line (author, licence, source).
+ * fleetPhotos.ts — vehicle photography (design.md §3.3 photo cards).
+ * Innova & Innova Crysta: actual photos of our own fleet (/images/fleet/own).
+ * Ertiga & Hycross: Wikimedia Commons (CC BY-SA, CC0 or public domain) —
+ * every use of those shows a credit line (author, licence, source).
  * Files live in /public/images/fleet (1280px, resized from the originals).
  *
  * The Innova Hycross photos show the Toyota Zenix, the Indonesian-market name
@@ -13,10 +14,15 @@ export interface FleetPhoto {
   alt: string;
   /** Short label used as a gallery caption */
   label: string;
-  author: string;
-  license: 'CC BY-SA 4.0' | 'CC BY-SA 3.0' | 'CC0' | 'Public domain';
+  /** Third-party photos only (Wikimedia Commons) */
+  author?: string;
+  license?: 'CC BY-SA 4.0' | 'CC BY-SA 3.0' | 'CC0' | 'Public domain';
   /** Wikimedia Commons file page */
-  sourceUrl: string;
+  sourceUrl?: string;
+  /** true = actual photo of our own fleet (no credit line needed) */
+  own?: boolean;
+  /** CSS object-position for cropping, e.g. 'center 60%' */
+  position?: string;
   width: number;
   height: number;
 }
@@ -24,88 +30,86 @@ export interface FleetPhoto {
 const commons = (file: string) => `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file.replace(/ /g, '_'))}`;
 
 export const fleetPhotos: Record<string, FleetPhoto[]> = {
+  // Actual photos of our own fleet (Toyota Innova, KA 02 AC 9968)
   innova: [
     {
-      src: '/images/fleet/innova-front.jpg',
-      alt: 'White Toyota Innova, front three-quarter view',
-      label: 'Exterior · front',
-      author: 'Ethan Llamas',
-      license: 'CC BY-SA 4.0',
-      sourceUrl: commons('2012 Toyota Innova 2.0 G in Pearl White, front left, 05-11-2024.jpg'),
-      width: 1280,
-      height: 960,
-    },
-    {
-      src: '/images/fleet/innova-interior.jpg',
-      alt: 'Toyota Innova cabin with dashboard and front seats',
-      label: 'Cabin & dashboard',
-      author: 'Ethan Llamas',
-      license: 'CC BY-SA 4.0',
-      sourceUrl: commons('2012 Toyota Innova 2.5 G interior.jpg'),
-      width: 1280,
-      height: 853,
-    },
-    {
-      src: '/images/fleet/innova-rear.jpg',
-      alt: 'Toyota Innova, rear three-quarter view',
-      label: 'Exterior · rear',
-      author: 'Ethan Llamas',
-      license: 'CC BY-SA 4.0',
-      sourceUrl: commons('2012 Toyota Innova 2.5 G in black, rear right.jpg'),
-      width: 1280,
-      height: 853,
-    },
-    {
-      src: '/images/fleet/innova-front-2.jpg',
-      alt: 'Toyota Innova parked, front view',
+      src: '/images/fleet/own/innova-side.jpg',
+      alt: 'Our silver Toyota Innova with roof carrier, side view',
       label: 'Exterior · side',
-      author: 'Ethan Llamas',
-      license: 'CC BY-SA 4.0',
-      sourceUrl: commons('Toyota Innova 2.5 G 2012.jpg'),
-      width: 1280,
-      height: 991,
+      own: true,
+      width: 1600,
+      height: 1200,
+      position: 'center 60%',
+    },
+    {
+      src: '/images/fleet/own/innova-front.jpg',
+      alt: 'Our silver Toyota Innova, front view',
+      label: 'Exterior · front',
+      own: true,
+      width: 960,
+      height: 1280,
+      position: 'center 65%',
+    },
+    {
+      src: '/images/fleet/own/innova-seats-front.jpg',
+      alt: 'Tan leather front seats in our Toyota Innova',
+      label: 'Leather seats · front',
+      own: true,
+      width: 1200,
+      height: 1600,
+    },
+    {
+      src: '/images/fleet/own/innova-seats-rear.jpg',
+      alt: 'Tan leather second and third row seats in our Toyota Innova',
+      label: 'Leather seats · rear rows',
+      own: true,
+      width: 1600,
+      height: 1200,
+    },
+    {
+      src: '/images/fleet/own/innova-rear.jpg',
+      alt: 'Our silver Toyota Innova, rear view',
+      label: 'Exterior · rear',
+      own: true,
+      width: 1200,
+      height: 1600,
+      position: 'center 60%',
     },
   ],
+  // Actual photos of our own fleet (Toyota Innova Crysta, KA 03 AJ 8559)
   'innova-crysta': [
     {
-      src: '/images/fleet/crysta-front.jpg',
-      alt: 'White Toyota Innova Crysta, front three-quarter view',
+      src: '/images/fleet/own/crysta-front.jpg',
+      alt: 'Our silver Toyota Innova Crysta, front three-quarter view',
       label: 'Exterior · front',
-      author: 'Premnath Kudva',
-      license: 'CC BY-SA 4.0',
-      sourceUrl: commons('Toyota Innova Crysta 2.4 Z front right.jpg'),
-      width: 1280,
-      height: 835,
+      own: true,
+      width: 960,
+      height: 1280,
+      position: 'center 62%',
     },
     {
-      src: '/images/fleet/crysta-side.jpg',
-      alt: 'Toyota Innova Crysta, side profile',
-      label: 'Exterior · side',
-      author: 'Premnath Kudva',
-      license: 'CC BY-SA 4.0',
-      sourceUrl: commons('Toyota Innova Crysta 2.4 Z side.jpg'),
-      width: 1280,
-      height: 720,
+      src: '/images/fleet/own/crysta-captain-seats.jpg',
+      alt: 'Second-row captain seats in our Toyota Innova Crysta',
+      label: 'Captain seats · 2nd row',
+      own: true,
+      width: 1599,
+      height: 899,
     },
     {
-      src: '/images/fleet/crysta-rear.jpg',
-      alt: 'Toyota Innova Crysta, rear three-quarter view',
-      label: 'Exterior · rear',
-      author: 'Premnath Kudva',
-      license: 'CC BY-SA 4.0',
-      sourceUrl: commons('Toyota Innova Crysta 2.4 Z rear left.jpg'),
-      width: 1280,
-      height: 720,
+      src: '/images/fleet/own/crysta-cabin.jpg',
+      alt: 'Driver cabin and front seats in our Toyota Innova Crysta',
+      label: 'Driver cabin',
+      own: true,
+      width: 1200,
+      height: 1600,
     },
     {
-      src: '/images/fleet/crysta-front-2.jpg',
-      alt: 'Silver Toyota Innova Crysta on a wet road under a cloudy sky',
-      label: 'On the road',
-      author: 'Abhishekptlbbk',
-      license: 'CC BY-SA 4.0',
-      sourceUrl: commons('Toyota Innova Crysta.jpg'),
-      width: 1280,
-      height: 604,
+      src: '/images/fleet/own/crysta-third-row.jpg',
+      alt: 'Third-row seats and floor mats in our Toyota Innova Crysta',
+      label: 'Third row',
+      own: true,
+      width: 1600,
+      height: 1200,
     },
   ],
   ertiga: [
@@ -152,41 +156,55 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
   ],
   'innova-hycross': [
     {
-      src: '/images/fleet/hycross-front.jpg',
-      alt: 'White Toyota Innova Hycross (Zenix), front three-quarter view',
+      src: '/images/fleet/own/hycross-front-side.jpg',
+      alt: 'Our white Toyota Innova Hycross hybrid, front three-quarter view',
       label: 'Exterior · front',
-      author: 'Ethan Llamas',
-      license: 'CC BY-SA 4.0',
-      sourceUrl: commons('Toyota Zenix 2.0 Q HEV Platinum White Pearl Mica - front.jpg'),
-      width: 1280,
-      height: 823,
+      own: true,
+      width: 1600,
+      height: 1200,
+      position: 'center 55%',
     },
     {
-      src: '/images/fleet/hycross-interior.jpg',
-      alt: 'Toyota Innova Hycross (Zenix) hybrid cabin and dashboard',
-      label: 'Cabin & dashboard',
-      author: 'Ethan Llamas',
-      license: 'CC BY-SA 4.0',
-      sourceUrl: commons('Toyota Zenix MAGH10 2.0 Q HEV interior.jpg'),
-      width: 1280,
-      height: 853,
+      src: '/images/fleet/own/hycross-side.jpg',
+      alt: 'Our white Toyota Innova Hycross hybrid, side profile',
+      label: 'Exterior · side',
+      own: true,
+      width: 1600,
+      height: 1200,
+      position: 'center 58%',
     },
     {
-      src: '/images/fleet/hycross-rear.jpg',
-      alt: 'White Toyota Innova Hycross (Zenix), rear three-quarter view',
-      label: 'Exterior · rear',
-      author: 'Ethan Llamas',
-      license: 'CC BY-SA 4.0',
-      sourceUrl: commons('Toyota Zenix 2.0 Q HEV Platinum White Pearl Mica - rear.jpg'),
-      width: 1280,
-      height: 823,
+      src: '/images/fleet/own/hycross-front.jpg',
+      alt: 'Our Toyota Innova Hycross, front view',
+      label: 'Exterior · front view',
+      own: true,
+      width: 1200,
+      height: 1600,
+      position: 'center 55%',
+    },
+    {
+      src: '/images/fleet/own/hycross-seats-front.jpg',
+      alt: 'Front seats with clean white covers in our Innova Hycross',
+      label: 'Front cabin',
+      own: true,
+      width: 1200,
+      height: 1600,
+    },
+    {
+      src: '/images/fleet/own/hycross-seats-rear.jpg',
+      alt: 'Rear seats with white covers, water and snacks in our Innova Hycross',
+      label: 'Rear cabin · water & snacks',
+      own: true,
+      width: 1200,
+      height: 1600,
     },
   ],
 };
 
-/** Homepage hero backdrop (design.md §3.2.1). */
-export const heroPhoto = fleetPhotos['innova-crysta'][3];
+/** Homepage hero backdrop (design.md §3.2.1) — our own Innova. */
+export const heroPhoto = fleetPhotos.innova[0];
 
 export const primaryPhoto = (vehicleId: string): FleetPhoto | undefined => fleetPhotos[vehicleId]?.[0];
 
-export const photoCredit = (p: FleetPhoto) => `Photo: ${p.author} / Wikimedia Commons, ${p.license}`;
+/** Credit line for third-party photos; empty for our own fleet photos. */
+export const photoCredit = (p: FleetPhoto) => (p.own ? '' : `Photo: ${p.author} / Wikimedia Commons, ${p.license}`);

@@ -3,7 +3,7 @@ import { ArrowRight, Clock, MessageCircle, Phone } from 'lucide-react';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
-  title: 'Coming Soon | Innova Cabs Bangalore',
+  title: 'Coming Soon | Innova Cab Rentals',
   robots: 'noindex, nofollow',
 };
 

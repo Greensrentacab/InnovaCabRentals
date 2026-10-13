@@ -5,3 +5,14 @@ node_modules
 *.pem
 .env*.local
 *.tsbuildinfo
+
+# env files (keep .env.example committed)
+.env
+.env*.local
+!.env.example
+
+# vercel
+.vercel
+
+# local production-build checks (NEXT_DIST_DIR)
+/.next-*/

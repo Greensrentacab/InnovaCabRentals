@@ -45,10 +45,13 @@ const routeRows: RouteRow[] = [
   ['udupi', 'Udupi', CITY_AIRPORT, 400, '8 hrs', 'coast', 'Sri Krishna Matha temple town near Malpe beach on the Karnataka coast.'],
   ['kochi', 'Kochi (Ernakulam)', CITY_AIRPORT, 550, '10 hrs', 'coast', 'Fort Kochi heritage, Chinese fishing nets and the Kerala backwaters gateway.'],
   ['alleppey', 'Alleppey (Alappuzha)', CITY_AIRPORT, 580, '11 hrs', 'coast', 'Kerala backwaters and houseboat stays around Vembanad Lake.'],
+  ['murudeshwar', 'Murudeshwar', CITY_AIRPORT, 495, '9 hrs 30 mins', 'temples', 'Seaside Shiva temple with the giant Shiva statue on the Karnataka coast.'],
+  ['srirangam', 'Srirangam (Trichy)', CITY_AIRPORT, 335, '6 hrs 30 mins', 'temples', 'Sri Ranganathaswamy Temple on the Kaveri island at Tiruchirappalli.'],
+  ['kanyakumari', 'Kanyakumari', CITY_AIRPORT, 690, '12 hrs', 'temples', 'Southern tip of India with the Vivekananda Rock Memorial and sunrise views.'],
 ];
 
 /**
- * Travel routes: Airport ↔ City plus 30 outstation routes.
+ * Travel routes: Airport ↔ City plus 33 outstation routes.
  * Slugs for the original 8 routes are unchanged (SEO).
  */
 export const catalogRoutes: Route[] = [

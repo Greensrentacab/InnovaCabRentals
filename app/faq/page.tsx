@@ -6,7 +6,8 @@ import CtaBand from '@/components/ds/CtaBand';
 import FaqAccordion from '@/components/home/FaqAccordion';
 
 export const metadata = {
-  title: `Frequently Asked Questions | Innova Cabs Bangalore | ${siteConfig.brand.name}`,
+  alternates: { canonical: '/faq' },
+  title: `Frequently Asked Questions | Innova Cab Rentals Bangalore | ${siteConfig.brand.name}`,
   description:
     'Comprehensive answers to questions about booking procedures, toll and driver allowance billing, luggage capacity in 7 & 8 seater Innova, and 24/7 airport and outstation services.',
   keywords: [
@@ -23,7 +24,7 @@ const categorizedFaqs = [
     category: 'Booking & Confirmation (Core FAQs)',
     items: [
       {
-        q: 'How do I book an Innova cab with Innova Cabs Bangalore?',
+        q: 'How do I book an Innova cab with Innova Cab Rentals?',
         a: 'You can call us directly or click our WhatsApp button to get an instant quote and booking confirmation. You can also submit the booking request form on our contact page, and our dispatch team will confirm your vehicle via a pre-filled WhatsApp link or call.',
       },
       {

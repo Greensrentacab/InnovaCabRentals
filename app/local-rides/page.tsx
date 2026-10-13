@@ -4,6 +4,7 @@ import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
+  alternates: { canonical: '/local-rides' },
   title: `Local Innova Car Rental Bangalore | Hourly & Full Day Packages | ${siteConfig.brand.name}`,
   description:
     'Rent Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga in Bangalore for local city travel. 8hr/80km full-day and 12hr/120km extended rental packages, custom durations on request, and point-to-point city transfers.',

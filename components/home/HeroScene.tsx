@@ -76,6 +76,7 @@ function SceneImages({ service, only }: { service: HomeService; only?: HomeServi
             height={1071}
             fetchPriority={key === service ? 'high' : 'low'}
             decoding="async"
+            style={{ objectPosition: s.pos }}
             className={cn(
               'absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-premium',
               on ? 'opacity-100' : 'opacity-0'
@@ -92,16 +93,34 @@ function SceneImages({ service, only }: { service: HomeService; only?: HomeServi
  * the text, the picture anchored bottom-right so the car shows clearly below
  * it. On the homepage it follows the booking tab; landing pages pass `scene`.
  */
-export function HeroBand({ className, scene }: { className?: string; scene?: HomeService }) {
+export function HeroBand({ className, scene, flip, plain, cover }: { className?: string; scene?: HomeService; flip?: boolean; plain?: boolean; cover?: boolean }) {
   const tab = useHeroService();
   const service = scene ?? tab;
   return (
     <div className={cn('pointer-events-none absolute overflow-hidden bg-gradient-to-b from-sky-100 via-sky-50 to-sky-100', className)}>
-      <div className="absolute bottom-0 right-0 aspect-[1920/1071] w-[160%] max-w-none [mask-image:linear-gradient(to_bottom,transparent,#000_30%)] sm:w-[110%] lg:w-full lg:[mask-image:linear-gradient(to_bottom,transparent,#000_28%)]">
+      <div
+        className={cn(
+          'absolute max-w-none',
+          // Default: picture anchored bottom-right, sized by its own aspect ratio
+          !plain && !cover && 'bottom-0 right-0 aspect-[1920/1071] w-[160%] [mask-image:linear-gradient(to_bottom,transparent,#000_30%)] sm:w-[110%]',
+          // Cover: fills the band (e.g. 4:5 on phones); heading area fades into the sky so the copy stays readable
+          cover && 'inset-0 h-full w-full [mask-image:linear-gradient(to_bottom,transparent_38%,#000_80%)]',
+          plain && 'inset-0 h-full w-full',
+          !plain && 'lg:inset-auto lg:bottom-0 lg:right-0 lg:h-auto lg:aspect-[1920/1071] lg:w-full lg:[mask-image:linear-gradient(to_bottom,transparent,#000_28%)]',
+          flip && 'lg:-scale-x-100'
+        )}
+      >
         <SceneImages service={service} only={scene} />
       </div>
-      <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-b from-transparent to-porcelain" />
-      <div className="absolute inset-y-0 right-0 hidden w-16 bg-gradient-to-r from-transparent to-porcelain lg:block" />
+      {/* Readability scrim behind the heading + copy (left, top part only) so the car stays clear */}
+      {plain && (
+        <div
+          className="absolute left-0 top-0 h-[68%] w-[68%] bg-gradient-to-r from-white/90 via-white/70 to-transparent [mask-image:linear-gradient(to_bottom,#000_72%,transparent)]"
+          aria-hidden="true"
+        />
+      )}
+      {!plain && <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-b from-transparent to-porcelain" />}
+      {!plain && <div className={cn('absolute inset-y-0 hidden w-16 from-transparent to-porcelain lg:block', flip ? 'left-0 bg-gradient-to-l' : 'right-0 bg-gradient-to-r')} />}
     </div>
   );
 }

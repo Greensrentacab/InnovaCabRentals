@@ -6,11 +6,9 @@ import {
   Luggage,
   MessageCircle,
   Phone,
-  Radar,
   ShieldCheck,
   Star,
   Users,
-  BadgeIndianRupee,
 } from 'lucide-react';
 import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import ServicesSection from '@/components/home/ServicesSection';
@@ -135,12 +133,15 @@ export default async function HomePage() {
         {/* Soft sky behind the whole hero (the form side on desktop) */}
         <div className="pointer-events-none absolute inset-x-0 top-0 -z-20 h-[760px] bg-gradient-to-b from-sky-100 via-sky-50 to-porcelain" aria-hidden="true" />
 
+        {/* Desktop: the picture spans the full hero width behind both columns */}
+        <HeroBand flip plain className="inset-x-0 top-0 -z-10 hidden h-[clamp(640px,52vw,780px)] lg:block" />
+
         {/* Copy + picture on the left, booking form on the right (desktop) */}
         <div className="section grid items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,450px)] lg:gap-10">
           <div className="relative min-w-0 pt-2 [text-shadow:0_1px_12px_rgba(255,255,255,0.95)] lg:col-start-1 lg:row-start-1 lg:pt-4">
             {/* Picture band sized to the copy, car bottom-right */}
             <div className="relative">
-              <HeroBand className="-inset-x-4 -top-28 bottom-0 -z-10 sm:-inset-x-6 sm:-top-36 lg:-left-8 lg:-right-2 lg:-top-36 lg:rounded-br-[2.5rem]" />
+              <HeroBand cover className="-inset-x-4 -top-28 -z-10 aspect-[4/5] sm:-inset-x-6 sm:-top-36 sm:bottom-0 sm:aspect-auto lg:hidden" />
 
               <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-live-500/20 bg-white/80 px-3 py-1.5 text-xs font-bold text-live-600 shadow-sm backdrop-blur-md">
                 <span className="relative flex h-2 w-2">
@@ -163,18 +164,6 @@ export default async function HomePage() {
               <div className="h-[290px] sm:h-[380px] lg:h-[400px] xl:h-[440px]" aria-hidden="true" />
             </div>
 
-            {/* Trust strip */}
-            <ul className="mt-4 grid animate-fade-up grid-cols-3 divide-x divide-amber-200/70 rounded-2xl border border-amber-200/70 bg-amber-50/80 py-2.5 text-[11px] font-semibold leading-tight text-slate-700 shadow-sm backdrop-blur [animation-delay:400ms] sm:text-sm">
-              <li className="flex items-center justify-center gap-1.5 px-2">
-                <ShieldCheck className="h-4 w-4 shrink-0 text-live-600" /> Verified drivers
-              </li>
-              <li className="flex items-center justify-center gap-1.5 px-2">
-                <Radar className="h-4 w-4 shrink-0 text-brand-600" /> Flight tracking
-              </li>
-              <li className="flex items-center justify-center gap-1.5 px-2">
-                <BadgeIndianRupee className="h-4 w-4 shrink-0 text-brand-600" /> Transparent price
-              </li>
-            </ul>
           </div>
 
           <div className="min-w-0 lg:col-start-2 lg:row-start-1 lg:pt-4">

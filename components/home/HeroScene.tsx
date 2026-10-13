@@ -152,6 +152,37 @@ export function HeroPicture({
   );
 }
 
+/**
+ * Phones/tablets: full-bleed picture behind the hero copy with a blue gradient
+ * from the top so white text stays readable; the car shows clearly below it.
+ * Fills its (relative) parent.
+ */
+export function HeroCover({ className }: { className?: string }) {
+  const service = useHeroService();
+  return (
+    <div className={cn('pointer-events-none absolute inset-0 overflow-hidden bg-slate-900', className)} aria-hidden="true">
+      <SceneImages service={service} pos="88% 72%" />
+      {/* Portrait airport picture made for phones (sky on top for the copy, car at the bottom) */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/hero/hero-airport-mobile.webp"
+        alt=""
+        width={768}
+        height={1376}
+        fetchPriority="high"
+        decoding="async"
+        style={{ objectPosition: '50% 100%' }}
+        className={cn(
+          'absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-premium',
+          service === 'airport' ? 'opacity-100' : 'opacity-0'
+        )}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 via-60% to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 to-transparent" />
+    </div>
+  );
+}
+
 const COPY: Record<HomeService, { title: string; lead: string }> = {
   airport: {
     title: 'Innova Airport Taxi',
@@ -172,7 +203,7 @@ export function HeroTitle() {
   const service = useHeroService();
   return (
     <>
-      {COPY[service].title} <span className="text-brand-700">Bangalore</span>
+      {COPY[service].title} <span className="text-sky-300 lg:text-brand-700">Bangalore</span>
     </>
   );
 }

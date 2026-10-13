@@ -16,6 +16,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import BrandMark from '@/components/BrandMark';
 import {
   Car,
   Users,
@@ -391,9 +392,7 @@ export default function AdminDashboardPage() {
   const sidebar = (
     <div className="flex h-full flex-col bg-[#0B1120] text-slate-300">
       <div className="flex items-center gap-3 px-5 pb-4 pt-6">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
-          <Car className="h-5 w-5" strokeWidth={2.2} />
-        </span>
+        <BrandMark className="h-11" />
         <div className="min-w-0 leading-tight">
           <p className="truncate text-[15px] font-extrabold text-white">{siteConfig.brand.name}</p>
           <p className="truncate text-xs text-slate-400">Bangalore dispatch desk</p>

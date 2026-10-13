@@ -39,11 +39,11 @@ export default function SegmentedControl<T extends string>({
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className={cn('relative flex gap-1 rounded-full border border-slate-200/80 bg-slate-100/70 p-1', className)}
+      className={cn('relative flex gap-1 rounded-2xl bg-slate-100/80 p-1', className)}
     >
       <span
         aria-hidden="true"
-        className="absolute bottom-1 left-1 top-1 rounded-full bg-brand-600 shadow-[0_8px_18px_-6px_rgba(56,189,248,0.8)] ring-1 ring-sky-300 transition-transform duration-300 ease-[cubic-bezier(0.34,1.25,0.64,1)]"
+        className="absolute bottom-1 left-1 top-1 rounded-xl bg-brand-600 shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.34,1.25,0.64,1)]"
         style={{
           width: `calc((100% - 8px - ${(n - 1) * 4}px) / ${n})`,
           transform: `translateX(calc(${activeIndex} * (100% + 4px)))`,
@@ -60,8 +60,8 @@ export default function SegmentedControl<T extends string>({
             aria-checked={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              'relative min-w-0 flex-1 whitespace-nowrap rounded-full font-semibold transition-colors',
-              size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-3 py-2 text-[13px]',
+              'relative min-w-0 flex-1 whitespace-nowrap rounded-xl font-semibold transition-colors',
+              size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-3 py-3 text-[13px]',
               selected ? 'text-white' : 'text-slate-500 hover:text-slate-800'
             )}
           >

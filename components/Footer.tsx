@@ -5,6 +5,7 @@
  */
 
 import Link from 'next/link';
+import BrandMark from '@/components/BrandMark';
 import { Car, ChevronDown, Clock, Crown, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { siteConfig } from '@/lib/siteConfig';
 import { catalogRoutes } from '@/lib/routeCatalog';
@@ -84,9 +85,7 @@ export default function Footer() {
         {/* Brand */}
         <div className="col-span-2 md:col-span-3 lg:col-span-1">
           <Link href="/" className="flex items-center gap-2.5" aria-label={`${siteConfig.brand.name} home`}>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 text-white shadow-glow">
-              <Car className="h-5 w-5" strokeWidth={2.2} />
-            </span>
+            <BrandMark className="h-11" />
             <span className="leading-none">
               <span className="block text-[15px] font-extrabold tracking-tight text-white">{siteConfig.brand.name}</span>
               <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-400">

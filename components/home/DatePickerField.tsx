@@ -172,7 +172,7 @@ export default function DatePickerField({
           aria-label={`${label}: ${display}`}
           onClick={() => (open ? close() : openPicker())}
           className={cn(
-            'field flex min-h-[56px] items-center gap-2 px-2.5 py-2 text-left sm:px-3',
+            'field flex min-h-[56px] items-center gap-2 px-3.5 py-2 text-left',
             open && 'border-brand-500 bg-white ring-4 ring-brand-500/10'
           )}
         >

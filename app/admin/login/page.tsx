@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { AlertCircle, ArrowRight, Car, KeyRound, Lock, Mail, Shield } from 'lucide-react';
 import { adminLogin } from '@/app/actions/admin';
 import { siteConfig } from '@/lib/siteConfig';
+import BrandMark from '@/components/BrandMark';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -59,9 +60,7 @@ export default function AdminLoginPage() {
       <div className="relative w-full max-w-md animate-fade-up space-y-6">
         {/* Brand header */}
         <div className="text-center">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-brand-900 text-white shadow-glow">
-            <Car className="h-7 w-7" strokeWidth={2.2} />
-          </span>
+          <BrandMark className="mx-auto h-20" />
           <h1 className="mt-4 text-3xl font-extrabold tracking-tight">{siteConfig.brand.name}</h1>
           <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-700">Chauffeur &amp; Dispatch Console</p>
         </div>

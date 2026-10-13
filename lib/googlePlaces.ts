@@ -13,6 +13,7 @@
  */
 
 import { siteConfig } from '@/lib/siteConfig';
+import { searchAreas } from '@/lib/bengaluruAreas';
 
 declare global {
   interface Window {
@@ -263,7 +264,8 @@ export async function searchPlaces(
 
               resolve(formatted);
             } else {
-              resolve([]);
+              // No Google match (or the key is blocked): fall back to the local Bengaluru list
+              resolve(fallbackSearch(trimmed));
             }
           }
         );
@@ -323,10 +325,15 @@ export const isPincode = (q: string) => /^\d{3}\s?\d{3}$/.test(q.trim());
 
 function fallbackSearch(query: string): LocationData[] {
   const lower = query.toLowerCase().replace(/\s+(?=\d)/g, '');
-  return MOCK_PLACES.filter(
+  const curated = MOCK_PLACES.filter(
     (p) =>
       p.name.toLowerCase().includes(lower) ||
       p.address.toLowerCase().includes(lower) ||
       p.address.replace(/\s/g, '').includes(lower)
   );
+  const seen = new Set(curated.map((p) => p.name.toLowerCase()));
+  const areas: LocationData[] = searchAreas(query)
+    .filter((name) => !seen.has(name.toLowerCase()))
+    .map((name) => ({ name, address: `${name}, Bengaluru, Karnataka`, lat: null, lng: null }));
+  return [...curated, ...areas].slice(0, 6);
 }

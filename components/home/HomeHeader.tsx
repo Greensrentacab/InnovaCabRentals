@@ -8,6 +8,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import BrandMark from '@/components/BrandMark';
 import {
   ArrowRight,
   Building2,
@@ -215,9 +216,7 @@ export default function HomeHeader() {
         >
           {/* Brand */}
           <Link href="/" className="flex items-center gap-2.5" aria-label={`${siteConfig.brand.name} home`}>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 text-white shadow-glow">
-              <Car className="h-5 w-5" strokeWidth={2.2} />
-            </span>
+            <BrandMark className="h-10" />
             <span className="text-[16px] font-extrabold leading-none tracking-tight text-ink">{siteConfig.brand.headerName}</span>
           </Link>
 

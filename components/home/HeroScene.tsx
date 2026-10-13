@@ -178,7 +178,7 @@ export function HeroCover({ className }: { className?: string }) {
         )}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 via-60% to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-sky-200 via-sky-200/60 to-transparent" />
     </div>
   );
 }

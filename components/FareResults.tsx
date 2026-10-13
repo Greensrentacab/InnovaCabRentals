@@ -218,43 +218,65 @@ export default function FareResults() {
 
   return (
     <section ref={sectionRef} id="fares" aria-live="polite" className="ds-scope section scroll-mt-24 pb-4 pt-10">
-      <div className="card-float p-5 sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <span className="eyebrow">Available cars</span>
-            <h2 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">{tripTypeLabel(trip)}</h2>
-            <ul className="mt-3 space-y-1.5 text-sm text-slate-600">
-              <li className="flex items-start gap-2">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                <span className="min-w-0">
-                  {[trip.pickup, ...(trip.stops ?? []), trip.drop].map((p) => p.name).join(' → ')}
-                  {trip.serviceType === 'outstation' && ` → ${trip.pickup.name}`}
-                </span>
-              </li>
-              <li className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                <span className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-brand-600" /> {formatDateLong(trip.date)}
-                  {trip.returnDate && ` – ${formatDateLong(trip.returnDate)}`}
-                </span>
-                <span className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-brand-600" /> {formatTime12(trip.time)}
-                </span>
-                {trip.serviceType === 'outstation' && search.totalKm !== null && (
-                  <span className="flex items-center gap-2">
-                    <RouteIcon className="h-4 w-4 text-brand-600" /> ~{search.totalKm} km round trip · {search.days} day
-                    {search.days > 1 ? 's' : ''}
-                  </span>
-                )}
-              </li>
-            </ul>
+      <div className="card-float overflow-hidden">
+        <div className="p-4 sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-brand-700">Available cars</p>
+              <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">{tripTypeLabel(trip)}</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => scrollToBook()}
+              className="inline-flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 transition hover:border-brand-300 hover:text-brand-700"
+            >
+              <Pencil className="h-3.5 w-3.5" /> Edit
+            </button>
           </div>
-          <button type="button" onClick={() => scrollToBook()} className="btn-ghost shrink-0">
-            <Pencil className="h-4 w-4" /> Edit trip
-          </button>
+
+          {/* Route as a simple timeline */}
+          {(() => {
+            const points = [trip.pickup, ...(trip.stops ?? []), trip.drop].map((p) => p.name);
+            if (trip.serviceType === 'outstation') points.push(trip.pickup.name);
+            return (
+              <ol className="relative mt-4 space-y-2.5 pl-6">
+                <span className="absolute bottom-2 left-[5px] top-2 w-px bg-slate-300" aria-hidden="true" />
+                {points.map((name, i) => (
+                  <li key={`${name}-${i}`} className="relative text-sm font-semibold leading-snug text-ink">
+                    <span
+                      className={cn(
+                        'absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-brand-600',
+                        i === points.length - 1 ? 'bg-brand-600' : 'bg-white'
+                      )}
+                      aria-hidden="true"
+                    />
+                    {name}
+                  </li>
+                ))}
+              </ol>
+            );
+          })()}
+
+          {/* Date, time and distance chips */}
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
+              <Calendar className="h-3.5 w-3.5 text-brand-600" /> {formatDateLong(trip.date)}
+              {trip.returnDate && ` – ${formatDateLong(trip.returnDate)}`}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
+              <Clock className="h-3.5 w-3.5 text-brand-600" /> {formatTime12(trip.time)}
+            </span>
+            {trip.serviceType === 'outstation' && search.totalKm !== null && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
+                <RouteIcon className="h-3.5 w-3.5 text-brand-600" /> ~{search.totalKm} km round trip · {search.days} day
+                {search.days > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
         </div>
 
-        <p className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
-          <Info className="mt-px h-4 w-4 shrink-0" />
+        <p className="flex items-start gap-2 border-t border-amber-100 bg-amber-50/80 px-4 py-2.5 text-[11px] font-semibold leading-snug text-amber-800 sm:px-6">
+          <Info className="mt-px h-3.5 w-3.5 shrink-0" />
           Toll fees, parking and state permits are paid by the customer and are not included in these fares.
         </p>
       </div>

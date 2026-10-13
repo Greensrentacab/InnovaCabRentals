@@ -5,20 +5,12 @@
 
 import { Info } from 'lucide-react';
 import { cn } from '@/lib/cn';
-import { photoCredit, type FleetPhoto } from '@/lib/fleetPhotos';
+import { type FleetPhoto } from '@/lib/fleetPhotos';
 
-export function PhotoCredit({ photo, className }: { photo: FleetPhoto; className?: string }) {
-  if (photo.own || !photo.sourceUrl) return null; // our own fleet photos need no credit
-  return (
-    <a
-      href={photo.sourceUrl}
-      target="_blank"
-      rel="noopener noreferrer license"
-      className={cn('text-[10px] leading-snug text-slate-400 transition-colors hover:text-slate-600', className)}
-    >
-      {photoCredit(photo)}
-    </a>
-  );
+/** Car photo credits are hidden site-wide at the client's request. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function PhotoCredit(_props: { photo: FleetPhoto; className?: string }) {
+  return null;
 }
 
 interface VehiclePhotoCardProps {

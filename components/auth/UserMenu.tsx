@@ -15,7 +15,7 @@ import UserAvatar from '@/components/auth/UserAvatar';
 import { cn } from '@/lib/cn';
 
 export default function UserMenu() {
-  const { available, loading, user, profile, openAuthDialog, signOut } = useAuth();
+  const { available, loading, user, profile, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -33,23 +33,20 @@ export default function UserMenu() {
     };
   }, [open]);
 
-  if (!available) return null;
-
-  if (loading) {
-    return <span className="shimmer hidden h-10 w-10 rounded-full sm:block" aria-hidden="true" />;
+  if (available && loading) {
+    return <span className="shimmer h-10 w-20 rounded-full" aria-hidden="true" />;
   }
 
+  // Signed out (or accounts not configured yet): visible "Sign in" button → /signin page
   if (!user) {
     return (
-      <button
-        type="button"
-        onClick={() => openAuthDialog('signin')}
-        aria-label="Sign in"
-        title="Sign in"
-        className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white/80 text-ink transition hover:border-brand-300 hover:text-brand-700 sm:flex"
+      <Link
+        href="/signin"
+        className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-sky-200 bg-white px-3 text-[13px] font-bold text-ink shadow-[0_6px_16px_-8px_rgba(56,189,248,0.7)] transition hover:border-brand-300 hover:text-brand-700 sm:px-4"
       >
-        <UserRound className="h-4 w-4" />
-      </button>
+        <UserRound className="h-4 w-4 text-brand-600" />
+        Sign in
+      </Link>
     );
   }
 

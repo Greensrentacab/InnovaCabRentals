@@ -78,7 +78,7 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
       href: '/outstation-cabs',
     },
     {
-      title: 'Local Hourly Rentals',
+      title: 'Local & Hourly Rentals',
       icon: Hourglass,
       photos: [
         scene('local', 'Innova Crysta parked near Vidhana Soudha, Bangalore'),
@@ -97,7 +97,7 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
   ];
 
   return (
-    <section id="services" className="section scroll-mt-24 py-16 sm:py-20">
+    <section id="services" className="section scroll-mt-24 pb-16 pt-8 sm:pb-20 sm:pt-10">
       <div className="mx-auto max-w-2xl text-center">
         <span className="eyebrow">Our services</span>
         <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">One fleet. Every kind of trip.</h2>
@@ -113,8 +113,10 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
             <Reveal key={card.title} delay={i * 0.1} className="h-full">
               <article className="card-float card-float-hover group flex h-full flex-col overflow-hidden">
                 <PhotoCarousel photos={card.photos} label={`${card.title} photos`} delay={i * 1300} className="h-48">
+                  {/* Whole picture opens the service page (dots stay clickable above it) */}
+                  <Link href={card.href} aria-label={`Open ${card.title}`} className="absolute inset-0 z-[5]" />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-900/5 to-transparent" />
-                  <div className="absolute left-4 top-4 flex flex-wrap gap-1.5">
+                  <div className="pointer-events-none absolute left-4 top-4 z-[6] flex flex-wrap gap-1.5">
                     {card.badges.map((badge) =>
                       badge.tone === 'amber' ? (
                         <span key={badge.label} className="rounded-full bg-amber-400 px-2.5 py-1 text-[11px] font-extrabold text-amber-950 shadow">
@@ -127,7 +129,7 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
                       )
                     )}
                   </div>
-                  <div className="absolute bottom-4 left-4 flex items-center gap-2.5 text-white">
+                  <div className="pointer-events-none absolute bottom-4 left-4 z-[6] flex items-center gap-2.5 text-white">
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/30 backdrop-blur-md">
                       <Icon className="h-5 w-5" />
                     </span>

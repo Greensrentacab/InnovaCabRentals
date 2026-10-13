@@ -122,7 +122,7 @@ export default async function HomePage() {
   const testimonials = siteConfig.testimonials;
 
 
-  // Hero trust strip (no ratings or customer counts — client request)
+  // Hero trust strip (client-supplied claims only; no star ratings)
   const trustItems = (
     <>
       <li className="flex items-center justify-center gap-1 whitespace-nowrap px-1 sm:gap-1.5 sm:px-2">
@@ -149,7 +149,7 @@ export default async function HomePage() {
         <link rel="preload" as="image" href="/images/hero/hero-airport-mobile.webp" media="(max-width: 1023px)" />
         <link rel="preload" as="image" href="/images/hero/hero-airport-1920.webp" media="(min-width: 1024px)" />
         {/* Soft sky behind the whole hero (the form side on desktop) */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 -z-20 h-[760px] bg-gradient-to-b from-sky-100 via-sky-50 to-porcelain max-lg:from-sky-300 max-lg:via-sky-200" aria-hidden="true" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-20 h-[760px] bg-gradient-to-b from-sky-100 via-sky-50 to-porcelain max-lg:bg-none" aria-hidden="true" />
 
         {/* Desktop: the picture spans the full hero width behind both columns */}
         <HeroBand flip plain className="inset-x-0 top-0 -z-10 hidden h-[clamp(640px,52vw,780px)] lg:block" />
@@ -158,8 +158,10 @@ export default async function HomePage() {
         <div className="section grid items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,450px)] lg:gap-10">
           <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4 lg:[text-shadow:0_1px_12px_rgba(255,255,255,0.95)]">
             {/* Phones/tablets: picture runs edge to edge from the top with the copy on it; desktop uses the band above */}
-            <div className="relative -mx-4 overflow-hidden px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
+            <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
               <HeroCover className="lg:hidden" />
+              {/* Dark fade continuing below the picture so it blends into the section underneath */}
+              <div className="pointer-events-none absolute inset-x-0 top-full h-24 bg-gradient-to-b from-black/70 to-transparent lg:hidden" aria-hidden="true" />
               <div className="relative">
                 <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border max-sm:hidden border-live-500/20 bg-white/90 px-3 py-1.5 text-xs font-bold text-live-600 shadow-sm backdrop-blur-md [text-shadow:none] lg:bg-white/80">
                   <span className="relative flex h-2 w-2">
@@ -193,6 +195,24 @@ export default async function HomePage() {
 
           <div className="relative z-10 -mt-[100px] min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:pt-4">
             <QuickBookingWidget {...widgetData} />
+
+            {/* Phones/tablets: trust symbols + customers served under the card (desktop has them beside the copy) */}
+            <div className="mt-4 space-y-2.5 lg:hidden">
+              <ul className="grid grid-cols-3 gap-2 text-center text-[11px] font-semibold leading-tight text-slate-700">
+                <li className="flex flex-col items-center gap-1">
+                  <ShieldCheck className="h-5 w-5 text-live-600" /> Verified drivers
+                </li>
+                <li className="flex flex-col items-center gap-1">
+                  <Radar className="h-5 w-5 text-brand-600" /> Flight tracking
+                </li>
+                <li className="flex flex-col items-center gap-1">
+                  <BadgeIndianRupee className="h-5 w-5 text-brand-600" /> Transparent price
+                </li>
+              </ul>
+              <p className="flex items-center justify-center gap-1.5 text-xs font-bold text-ink">
+                <Users className="h-4 w-4 text-brand-600" /> {siteConfig.trustClaims.customersServed.label}
+              </p>
+            </div>
           </div>
         </div>
       </section>

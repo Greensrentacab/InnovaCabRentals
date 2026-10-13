@@ -586,12 +586,12 @@ export default function QuickBookingWidget({
       id="book"
       onSubmit={handleSubmit}
       noValidate
-      className="glass-strong relative animate-fade-up scroll-mt-28 rounded-4xl p-4 max-lg:border-sky-200 max-lg:bg-white max-lg:backdrop-blur-none shadow-[0_24px_60px_-18px_rgba(56,189,248,0.55),0_0_0_1px_rgba(186,230,253,0.9)] [animation-delay:150ms] sm:p-6"
+      className="glass-strong relative animate-fade-up scroll-mt-28 rounded-4xl p-4 max-lg:border-slate-200 max-lg:bg-white max-lg:shadow-[0_24px_50px_-12px_rgba(0,0,0,0.5),0_8px_16px_-8px_rgba(0,0,0,0.25)] max-lg:backdrop-blur-none shadow-[0_24px_60px_-18px_rgba(56,189,248,0.55),0_0_0_1px_rgba(186,230,253,0.9)] [animation-delay:150ms] sm:p-6"
     >
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-extrabold tracking-tight text-ink">Quick Fare Estimate</h2>
-          <p className="text-xs font-medium text-slate-500 max-sm:hidden">Know your fare before you book</p>
+          <p className="text-xs font-medium text-slate-500">Know your fare before you book</p>
         </div>
         <span className="chip-live max-sm:hidden">
           <span className="h-1.5 w-1.5 rounded-full bg-live-500" /> Live
@@ -884,7 +884,7 @@ export default function QuickBookingWidget({
       <button
         type="submit"
         disabled={search.status === 'loading'}
-        className="btn-primary group mt-5 w-full py-3.5 text-[15px] shadow-[0_14px_30px_-8px_rgba(56,189,248,0.75)]"
+        className="btn-primary group mt-5 w-full py-3.5 text-[15px] max-lg:shadow-none lg:shadow-[0_14px_30px_-8px_rgba(56,189,248,0.75)]"
       >
         {search.status === 'loading' ? (
           <>

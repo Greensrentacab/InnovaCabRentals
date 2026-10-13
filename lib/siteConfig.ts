@@ -127,6 +127,11 @@ export const siteConfig = {
       label: '15 Years of Experience',
       verified: false,
     } as TrustClaim<number>,
+    customersServed: {
+      value: 3500,
+      label: '3,500+ customers served',
+      verified: false,
+    } as TrustClaim<number>,
   },
 
   /**

@@ -82,7 +82,7 @@ const navGroups: NavGroup[] = [
   {
     label: 'More',
     items: [
-      { label: 'Local Hourly Rentals', hint: '8 hr, 12 hr & custom-duration hire', href: '/local-rides', icon: Hourglass },
+      { label: 'Local & Hourly Rentals', hint: '8 hr, 12 hr & custom-duration hire', href: '/local-rides', icon: Hourglass },
       { label: 'About Us', hint: `${siteConfig.trustClaims.yearsExperience.value} years of Innova rentals`, href: '/about', icon: Building2 },
       { label: 'FAQ', hint: 'Fares, tolls, payments & more', href: '/faq', icon: HelpCircle },
       { label: 'Contact', hint: siteConfig.contact.hours, href: '/contact', icon: Info },
@@ -177,7 +177,7 @@ export default function HomeHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
-  const { available: authAvailable, user, profile, openAuthDialog, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -277,8 +277,7 @@ export default function HomeHeader() {
             className="glass-strong fixed inset-x-3 top-[72px] z-50 max-h-[min(76dvh,600px)] animate-drop-in overflow-y-auto rounded-3xl bg-white/95 p-2 sm:left-auto sm:right-4 sm:w-96"
           >
             {/* Account */}
-            {authAvailable &&
-              (user ? (
+            {(user ? (
                 <div className="mb-1 rounded-2xl bg-slate-50 p-2">
                   <div className="flex items-center gap-3 p-1.5">
                     <UserAvatar
@@ -323,26 +322,12 @@ export default function HomeHeader() {
                 </div>
               ) : (
                 <div className="mb-1 grid grid-cols-2 gap-2 p-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      openAuthDialog('signin');
-                    }}
-                    className="btn-ghost px-3 py-2.5"
-                  >
+                  <Link href="/signin" onClick={() => setMenuOpen(false)} className="btn-primary px-3 py-2.5">
                     <UserRound className="h-4 w-4" /> Sign In
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      openAuthDialog('signup');
-                    }}
-                    className="btn-ghost px-3 py-2.5"
-                  >
+                  </Link>
+                  <Link href="/signup" onClick={() => setMenuOpen(false)} className="btn-ghost px-3 py-2.5">
                     Create Account
-                  </button>
+                  </Link>
                 </div>
               ))}
 

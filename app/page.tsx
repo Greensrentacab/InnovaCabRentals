@@ -7,6 +7,8 @@ import {
   MessageCircle,
   Phone,
   ShieldCheck,
+  Radar,
+  BadgeIndianRupee,
   Star,
   Users,
 } from 'lucide-react';
@@ -32,7 +34,7 @@ import {
   minFare,
   routeFromFare,
 } from '@/lib/storefrontData';
-import { HeroBand, HeroLead, HeroTitle } from '@/components/home/HeroScene';
+import { HeroBand, HeroLead, HeroPicture, HeroTitle } from '@/components/home/HeroScene';
 
 export const revalidate = 60; // Revalidate dynamic Firestore data every minute
 
@@ -120,13 +122,28 @@ export default async function HomePage() {
   const testimonials = siteConfig.testimonials;
 
 
+  // Hero trust strip (no ratings or customer counts — client request)
+  const trustItems = (
+    <>
+      <li className="flex items-center justify-center gap-1.5 px-2">
+        <ShieldCheck className="h-4 w-4 shrink-0 text-live-600" /> Verified drivers
+      </li>
+      <li className="flex items-center justify-center gap-1.5 px-2">
+        <Radar className="h-4 w-4 shrink-0 text-brand-600" /> Flight tracking
+      </li>
+      <li className="flex items-center justify-center gap-1.5 px-2">
+        <BadgeIndianRupee className="h-4 w-4 shrink-0 text-brand-600" /> Transparent price
+      </li>
+    </>
+  );
+
   return (
     <div className="ds-scope bg-porcelain">
       {/* ================================================================ */}
       {/* 1. HERO + QUICK BOOKING WIDGET — light sky-blue & white theme    */}
       {/*    (no overflow-hidden: the calendar pop-up must extend past it) */}
       {/* ================================================================ */}
-      <section className="relative isolate z-10 pb-12 pt-24 sm:pt-32 lg:pb-16">
+      <section className="relative isolate z-10 pb-4 pt-24 sm:pt-32 lg:pb-8">
         {/* Picture follows the selected service tab. Desktop: whole picture across the top, car on the right */}
         {/* Start loading the default (airport) picture before the page script runs */}
         <link rel="preload" as="image" href="/images/hero/hero-airport-1920.webp" />
@@ -141,8 +158,6 @@ export default async function HomePage() {
           <div className="relative min-w-0 pt-2 [text-shadow:0_1px_12px_rgba(255,255,255,0.95)] lg:col-start-1 lg:row-start-1 lg:pt-4">
             {/* Picture band sized to the copy, car bottom-right */}
             <div className="relative">
-              <HeroBand cover className="-inset-x-4 -top-28 -z-10 aspect-[4/5] sm:-inset-x-6 sm:-top-36 sm:bottom-0 sm:aspect-auto lg:hidden" />
-
               <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-live-500/20 bg-white/80 px-3 py-1.5 text-xs font-bold text-live-600 shadow-sm backdrop-blur-md">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-live-500" />
@@ -160,8 +175,18 @@ export default async function HomePage() {
                 <HeroLead />
               </p>
 
-              {/* Room for the car in the picture band */}
-              <div className="h-[290px] sm:h-[380px] lg:h-[400px] xl:h-[440px]" aria-hidden="true" />
+              {/* Phones/tablets: the picture comes right after the text (never under it), trust strip on its bottom edge */}
+              <HeroPicture className="-mx-4 mt-4 sm:-mx-6 sm:mt-6 lg:hidden">
+                <ul className="relative z-10 mx-3 -mt-5 grid grid-cols-3 divide-x divide-amber-200/70 rounded-2xl border border-amber-200/70 bg-amber-50/95 py-2.5 text-[11px] font-semibold leading-tight text-slate-700 shadow-sm backdrop-blur [text-shadow:none] sm:mx-6 sm:text-sm">
+                  {trustItems}
+                </ul>
+              </HeroPicture>
+
+              {/* Desktop: room for the car in the full-width picture, then the trust strip */}
+              <div className="hidden lg:block lg:h-[340px] xl:h-[380px]" aria-hidden="true" />
+              <ul className="mt-2 hidden grid-cols-3 divide-x divide-amber-200/70 rounded-2xl border border-amber-200/70 bg-amber-50/95 py-3 text-sm font-semibold leading-tight text-slate-700 shadow-sm backdrop-blur [text-shadow:none] lg:grid">
+                {trustItems}
+              </ul>
             </div>
 
           </div>

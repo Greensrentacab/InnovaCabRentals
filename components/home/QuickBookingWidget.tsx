@@ -85,7 +85,7 @@ const DEFAULT_TIME = '09:00';
 const SERVICE_TABS: { value: HomeService; label: string; icon: typeof Plane }[] = [
   { value: 'airport', label: 'Airport Taxi', icon: Plane },
   { value: 'outstation', label: 'Outstation', icon: Mountain },
-  { value: 'local', label: 'Local Hourly', icon: Hourglass },
+  { value: 'local', label: 'Local & Hourly', icon: Hourglass },
 ];
 
 const TERMINALS: Record<Terminal, string> = {
@@ -613,11 +613,11 @@ export default function QuickBookingWidget({
               aria-selected={selected}
               onClick={() => switchService(tab.value)}
               className={cn(
-                'relative flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 text-xs font-bold transition-colors sm:flex-row sm:justify-center sm:text-[13px]',
+                'relative flex items-center justify-center gap-1 whitespace-nowrap rounded-xl px-1 py-3 text-[10.5px] font-bold transition-colors min-[400px]:text-[11.5px] sm:gap-1.5 sm:px-2 sm:text-[13px]',
                 selected ? 'text-white' : 'text-slate-500 hover:text-slate-800'
               )}
             >
-              <Icon className="relative h-4 w-4" />
+              <Icon className="relative h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
               <span className="relative">{tab.label}</span>
             </button>
           );

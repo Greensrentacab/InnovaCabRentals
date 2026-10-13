@@ -24,7 +24,7 @@ import { scrollToBook } from '@/components/home/scrollToBook';
 const SERVICE_LABEL: Record<string, string> = {
   outstation: 'Outstation (Round Trip)',
   airport: 'Airport Transfer',
-  local: 'Local Hourly Rental',
+  local: 'Local & Hourly Rental',
   tour: 'Tour',
 };
 
@@ -37,7 +37,7 @@ function tripTypeLabel(trip: TripParams) {
     if (trip.tripType === 'round') return 'Airport Transfer (Round)';
     return trip.drop.name.includes('Airport') ? 'Airport Drop' : 'Airport Pickup';
   }
-  if (trip.serviceType === 'local') return `Local Hourly Rental${trip.packageLabel ? ` · ${trip.packageLabel}` : ''}`;
+  if (trip.serviceType === 'local') return `Local & Hourly Rental${trip.packageLabel ? ` · ${trip.packageLabel}` : ''}`;
   return SERVICE_LABEL[trip.serviceType] ?? trip.serviceType;
 }
 
@@ -85,7 +85,6 @@ function ResultCard({
   const termsId = useId();
   // Car photo carousel (our own fleet photos where available)
   const photos = (fleetPhotos[car.vehicleId] ?? []).slice(0, 5);
-  const credited = photos.filter((p) => !p.own && p.sourceUrl);
   const waUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
     buildAdminWhatsAppMessage(trip, car, { totalKm, days })
   )}`;
@@ -194,21 +193,6 @@ function ResultCard({
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
           </div>
-          {/* Stock photos (Wikimedia Commons) need a credit; our own photos don't */}
-          {credited.length > 0 && (
-            <p className="mt-3 text-[10px] leading-relaxed text-slate-400">
-              Representative photos:{' '}
-              {credited.map((p, k) => (
-                <span key={p.src}>
-                  {k > 0 && '; '}
-                  <a href={p.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-700">
-                    {p.author}
-                  </a>{' '}
-                  / Wikimedia Commons, {p.license}
-                </span>
-              ))}
-            </p>
-          )}
         </div>
       </div>
     </article>

@@ -30,6 +30,31 @@ export const emptyRates = (): VehicleRates => ({
 });
 
 /**
+ * Starting tariffs (INR) in line with typical Bangalore market rates, Oct 2026.
+ * The client changes these any time in Admin → Pricing.
+ * Order: per km, driver allowance/day, airport (each way), 8 hr/80 km,
+ * 12 hr/120 km, extra km, extra hour.
+ */
+const defaultRates = (
+  outstationPerKm: number,
+  driverAllowancePerDay: number,
+  airportFare: number,
+  local8h: number,
+  local12h: number,
+  extraKmRate: number,
+  extraHourRate: number
+): VehicleRates => ({
+  outstationPerKm,
+  outstationMinKmPerDay: 300,
+  driverAllowancePerDay,
+  airportFare,
+  local8h,
+  local12h,
+  extraKmRate,
+  extraHourRate,
+});
+
+/**
  * Vehicle Seed Data
  * Seats, luggage, and features are placeholders until verified with client fleet.
  */
@@ -48,7 +73,7 @@ export const seedVehicles: Vehicle[] = [
     ], // PLACEHOLDER
     confirmed: true,
     baseFare: null, // REPLACE WITH CLIENT PRICING
-    rates: emptyRates(),
+    rates: defaultRates(16, 450, 2000, 2800, 3900, 16, 200),
   },
   {
     id: 'innova-crysta',
@@ -64,7 +89,7 @@ export const seedVehicles: Vehicle[] = [
     ], // PLACEHOLDER
     confirmed: true,
     baseFare: null, // REPLACE WITH CLIENT PRICING
-    rates: emptyRates(),
+    rates: defaultRates(19, 500, 2500, 3300, 4600, 19, 250),
   },
   {
     id: 'ertiga',
@@ -80,7 +105,7 @@ export const seedVehicles: Vehicle[] = [
     ], // PLACEHOLDER
     confirmed: true,
     baseFare: null, // REPLACE WITH CLIENT PRICING
-    rates: emptyRates(),
+    rates: defaultRates(13, 400, 1600, 2400, 3400, 14, 180),
   },
   {
     id: 'innova-hycross',
@@ -96,7 +121,7 @@ export const seedVehicles: Vehicle[] = [
     ], // PLACEHOLDER
     confirmed: true, // confirmed by the client (Oct 2026)
     baseFare: null, // REPLACE WITH CLIENT PRICING
-    rates: emptyRates(),
+    rates: defaultRates(23, 500, 3000, 4000, 5500, 23, 300),
   },
 ];
 

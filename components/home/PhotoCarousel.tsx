@@ -40,6 +40,7 @@ export default function PhotoCarousel({
   const [visible, setVisible] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const touchX = useRef<number | null>(null);
+  const swiped = useRef(false);
   const count = photos.length;
 
   const go = useCallback((i: number) => setIndex(((i % count) + count) % count), [count]);
@@ -82,8 +83,19 @@ export default function PhotoCarousel({
       onTouchEnd={(e) => {
         if (touchX.current === null) return;
         const dx = e.changedTouches[0].clientX - touchX.current;
-        if (Math.abs(dx) > 40) go(index + (dx < 0 ? 1 : -1));
+        if (Math.abs(dx) > 40) {
+          go(index + (dx < 0 ? 1 : -1));
+          swiped.current = true;
+        }
         touchX.current = null;
+      }}
+      onClickCapture={(e) => {
+        // A swipe changes the photo; it shouldn't also follow a link on the card
+        if (swiped.current) {
+          e.preventDefault();
+          e.stopPropagation();
+          swiped.current = false;
+        }
       }}
     >
       {photos.map((p, i) => {

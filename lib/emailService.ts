@@ -10,7 +10,7 @@
 import { Resend } from 'resend';
 import { Booking } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
-import { formatTime12 } from '@/lib/time';
+import { formatTime12, formatDateLong } from '@/lib/time';
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const adminEmail = process.env.ADMIN_EMAIL || 'greensrentacab@gmail.com';
@@ -149,8 +149,8 @@ export async function sendCustomerBookingEmail(
           ? 'Airport · Round Trip'
           : 'Airport Transfer';
   const route = [booking.pickupName, ...(booking.stops ?? []), booking.dropName].join(' → ');
-  const schedule = `${booking.pickupDate} at ${formatTime12(booking.pickupTime)}${
-    booking.returnDate ? ` · Return ${booking.returnDate}` : ''
+  const schedule = `${formatDateLong(booking.pickupDate)}, ${formatTime12(booking.pickupTime)}${
+    booking.returnDate ? ` · Return ${formatDateLong(booking.returnDate)}` : ''
   }`;
   const greetingName = (booking.accountName || booking.customerName).split(' ')[0];
   const viewUrl = `${siteUrl}/booking/confirmed?id=${encodeURIComponent(booking.bookingId)}`;
@@ -158,75 +158,53 @@ export async function sendCustomerBookingEmail(
     `Hello ${siteConfig.brand.name}, I have a question about my booking #${booking.bookingId}.`
   )}`;
 
-  const row = (label: string, value: string, highlight = false) => `
+  const row = (label: string, value: string, strong = false) => `
     <tr>
-      <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;font-weight:600;vertical-align:top;width:38%;">${label}</td>
-      <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:${highlight ? '#1d4ed8' : '#0f172a'};font-weight:${highlight ? 800 : 700};text-align:right;">${value}</td>
+      <td style="padding:12px 0;border-top:1px solid #ececec;font-size:13px;color:#6b6b6b;vertical-align:top;width:34%;">${label}</td>
+      <td style="padding:12px 0;border-top:1px solid #ececec;font-size:14px;line-height:1.5;color:#111111;font-weight:${strong ? 600 : 400};vertical-align:top;">${value}</td>
     </tr>`;
 
   // Table layout + inline styles: the only markup email clients render reliably.
-  // Palette mirrors the storefront design tokens (ink #0F172A, brand-600 #2563EB).
+  // Deliberately plain: white page, one accent colour, no cards, badges or banners.
   const htmlContent = `
     <!DOCTYPE html>
     <html>
       <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-      <body style="margin:0;padding:24px 12px;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e2e8f0;">
+      <body style="margin:0;padding:32px 16px;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111111;-webkit-font-smoothing:antialiased;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;">
           <tr>
-            <td style="background:#0f172a;padding:28px 32px;">
-              <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-                <td style="width:40px;height:40px;border-radius:12px;background:#2563eb;color:#ffffff;font-weight:800;font-size:15px;text-align:center;vertical-align:middle;">IC</td>
-                <td style="padding-left:12px;">
-                  <div style="font-size:17px;font-weight:800;color:#ffffff;letter-spacing:-0.2px;">${escapeHtml(siteConfig.brand.name)}</div>
-                  <div style="font-size:10px;font-weight:700;color:#93c5fd;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">Premium · Bangalore</div>
-                </td>
-              </tr></table>
-              <div style="margin-top:24px;">
-                <span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:11px;font-weight:800;letter-spacing:0.6px;text-transform:uppercase;padding:5px 12px;border-radius:999px;">Pending admin confirmation</span>
-              </div>
-              <h1 style="margin:12px 0 0;font-size:24px;font-weight:800;color:#ffffff;letter-spacing:-0.4px;">Booking request received</h1>
-              <p style="margin:6px 0 0;font-size:14px;color:#cbd5e1;">Reference <strong style="color:#ffffff;font-family:Consolas,Menlo,monospace;letter-spacing:1px;">#${escapeHtml(booking.bookingId)}</strong></p>
+            <td style="padding-bottom:28px;font-size:14px;font-weight:600;color:#111111;">${escapeHtml(siteConfig.brand.name)}</td>
+          </tr>
+          <tr>
+            <td>
+              <h1 style="margin:0;font-size:22px;line-height:1.3;font-weight:600;color:#111111;">We&rsquo;ve received your booking request</h1>
+              <p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:#444444;">Hi ${escapeHtml(greetingName)}, thanks for booking with us. Our team will confirm it shortly and message you on WhatsApp. Nothing to pay in advance.</p>
+              <p style="margin:16px 0 0;font-size:13px;color:#6b6b6b;">Reference <span style="font-family:Consolas,Menlo,monospace;color:#111111;">#${escapeHtml(booking.bookingId)}</span></p>
             </td>
           </tr>
           <tr>
-            <td style="padding:28px 32px 8px;">
-              <p style="margin:0;font-size:15px;line-height:1.6;color:#334155;">Hi ${escapeHtml(greetingName)}, thank you for choosing ${escapeHtml(siteConfig.brand.name)}. Here is a summary of your trip request.</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:12px 32px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:16px;padding:6px 18px;">
+            <td style="padding-top:24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-bottom:1px solid #ececec;">
                 ${row('Route', escapeHtml(route))}
-                ${row('Trip type', escapeHtml(tripLabel))}
+                ${row('Trip', escapeHtml(tripLabel))}
                 ${row('Pickup', escapeHtml(schedule))}
                 ${row('Vehicle', escapeHtml(booking.vehicleName))}
-                ${row(
-                  'Passenger',
-                  `${escapeHtml(booking.customerName)}<br><span style="font-weight:600;color:#64748b;font-size:13px;">+91 ${escapeHtml(booking.customerPhone)}</span>`
-                )}
-                ${row('Estimated tariff', escapeHtml(fareDisplay), true)}
+                ${row('Passenger', `${escapeHtml(booking.customerName)}, +91 ${escapeHtml(booking.customerPhone)}`)}
+                ${row('Estimated fare', escapeHtml(fareDisplay), true)}
               </table>
-              <p style="margin:8px 0 0;font-size:12px;color:#64748b;">No advance payment required. Tolls, parking and state permits are extra, as applicable.</p>
+              <p style="margin:12px 0 0;font-size:12px;line-height:1.6;color:#6b6b6b;">Tolls, parking and state permits are extra, as applicable. Your chauffeur&rsquo;s details will be sent about 2 hours before pickup.</p>
             </td>
           </tr>
           <tr>
-            <td style="padding:12px 32px;">
-              <div style="background:#eff6ff;border:1px solid #dbeafe;border-radius:16px;padding:16px 18px;">
-                <p style="margin:0;font-size:13px;font-weight:800;color:#1e40af;">Chauffeur assignment</p>
-                <p style="margin:6px 0 0;font-size:13px;line-height:1.6;color:#1e3a8a;">Our dispatch manager will contact you on WhatsApp 2 hours prior to pickup with driver details.</p>
-              </div>
+            <td style="padding-top:28px;font-size:14px;line-height:1.8;">
+              <a href="${viewUrl}" style="color:#2563eb;text-decoration:underline;">View your booking</a><br>
+              <a href="${opsWaUrl}" style="color:#2563eb;text-decoration:underline;">Message us on WhatsApp</a><br>
+              <a href="${siteConfig.contact.phone.tel}" style="color:#2563eb;text-decoration:underline;">Call ${escapeHtml(siteConfig.contact.phone.display)}</a>
             </td>
           </tr>
           <tr>
-            <td style="padding:16px 32px 28px;">
-              <a href="${viewUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:13px 22px;border-radius:999px;font-weight:700;font-size:14px;margin:0 8px 8px 0;">View My Booking Online</a>
-              <a href="${opsWaUrl}" style="display:inline-block;background:#ffffff;color:#0f172a;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:700;font-size:14px;border:1px solid #cbd5e1;margin:0 0 8px;">Contact 24/7 Operations Desk</a>
-              <p style="margin:12px 0 0;font-size:12px;color:#64748b;">Prefer to call? <a href="${siteConfig.contact.phone.tel}" style="color:#1d4ed8;font-weight:700;text-decoration:none;">${escapeHtml(siteConfig.contact.phone.display)}</a></p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:18px 32px;border-top:1px solid #e2e8f0;text-align:center;font-size:12px;color:#94a3b8;">
-              ${escapeHtml(siteConfig.brand.name)} • ${escapeHtml(siteConfig.contact.hours)} • ${escapeHtml(siteConfig.contact.address.city)}, ${escapeHtml(siteConfig.contact.address.state)}
+            <td style="padding-top:36px;font-size:12px;line-height:1.6;color:#8a8a8a;">
+              ${escapeHtml(siteConfig.brand.name)}<br>${escapeHtml(siteConfig.contact.hours)} &middot; ${escapeHtml(siteConfig.contact.address.city)}, ${escapeHtml(siteConfig.contact.address.state)}
             </td>
           </tr>
         </table>

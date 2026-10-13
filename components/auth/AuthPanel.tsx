@@ -38,7 +38,7 @@ interface AuthPanelProps {
 }
 
 export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', onSuccess, className }: AuthPanelProps) {
-  const { available, signInWithGoogle, signUpWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithGoogle, signUpWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [name, setName] = useState('');
@@ -90,15 +90,8 @@ export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', o
     run('email', () => (isSignUp ? signUpWithEmail(name, email, password) : signInWithEmail(email, password)));
   };
 
-  if (!available) {
-    return (
-      <p role="alert" className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-800">
-        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-        Online sign-in is temporarily unavailable. Please call or WhatsApp us and we&apos;ll book your trip directly.
-      </p>
-    );
-  }
-
+  // Full panel always renders; without Firebase keys every action shows the
+  // "sign-in unavailable" message (thrown by AuthContext) instead of hiding the UI.
   return (
     <div className={cn('space-y-4', className)}>
       <SegmentedControl

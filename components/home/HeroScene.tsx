@@ -57,7 +57,7 @@ function useHeroService() {
   return service;
 }
 
-function SceneImages({ service, only }: { service: HomeService; only?: HomeService }) {
+function SceneImages({ service, only, pos }: { service: HomeService; only?: HomeService; pos?: string }) {
   return (
     <>
       {ORDER.filter((key) => !only || key === only).map((key) => {
@@ -76,7 +76,7 @@ function SceneImages({ service, only }: { service: HomeService; only?: HomeServi
             height={1071}
             fetchPriority={key === service ? 'high' : 'low'}
             decoding="async"
-            style={{ objectPosition: s.pos }}
+            style={{ objectPosition: pos ?? s.pos }}
             className={cn(
               'absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-premium',
               on ? 'opacity-100' : 'opacity-0'
@@ -121,6 +121,33 @@ export function HeroBand({ className, scene, flip, plain, cover }: { className?:
       )}
       {!plain && <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-b from-transparent to-porcelain" />}
       {!plain && <div className={cn('absolute inset-y-0 hidden w-16 from-transparent to-porcelain lg:block', flip ? 'left-0 bg-gradient-to-l' : 'right-0 bg-gradient-to-r')} />}
+    </div>
+  );
+}
+
+/**
+ * Hero picture in the page flow, right under the subheading, so text never
+ * sits on the car (phones/tablets). Top edge fades into the sky background;
+ * phones crop to 4:3 so the car shows larger. Follows the booking tab unless
+ * a fixed `scene` is passed. `children` overlay the bottom (trust strip).
+ */
+export function HeroPicture({
+  className,
+  scene,
+  children,
+}: {
+  className?: string;
+  scene?: HomeService;
+  children?: React.ReactNode;
+}) {
+  const tab = useHeroService();
+  const service = scene ?? tab;
+  return (
+    <div className={cn('relative', className)}>
+      <div className="relative aspect-[4/3] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,#000_20%)] sm:aspect-[1920/1071]">
+        <SceneImages service={service} only={scene} pos="88% 72%" />
+      </div>
+      {children}
     </div>
   );
 }

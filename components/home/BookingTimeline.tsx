@@ -2,9 +2,8 @@
 
 /**
  * BookingTimeline.tsx — "How booking works" pipeline + urgent banner
- * (design.md §3.4). The active step auto-advances every 2.6s while the
- * section is in view (disabled under reduced motion); hovering a step
- * activates it.
+ * (design.md §3.4). Scroll-driven: the line fills and each checkpoint lights
+ * up as it reaches a point 60% down the screen (left to right on desktop).
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -35,31 +34,62 @@ const STEPS: { icon: LucideIcon; title: string; desc: string }[] = [
   },
 ];
 
-const CYCLE_MS = 2600;
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
 export default function BookingTimeline() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [active, setActive] = useState(0);
-  const [inView, setInView] = useState(false);
-  const [revealed, setRevealed] = useState(false);
-  const [hovering, setHovering] = useState(false);
+  const listRef = useRef<HTMLOListElement>(null);
+  const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
+  // -1 = no checkpoint reached yet
+  const [active, setActive] = useState(-1);
+  // Mobile vertical track (px, relative to the list) + how much of it is filled
+  const [track, setTrack] = useState({ top: 28, height: 0, fill: 0 });
+  // Desktop: scroll progress across the 3 connectors (0..3)
+  const [desktopQ, setDesktopQ] = useState(0);
 
   useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(([entry]) => {
-        setInView(entry.isIntersecting);
-        if (entry.isIntersecting) setRevealed(true);
-      }, { threshold: 0.25 });
-    observer.observe(el);
-    return () => observer.disconnect();
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const list = listRef.current;
+      const items = itemRefs.current.filter(Boolean) as HTMLLIElement[];
+      if (!list || items.length < STEPS.length) return;
+      const vh = window.innerHeight;
+      const listRect = list.getBoundingClientRect();
+
+      if (window.matchMedia('(min-width: 768px)').matches) {
+        // Row layout: the checkpoints fill left to right as the row scrolls up the screen
+        const p = clamp01((vh * 0.8 - listRect.top) / (vh * 0.4));
+        const q = p * (STEPS.length - 1);
+        setDesktopQ(q);
+        setActive(p > 0 ? Math.min(STEPS.length - 1, Math.floor(q + 0.001)) : -1);
+        return;
+      }
+
+      // Column layout: a checkpoint is reached when its icon crosses a line 60% down the screen
+      const trigger = vh * 0.6;
+      const centers = items.map((li) => li.getBoundingClientRect().top + 28);
+      const first = centers[0];
+      const last = centers[centers.length - 1];
+      setTrack({
+        top: first - listRect.top,
+        height: last - first,
+        fill: clamp01((trigger - first) / (last - first || 1)),
+      });
+      setActive(centers.filter((c) => c <= trigger).length - 1);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    return () => {
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, []);
-
-  useEffect(() => {
-    if (!inView || hovering || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const timer = setInterval(() => setActive((i) => (i + 1) % STEPS.length), CYCLE_MS);
-    return () => clearInterval(timer);
-  }, [inView, hovering]);
 
   return (
     <section ref={sectionRef} id="how-it-works" className="relative scroll-mt-24 overflow-hidden bg-white py-16 sm:py-24">
@@ -71,41 +101,34 @@ export default function BookingTimeline() {
           <p className="mt-3 text-slate-600">No app, no login, no advance payment — booking takes about a minute.</p>
         </div>
 
-        <ol
-          className="relative mt-14 grid gap-8 md:grid-cols-4 md:gap-6"
-          onMouseLeave={() => setHovering(false)}
-        >
+        <ol ref={listRef} className="relative mt-14 grid gap-8 md:grid-cols-4 md:gap-6">
+          {/* Mobile track: grey line between the first and last checkpoint, blue fill follows the scroll */}
+          <div
+            className="absolute left-[27px] w-0.5 bg-slate-200 md:hidden"
+            style={{ top: track.top, height: track.height }}
+            aria-hidden="true"
+          >
+            <div className="w-full bg-brand-600" style={{ height: `${track.fill * 100}%` }} />
+          </div>
+
           {STEPS.map((step, i) => {
             const Icon = step.icon;
             const isActive = i === active;
-            const isDone = i < active;
+            const reached = i <= active;
             const isLast = i === STEPS.length - 1;
             return (
               <li
                 key={step.title}
-                className="relative flex gap-4 md:flex-col md:items-center md:text-center"
-                onMouseEnter={() => {
-                  setHovering(true);
-                  setActive(i);
+                ref={(el) => {
+                  itemRefs.current[i] = el;
                 }}
+                className="relative flex gap-4 md:flex-col md:items-center md:text-center"
               >
                 {!isLast && (
-                  <>
-                    {/* Mobile connector (vertical) */}
-                    <div className="absolute left-[27px] top-14 h-[calc(100%-8px)] w-0.5 bg-slate-200 md:hidden">
-                      <div
-                        className="h-full w-full origin-top bg-brand-600 transition-transform duration-700 ease-premium"
-                        style={{ transform: `scaleY(${revealed ? 1 : 0})`, transitionDelay: `${0.3 + i * 0.25}s` }}
-                      />
-                    </div>
-                    {/* Desktop connector (horizontal) */}
-                    <div className="absolute left-[calc(50%+36px)] top-7 hidden h-0.5 w-[calc(100%-72px+24px)] overflow-hidden rounded-full bg-slate-200 md:block">
-                      <div
-                        className="h-full w-full origin-left bg-gradient-to-r from-brand-600 to-brand-400 transition-transform duration-700 ease-premium"
-                        style={{ transform: `scaleX(${revealed ? 1 : 0})`, transitionDelay: `${i * 0.3}s` }}
-                      />
-                    </div>
-                  </>
+                  /* Desktop connector (horizontal), filled as the row scrolls into view */
+                  <div className="absolute left-[calc(50%+36px)] top-7 hidden h-0.5 w-[calc(100%-72px+24px)] overflow-hidden rounded-full bg-slate-200 md:block">
+                    <div className="h-full w-full origin-left bg-brand-600" style={{ transform: `scaleX(${clamp01(desktopQ - i)})` }} />
+                  </div>
                 )}
 
                 <div className="relative z-10 shrink-0">
@@ -115,16 +138,16 @@ export default function BookingTimeline() {
                       'relative flex h-14 w-14 items-center justify-center rounded-full border-2 transition-all duration-500',
                       isActive
                         ? 'border-brand-600 bg-brand-600 text-white shadow-glow'
-                        : isDone
-                          ? 'border-brand-200 bg-brand-50 text-brand-700'
+                        : reached
+                          ? 'border-brand-600 bg-brand-50 text-brand-700'
                           : 'border-slate-200 bg-white text-slate-500'
                     )}
                   >
                     <Icon className="h-6 w-6" />
                     <span
                       className={cn(
-                        'absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-extrabold ring-2 ring-white',
-                        isActive ? 'bg-ink text-white' : 'bg-slate-100 text-slate-600'
+                        'absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-extrabold ring-2 ring-white transition-colors duration-500',
+                        isActive ? 'bg-ink text-white' : reached ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'
                       )}
                     >
                       {i + 1}
@@ -133,7 +156,7 @@ export default function BookingTimeline() {
                 </div>
 
                 <div className="pb-2 md:mt-5">
-                  <h3 className={cn('text-base font-extrabold transition-colors', isActive ? 'text-brand-700' : 'text-ink')}>
+                  <h3 className={cn('text-base font-extrabold transition-colors duration-500', reached ? 'text-brand-700' : 'text-ink')}>
                     {step.title}
                   </h3>
                   <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-slate-600 md:mx-auto">{step.desc}</p>

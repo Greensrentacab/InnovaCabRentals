@@ -95,7 +95,10 @@ export async function createBookingRequest(
     };
 
     // 3. Save to Firestore 'bookings' collection via Admin SDK
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY) {
+    if (
+      process.env.FIREBASE_PROJECT_ID &&
+      (process.env.FIREBASE_PRIVATE_KEY_BASE64 || process.env.FIREBASE_PRIVATE_KEY)
+    ) {
       const { adminDb } = await import('@/lib/firebaseAdmin');
       await adminDb.collection('bookings').doc(bookingId).set(booking);
     } else {

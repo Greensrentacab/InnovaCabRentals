@@ -2,7 +2,8 @@
 
 /**
  * HomeHeader.tsx — floating glass navigation pill (design.md §3.1).
- * Desktop: hover-intent dropdowns. Mobile (< lg): drop-in menu sheet.
+ * Desktop: hover-intent dropdowns + account pill (UserMenu). Mobile (< lg):
+ * drop-in menu sheet with the account block at the top.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -10,6 +11,7 @@ import Link from 'next/link';
 import {
   ArrowRight,
   Building2,
+  CalendarClock,
   Car,
   ChevronDown,
   Crown,
@@ -18,6 +20,7 @@ import {
   Hourglass,
   Info,
   LayoutGrid,
+  LogOut,
   Map,
   Menu,
   Mountain,
@@ -26,12 +29,16 @@ import {
   PlaneTakeoff,
   Route as RouteIcon,
   Sparkles,
+  UserRound,
   X,
   type LucideIcon,
 } from 'lucide-react';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/cn';
 import { scrollToBook, scrollToId } from '@/components/home/scrollToBook';
+import { useAuth } from '@/context/AuthContext';
+import UserMenu from '@/components/auth/UserMenu';
+import UserAvatar from '@/components/auth/UserAvatar';
 
 interface NavItem {
   label: string;
@@ -170,6 +177,7 @@ export default function HomeHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const { available: authAvailable, user, profile, openAuthDialog, signOut } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -237,6 +245,7 @@ export default function HomeHeader() {
               <Headphones className="h-3.5 w-3.5" />
               24/7 · {siteConfig.contact.phone.display}
             </a>
+            <UserMenu />
             <button type="button" onClick={book} className="btn-primary hidden px-5 py-2.5 sm:inline-flex">
               Book a Cab
             </button>
@@ -265,8 +274,78 @@ export default function HomeHeader() {
             role="dialog"
             aria-modal="true"
             aria-label="Site menu"
-            className="glass-strong fixed inset-x-3 top-[72px] z-50 max-h-[min(70dvh,520px)] animate-drop-in overflow-y-auto rounded-3xl bg-white/95 p-2 sm:left-auto sm:right-4 sm:w-96"
+            className="glass-strong fixed inset-x-3 top-[72px] z-50 max-h-[min(76dvh,600px)] animate-drop-in overflow-y-auto rounded-3xl bg-white/95 p-2 sm:left-auto sm:right-4 sm:w-96"
           >
+            {/* Account */}
+            {authAvailable &&
+              (user ? (
+                <div className="mb-1 rounded-2xl bg-slate-50 p-2">
+                  <div className="flex items-center gap-3 p-1.5">
+                    <UserAvatar
+                      name={profile?.displayName || user.displayName}
+                      email={user.email}
+                      photoURL={profile?.photoURL ?? user.photoURL}
+                      size="md"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-extrabold text-ink">
+                        {profile?.displayName || user.displayName || 'Your account'}
+                      </span>
+                      <span className="block truncate text-xs text-slate-500">{user.email}</span>
+                    </span>
+                  </div>
+                  <div className="mt-1 grid grid-cols-3 gap-1.5">
+                    <Link
+                      href="/profile"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex flex-col items-center gap-1 rounded-xl bg-white px-2 py-2 text-[11px] font-bold text-ink ring-1 ring-slate-200/80"
+                    >
+                      <UserRound className="h-4 w-4 text-brand-600" /> Profile
+                    </Link>
+                    <Link
+                      href="/profile?tab=bookings"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex flex-col items-center gap-1 rounded-xl bg-white px-2 py-2 text-[11px] font-bold text-ink ring-1 ring-slate-200/80"
+                    >
+                      <CalendarClock className="h-4 w-4 text-brand-600" /> My Bookings
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        void signOut();
+                      }}
+                      className="flex flex-col items-center gap-1 rounded-xl bg-white px-2 py-2 text-[11px] font-bold text-rose-600 ring-1 ring-slate-200/80"
+                    >
+                      <LogOut className="h-4 w-4" /> Sign out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-1 grid grid-cols-2 gap-2 p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      openAuthDialog('signin');
+                    }}
+                    className="btn-ghost px-3 py-2.5"
+                  >
+                    <UserRound className="h-4 w-4" /> Sign In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      openAuthDialog('signup');
+                    }}
+                    className="btn-ghost px-3 py-2.5"
+                  >
+                    Create Account
+                  </button>
+                </div>
+              ))}
+
             {navGroups.map((group) => {
               const expanded = openGroup === group.label;
               return (

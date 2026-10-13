@@ -178,6 +178,7 @@ export default function AdminDashboardPage() {
       b.bookingId.toLowerCase().includes(bookingSearch.toLowerCase()) ||
       b.customerName.toLowerCase().includes(bookingSearch.toLowerCase()) ||
       b.customerPhone.includes(bookingSearch) ||
+      (b.customerEmail ?? '').toLowerCase().includes(bookingSearch.toLowerCase()) ||
       b.pickupName.toLowerCase().includes(bookingSearch.toLowerCase()) ||
       b.dropName.toLowerCase().includes(bookingSearch.toLowerCase());
 
@@ -524,6 +525,12 @@ export default function AdminDashboardPage() {
                           <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Passenger Info</p>
                           <p className="mt-1 text-sm font-bold text-ink">{b.customerName}</p>
                           <p className="font-mono text-slate-500">+91 {b.customerPhone}</p>
+                          {b.customerEmail && (
+                            <p className="mt-1 truncate text-slate-500" title="Account that placed the booking">
+                              {b.accountName && b.accountName !== b.customerName ? `${b.accountName} · ` : ''}
+                              {b.customerEmail}
+                            </p>
+                          )}
                           <div className="mt-2 flex items-center gap-2">
                             <a href={`tel:+91${cleanCustomerPhone}`} className={`${smallBtn} border border-slate-200/80 bg-white text-slate-800 hover:border-slate-300`}>
                               <Phone className="h-3 w-3 text-brand-600" /> Call

@@ -45,6 +45,13 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // 7. Customer account profiles: a signed-in customer may read their own;
+    // all writes go through /api/me/profile (Admin SDK)
+    match /users/{userId} {
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+      allow write: if isAdmin();
+    }
+
     // Default deny for any unspecified collections
     match /{document=**} {
       allow read, write: if false;

@@ -2,5 +2,10 @@
   command = "npm run build"
   publish = ".next"
 
+# Node 22 for the build and the server functions. firebase-admin's dependency
+# tree includes ESM-only packages that older Node versions can't require().
+[build.environment]
+  NODE_VERSION = "22"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"

@@ -9,8 +9,11 @@
  *     results (cars, prices, T&Cs, WhatsApp) render inline under the booking
  *     widget (components/FareResults.tsx).
  *  2. Booking request — "Request Booking" on a car opens the modal flow:
- *     Your Details (ONLY Full Name and 10-digit Mobile) → Review →
- *     Processing → Success / Error (Try Again keeps all entered data).
+ *     Your Details (passenger Full Name and 10-digit Mobile) → Review →
+ *     Sign in & Confirm (account gate) → Processing → Success / Error
+ *     (Try Again keeps all entered data).
+ *     The booking is submitted with the customer's Firebase ID token so the
+ *     server links it to their account (userId + receipt email).
  */
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
@@ -18,8 +21,17 @@ import { LocationData } from '@/lib/googlePlaces';
 import { Vehicle, ServiceType, TripType, Booking } from '@/lib/types';
 import { formatTime12 } from '@/lib/time';
 import { siteConfig } from '@/lib/siteConfig';
+import { useAuth } from '@/context/AuthContext';
 
-export type BookingStep = 'loading' | 'vehicle' | 'details' | 'review' | 'processing' | 'success' | 'error';
+export type BookingStep =
+  | 'loading'
+  | 'vehicle'
+  | 'details'
+  | 'review'
+  | 'auth'
+  | 'processing'
+  | 'success'
+  | 'error';
 
 export interface FareResult {
   vehicleId: string;
@@ -79,7 +91,7 @@ export interface BookingFlowState {
   faresMap: { [vehicleId: string]: number | null };
   selectedVehicle: Vehicle | null;
 
-  // Customer Details (ONLY Full Name and 10-digit Mobile)
+  // Passenger Details (ONLY Full Name and 10-digit Mobile) — may differ from the account owner
   customerName: string;
   customerPhone: string;
 
@@ -154,6 +166,7 @@ const BookingFlowContext = createContext<BookingFlowContextType | undefined>(und
 export function BookingFlowProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<BookingFlowState>(defaultState);
   const [search, setSearch] = useState<FareSearchState>(defaultSearch);
+  const { getIdToken } = useAuth();
 
   // Triggered by "See Fares & Available Innovas" in the booking widget
   const searchFares = useCallback(async (params: TripParams) => {
@@ -250,7 +263,7 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
     setState((prev) => ({ ...prev, customerName: name, customerPhone: phone }));
   }, []);
 
-  // Executes POST /api/bookings to create the booking request
+  // Executes POST /api/bookings to create the booking request (signed-in customers only)
   const executeBookingSubmission = useCallback(async () => {
     setState((prev) => ({ ...prev, step: 'processing', errorMessage: null }));
 
@@ -259,9 +272,16 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
         throw new Error('Incomplete booking information. Please review your trip details.');
       }
 
+      const idToken = await getIdToken();
+      if (!idToken) {
+        // Signed out in the meantime: back to the Step 4 sign-in gate
+        setState((prev) => ({ ...prev, step: 'auth' }));
+        return;
+      }
+
       const res = await fetch('/api/bookings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
         body: JSON.stringify({
           name: state.customerName,
           phone: state.customerPhone,
@@ -313,7 +333,7 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
         errorMessage: error.message || 'Network error occurred while reserving vehicle.',
       }));
     }
-  }, [state]);
+  }, [state, getIdToken]);
 
   const submitBooking = useCallback(async () => {
     await executeBookingSubmission();

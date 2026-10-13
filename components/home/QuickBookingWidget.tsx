@@ -586,7 +586,7 @@ export default function QuickBookingWidget({
       id="book"
       onSubmit={handleSubmit}
       noValidate
-      className="glass-strong relative animate-fade-up scroll-mt-28 rounded-4xl p-4 max-lg:border-slate-200 max-lg:bg-white max-lg:shadow-[0_24px_50px_-12px_rgba(0,0,0,0.5),0_8px_16px_-8px_rgba(0,0,0,0.25)] max-lg:backdrop-blur-none shadow-[0_24px_60px_-18px_rgba(56,189,248,0.55),0_0_0_1px_rgba(186,230,253,0.9)] [animation-delay:150ms] sm:p-6"
+      className="glass-strong relative animate-fade-up scroll-mt-28 rounded-4xl p-4 max-lg:border-slate-200 max-lg:bg-white max-lg:shadow-[0_6px_18px_-8px_rgba(0,0,0,0.35)] max-lg:backdrop-blur-none shadow-[0_24px_60px_-18px_rgba(56,189,248,0.55),0_0_0_1px_rgba(186,230,253,0.9)] [animation-delay:150ms] sm:p-6"
     >
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>

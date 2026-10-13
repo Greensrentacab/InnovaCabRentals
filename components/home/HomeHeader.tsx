@@ -208,6 +208,14 @@ export default function HomeHeader() {
   return (
     <>
       <header className="ds-scope fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-4">
+        {/* Blurred strip across the top edge once the page scrolls, fading out downwards */}
+        <div
+          aria-hidden="true"
+          className={cn(
+            'pointer-events-none absolute inset-x-0 top-0 -z-10 h-24 bg-white/40 backdrop-blur-lg transition-opacity duration-300 [-webkit-mask-image:linear-gradient(to_bottom,#000_50%,transparent)] [mask-image:linear-gradient(to_bottom,#000_50%,transparent)]',
+            scrolled ? 'opacity-100' : 'opacity-0'
+          )}
+        />
         <div
           className={cn(
             'mx-auto flex max-w-7xl items-center gap-3 rounded-full py-2 pl-3 pr-2 transition-all duration-300 ease-premium sm:pl-4',
@@ -217,7 +225,12 @@ export default function HomeHeader() {
           {/* Brand */}
           <Link href="/" className="flex items-center gap-2.5" aria-label={`${siteConfig.brand.name} home`}>
             <BrandMark className="h-10" />
-            <span className="text-[16px] font-extrabold leading-none tracking-tight text-ink">{siteConfig.brand.headerName}</span>
+            <span className="leading-none">
+              <span className="block text-[16px] font-extrabold tracking-tight text-ink">
+                {siteConfig.brand.headerName.replace(/\s*Bangalore$/i, '')}
+              </span>
+              <span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.18em] text-brand-700">Bangalore</span>
+            </span>
           </Link>
 
           {/* Desktop nav */}

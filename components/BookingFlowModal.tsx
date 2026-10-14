@@ -623,17 +623,17 @@ export default function BookingFlowModal() {
             <div className="pb-safe flex shrink-0 items-center gap-2 border-t border-slate-100 bg-white/90 px-5 py-4 backdrop-blur md:px-8 md:pb-4">
               {state.step === 'vehicle' && (
                 <>
-                  <button type="button" onClick={closeBookingFlow} className="btn-ghost px-4">
+                  <button type="button" onClick={closeBookingFlow} className="inline-flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-ink transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]">
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={() => setStep('details')}
                     disabled={!state.selectedVehicle}
-                    className="btn-primary group flex-1"
+                    className="group inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand-600 px-4 text-[15px] font-bold text-white shadow-[0_10px_20px_-10px_rgba(37,99,235,0.8)] transition hover:bg-brand-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                   >
                     Continue to Details
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
                   </button>
                 </>
               )}
@@ -645,30 +645,30 @@ export default function BookingFlowModal() {
                       updateCustomerDetails(name, phone);
                       closeBookingFlow();
                     }}
-                    className="btn-ghost px-4"
+                    className="inline-flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-ink transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
                   >
-                    <ArrowLeft className="h-4 w-4" /> Back to cars
+                    <ArrowLeft className="h-4 w-4" /> Back<span className="hidden sm:inline"> to cars</span>
                   </button>
-                  <button type="submit" form="booking-details-form" className="btn-primary group flex-1">
+                  <button type="submit" form="booking-details-form" className="group inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand-600 px-4 text-[15px] font-bold text-white shadow-[0_10px_20px_-10px_rgba(37,99,235,0.8)] transition hover:bg-brand-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none">
                     Continue to Review
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
                   </button>
                 </>
               )}
               {state.step === 'review' && (
                 <>
-                  <button type="button" onClick={() => setStep('details')} className="btn-ghost px-4">
+                  <button type="button" onClick={() => setStep('details')} className="inline-flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-ink transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]">
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
-                  <button type="button" onClick={() => setStep('auth')} className="btn-primary group flex-1">
+                  <button type="button" onClick={() => setStep('auth')} className="group inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand-600 px-4 text-[15px] font-bold text-white shadow-[0_10px_20px_-10px_rgba(37,99,235,0.8)] transition hover:bg-brand-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none">
                     {user ? 'Continue to Confirm' : 'Continue to Sign In'}
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
                   </button>
                 </>
               )}
               {state.step === 'auth' && (
                 <>
-                  <button type="button" onClick={() => setStep('review')} className="btn-ghost px-4">
+                  <button type="button" onClick={() => setStep('review')} className="inline-flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-ink transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]">
                     <ArrowLeft className="h-4 w-4" />
                     <span className="hidden sm:inline">Back to review</span>
                     <span className="sm:hidden">Back</span>
@@ -677,10 +677,10 @@ export default function BookingFlowModal() {
                     type="button"
                     onClick={submitBooking}
                     disabled={!user}
-                    className="btn-primary group flex-1 py-3.5 text-[15px]"
+                    className="group inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand-600 px-4 text-[15px] font-bold text-white shadow-[0_10px_20px_-10px_rgba(37,99,235,0.8)] transition hover:bg-brand-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                   >
                     Submit Booking Request
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
                   </button>
                 </>
               )}

@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { ArrowRight, Calendar, Check, ChevronDown, Clock, FileText, Info, Luggage, MapPin, MessageCircle, Pencil, Route as RouteIcon, Users } from 'lucide-react';
+import { Calendar, Check, ChevronDown, Clock, FileText, Info, Luggage, MapPin, MessageCircle, Pencil, Route as RouteIcon, Snowflake, Users } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useBookingFlow, type FareResult, type TripParams } from '@/context/BookingFlowContext';
 import { siteConfig } from '@/lib/siteConfig';
@@ -67,6 +67,24 @@ export function buildAdminWhatsAppMessage(
   return lines.join('\n');
 }
 
+/** Short tag on each car photo (factual, no ratings) */
+const CAR_TAG: Record<string, string> = {
+  ertiga: 'Best Value',
+  innova: 'Classic Comfort',
+  'innova-crysta': 'Captain Seats',
+  'innova-hycross': 'Strong Hybrid',
+};
+
+/** What the shown fare covers, in a few words */
+function fareCaption(trip: TripParams, totalKm: number | null, days: number) {
+  if (trip.serviceType === 'airport') return trip.tripType === 'round' ? 'Airport round trip' : 'Airport · one way';
+  if (trip.serviceType === 'local') return trip.packageLabel ? `${trip.packageLabel} package` : 'Local package';
+  if (trip.serviceType === 'outstation')
+    return totalKm ? `~${totalKm} km · ${days} day${days > 1 ? 's' : ''} round trip` : 'Round trip';
+  return 'Estimated fare';
+}
+
+/** Compact 2-up result card (mobile first): photos, specs, price, T&C toggle, actions. */
 function ResultCard({
   car,
   trip,
@@ -83,116 +101,91 @@ function ResultCard({
   const { requestBooking } = useBookingFlow();
   const [showTerms, setShowTerms] = useState(false);
   const termsId = useId();
-  // Car photo carousel (our own fleet photos where available)
   const photos = (fleetPhotos[car.vehicleId] ?? []).slice(0, 5);
   const waUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
     buildAdminWhatsAppMessage(trip, car, { totalKm, days })
   )}`;
+  const tag = CAR_TAG[car.vehicleId];
 
-  // Same layout as the homepage "Our fleet" cards, plus the trip fare
   return (
-    <article className="card-float card-float-hover flex h-full flex-col overflow-hidden">
+    <article className="card-float flex h-full min-w-0 flex-col overflow-hidden rounded-3xl">
       {photos.length > 0 && (
-        <PhotoCarousel photos={photos} label={`${car.vehicleName} photos`} delay={index * 900} className="aspect-[16/10]">
-          {car.seats ? (
-            <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-ink shadow-sm backdrop-blur">
-              {car.seats} + driver
+        <PhotoCarousel photos={photos} label={`${car.vehicleName} photos`} delay={index * 900} className="aspect-[4/3]">
+          {tag && (
+            <span className="absolute left-2 top-2 z-10 rounded-full bg-ink/80 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur sm:left-3 sm:top-3 sm:px-2.5 sm:text-[11px]">
+              {tag}
             </span>
-          ) : null}
+          )}
         </PhotoCarousel>
       )}
 
-      <div className="flex flex-1 flex-col p-5 sm:p-6">
-        {car.vehicleType && (
-          <p className="w-fit rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-brand-700">
-            {car.vehicleType}
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        <h3 className="line-clamp-2 text-[13px] font-extrabold leading-snug tracking-tight sm:text-base">{car.vehicleName}</h3>
+        {car.vehicleType && <p className="mt-0.5 truncate text-[11px] text-slate-500 sm:text-xs">{car.vehicleType}</p>}
+
+        <p className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-semibold text-slate-600 sm:text-xs">
+          {car.seats ? (
+            <span className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5 text-brand-600" /> {car.seats}+1
+            </span>
+          ) : null}
+          {car.luggage ? (
+            <span className="flex items-center gap-1">
+              <Luggage className="h-3.5 w-3.5 text-brand-600" /> {car.luggage}
+            </span>
+          ) : null}
+          <span className="flex items-center gap-1">
+            <Snowflake className="h-3.5 w-3.5 text-brand-600" /> AC
+          </span>
+        </p>
+
+        <div className="mt-3 rounded-2xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-200/70 sm:px-3">
+          <p className="text-lg font-extrabold leading-tight tracking-tight tabular-nums text-ink sm:text-xl">
+            {car.fare !== null ? inr(car.fare) : <span className="text-sm">Price on request</span>}
           </p>
-        )}
-        <h3 className="mt-2 text-xl font-extrabold tracking-tight sm:text-2xl">{car.vehicleName}</h3>
+          <p className="mt-0.5 text-[10px] font-medium leading-snug text-slate-500 sm:text-[11px]">{fareCaption(trip, totalKm, days)}</p>
+          <p className="text-[10px] font-medium leading-snug text-amber-700 sm:text-[11px]">Tolls &amp; parking extra</p>
+        </div>
 
-        {(car.seats || car.luggage) ? (
-          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-            {car.seats ? (
-              <span className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 font-medium text-slate-700">
-                <Users className="h-4 w-4 shrink-0 text-brand-600" /> {car.seats} seats + driver
-              </span>
-            ) : null}
-            {car.luggage ? (
-              <span className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 font-medium text-slate-700">
-                <Luggage className="h-4 w-4 shrink-0 text-brand-600" /> {car.luggage} large bags
-              </span>
-            ) : null}
-          </div>
-        ) : null}
-
-        {car.features && car.features.length > 0 && (
-          <ul className="mt-4 grid gap-y-2">
-            {car.features.map((feature) => (
-              <li key={feature} className="flex items-start gap-2 text-sm font-medium text-slate-700">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-live-600" strokeWidth={2.5} />
-                {feature}
+        {/* Terms & conditions: hidden until tapped */}
+        <button
+          type="button"
+          aria-expanded={showTerms}
+          aria-controls={termsId}
+          onClick={() => setShowTerms((v) => !v)}
+          className="mt-2 inline-flex w-fit items-center gap-1 text-[10.5px] font-bold text-slate-500 transition hover:text-brand-700 sm:text-[11px]"
+        >
+          <FileText className="h-3 w-3" /> T&amp;C
+          <ChevronDown className={cn('h-3 w-3 transition-transform', showTerms && 'rotate-180')} />
+        </button>
+        {showTerms && (
+          <ul id={termsId} className="mt-1.5 animate-fade-in space-y-1 rounded-xl bg-slate-50 p-2">
+            {[...car.breakdown, ...car.terms].map((term) => (
+              <li key={term} className="flex items-start gap-1.5 text-[10.5px] leading-snug text-slate-600 sm:text-[11px]">
+                <Check className="mt-0.5 h-3 w-3 shrink-0 text-live-600" strokeWidth={3} />
+                {term}
               </li>
             ))}
           </ul>
         )}
 
-        <div className="mt-auto pt-5">
-          <div className="rounded-2xl border border-slate-200/80 p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Estimated fare</p>
-            <p className="text-2xl font-extrabold tracking-tight tabular-nums text-ink">
-              {car.fare !== null ? inr(car.fare) : <span className="text-lg">Price on request</span>}
-            </p>
-            {car.breakdown.length > 0 && (
-              <ul className="mt-1 space-y-0.5 text-[11px] text-slate-500">
-                {car.breakdown.map((line) => (
-                  <li key={line} className="tabular-nums">
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* Terms & conditions: hidden until the customer taps the button */}
+        <div className="mt-auto grid gap-1.5 pt-3">
           <button
             type="button"
-            aria-expanded={showTerms}
-            aria-controls={termsId}
-            onClick={() => setShowTerms((v) => !v)}
-            className="mt-3 inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-slate-600 transition hover:border-brand-300 hover:text-brand-700"
+            onClick={() => requestBooking(car.vehicleId)}
+            className="btn-primary w-full px-2 py-2.5 text-[13px] shadow-[0_10px_22px_-8px_rgba(56,189,248,0.8)]"
           >
-            <FileText className="h-3.5 w-3.5" /> Terms &amp; conditions
-            <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', showTerms && 'rotate-180')} />
+            Book Now
           </button>
-          {showTerms && (
-            <ul id={termsId} className="mt-2 animate-fade-in space-y-1.5 rounded-2xl bg-slate-50 p-3">
-              {car.terms.map((term) => (
-                <li key={term} className="flex items-start gap-2 text-xs leading-relaxed text-slate-600">
-                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-live-500/10 text-live-600">
-                    <Check className="h-2.5 w-2.5" strokeWidth={3} />
-                  </span>
-                  {term}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <div className="mt-4 grid grid-cols-[auto_1fr] gap-2">
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-whatsapp h-12 w-12 p-0"
-              aria-label={`Send ${car.vehicleName} booking details on WhatsApp`}
-              title="Send trip & car details on WhatsApp"
-            >
-              <MessageCircle className="h-5 w-5" />
-            </a>
-            <button type="button" onClick={() => requestBooking(car.vehicleId)} className="btn-primary group">
-              Request Booking
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </button>
-          </div>
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-whatsapp w-full px-2 py-2.5 text-[13px]"
+            aria-label={`Send ${car.vehicleName} booking details on WhatsApp`}
+          >
+            <MessageCircle className="h-4 w-4" /> WhatsApp
+          </a>
         </div>
       </div>
     </article>
@@ -260,11 +253,11 @@ export default function FareResults() {
       </div>
 
       {search.status === 'loading' && (
-        <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="card-float overflow-hidden">
-              <div className="shimmer aspect-[16/9]" />
-              <div className="space-y-3 p-5">
+              <div className="shimmer aspect-[4/3]" />
+              <div className="space-y-2 p-3">
                 <div className="shimmer h-8 w-1/2 rounded-lg" />
                 <div className="shimmer h-3 rounded-full" />
                 <div className="shimmer h-3 w-4/5 rounded-full" />
@@ -285,14 +278,14 @@ export default function FareResults() {
       )}
 
       {search.status === 'done' && (
-        <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {search.results.map((car, i) => (
             <div key={car.vehicleId} className="min-w-0 animate-fade-up">
               <ResultCard car={car} trip={trip} totalKm={search.totalKm} days={search.days} index={i} />
             </div>
           ))}
           {search.results.length === 0 && (
-            <p className="card-float p-6 text-sm text-slate-600 md:col-span-2 xl:col-span-4">
+            <p className="card-float p-6 text-sm text-slate-600 col-span-2 lg:col-span-4">
               No cars are available for this trip right now. Please WhatsApp us and we&apos;ll arrange one.
             </p>
           )}

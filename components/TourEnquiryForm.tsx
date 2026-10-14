@@ -216,10 +216,10 @@ export default function TourEnquiryForm() {
                 onChange={(e) => setFormData({ ...formData, vehicleModel: e.target.value })}
                 className="field"
               >
+                <option>Maruti Suzuki Ertiga</option>
                 <option>Toyota Innova (7/8 Seater)</option>
                 <option>Toyota Innova Crysta</option>
                 <option>Toyota Innova Hycross</option>
-                <option>Maruti Suzuki Ertiga</option>
               </select>
             </div>
           </div>

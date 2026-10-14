@@ -189,7 +189,7 @@ export default function AboutPage() {
 
       <CtaBand
         title={siteConfig.cta.advanceBooking}
-        subtitle="Book your next airport transfer, full-day city rental, or outstation holiday with Bangalore's most reliable Innova fleet."
+        subtitle="Book your next airport transfer, hourly city rental, or outstation holiday with Bangalore's most reliable Innova fleet."
       />
     </div>
   );

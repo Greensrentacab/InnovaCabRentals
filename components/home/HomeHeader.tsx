@@ -72,10 +72,10 @@ const navGroups: NavGroup[] = [
   {
     label: 'Fleet',
     items: [
+      { label: 'Maruti Suzuki Ertiga', hint: 'Compact 7-seater', href: '/ertiga-rental-bangalore', icon: Car },
       { label: 'Toyota Innova', hint: 'Standard 7-seater', href: '/innova-rental-bangalore', icon: Car },
       { label: 'Toyota Innova Crysta', hint: 'Luxury 7-seater', href: '/innova-crysta-rental-bangalore', icon: Crown },
       { label: 'Toyota Innova Hycross', hint: 'Premium hybrid 7-seater', href: '/innova-hycross-rental-bangalore', icon: Sparkles },
-      { label: 'Maruti Suzuki Ertiga', hint: 'Compact 7-seater', href: '/ertiga-rental-bangalore', icon: Car },
       { label: 'Compare Fleet', hint: 'Seats, luggage & comfort side by side', href: '/vehicles#compare', icon: LayoutGrid },
     ],
   },

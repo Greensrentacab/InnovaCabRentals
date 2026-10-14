@@ -296,7 +296,7 @@ export default function QuickBookingWidget({
   const airportFirst = airportMode === 'pickup' || (airportMode === 'round' && roundFromAirport);
   const [terminal, setTerminal] = useState<Terminal>('T1');
   const [localPackageId, setLocalPackageId] = useState(
-    () => localPackages.find((p) => p.label === 'Full-day')?.id ?? localPackages[0]?.id ?? ''
+    () => localPackages.find((p) => p.label === '8 Hours')?.id ?? localPackages[0]?.id ?? ''
   );
 
   // Stored location data: { name, address (incl. pincode), lat, lng }

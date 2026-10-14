@@ -38,7 +38,7 @@ export default function PackageSelector({ packages, vehicles }: PackageSelectorP
           value={activeTab}
           onChange={setActiveTab}
           options={[
-            { value: 'packages', label: 'Hourly & Full Day', icon: Clock },
+            { value: 'packages', label: '8 Hr & 12 Hr', icon: Clock },
             { value: 'point-to-point', label: 'Point-to-Point', icon: Navigation },
           ]}
         />

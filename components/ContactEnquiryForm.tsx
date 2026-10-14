@@ -150,7 +150,7 @@ export default function ContactEnquiryForm() {
               >
                 <option value="Airport Pickup / Drop">Airport Pickup / Drop (BLR)</option>
                 <option value="Outstation Round Trip">Outstation Round Trip</option>
-                <option value="Local Full Day Rental (8hr/80km)">Local Full Day Rental (8hr/80km)</option>
+                <option value="Local 8 Hours Rental (8hr/80km)">Local 8 Hours Rental (8hr/80km)</option>
                 <option value="Local Extended Rental (12hr/120km)">Local Extended Rental (12hr/120km)</option>
                 <option value="Local Custom Duration (On Request)">Local Custom Duration (On Request)</option>
                 <option value="Custom Tour Package">Custom Tour Package</option>
@@ -166,10 +166,10 @@ export default function ContactEnquiryForm() {
                 onChange={(e) => setFormData({ ...formData, vehicleModel: e.target.value })}
                 className="field"
               >
+                <option value="Maruti Suzuki Ertiga">Maruti Suzuki Ertiga (6+1 Seater)</option>
                 <option value="Toyota Innova (7/8 Seater)">Toyota Innova (7/8 Seater)</option>
                 <option value="Toyota Innova Crysta">Toyota Innova Crysta (Luxury)</option>
                 <option value="Toyota Innova Hycross">Toyota Innova Hycross (Hybrid)</option>
-                <option value="Maruti Suzuki Ertiga">Maruti Suzuki Ertiga (6+1 Seater)</option>
               </select>
             </div>
           </div>

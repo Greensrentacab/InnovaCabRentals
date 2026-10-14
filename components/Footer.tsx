@@ -57,10 +57,10 @@ const columns: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: 'Our fleet',
     links: [
+      { label: 'Maruti Ertiga Rental', href: '/ertiga-rental-bangalore' },
       { label: 'Toyota Innova Rental', href: '/innova-rental-bangalore' },
       { label: 'Innova Crysta Rental', href: '/innova-crysta-rental-bangalore' },
       { label: 'Innova Hycross Rental', href: '/innova-hycross-rental-bangalore' },
-      { label: 'Maruti Ertiga Rental', href: '/ertiga-rental-bangalore' },
       { label: 'Compare All Cars', href: '/vehicles#compare' },
     ],
   },

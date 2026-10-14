@@ -60,6 +60,22 @@ const defaultRates = (
  */
 export const seedVehicles: Vehicle[] = [
   {
+    id: 'ertiga',
+    name: 'Maruti Suzuki Ertiga',
+    type: 'Compact 7 Seater MPV',
+    seats: 6, // PLACEHOLDER (6 passengers + driver)
+    luggage: 2, // PLACEHOLDER
+    features: [
+      'Dual AC with Rear Roof Vents',
+      'Comfortable 3-Row Seating',
+      'Economical for Small Groups',
+      'Experienced Chauffeur',
+    ], // PLACEHOLDER
+    confirmed: true,
+    baseFare: null, // REPLACE WITH CLIENT PRICING
+    rates: defaultRates(13, 400, 1600, 2400, 3400, 14, 180),
+  },
+  {
     id: 'innova',
     name: 'Toyota Innova',
     type: 'Standard 7/8 Seater MPV',
@@ -90,22 +106,6 @@ export const seedVehicles: Vehicle[] = [
     confirmed: true,
     baseFare: null, // REPLACE WITH CLIENT PRICING
     rates: defaultRates(19, 500, 2500, 3300, 4600, 19, 250),
-  },
-  {
-    id: 'ertiga',
-    name: 'Maruti Suzuki Ertiga',
-    type: 'Compact 7 Seater MPV',
-    seats: 6, // PLACEHOLDER (6 passengers + driver)
-    luggage: 2, // PLACEHOLDER
-    features: [
-      'Dual AC with Rear Roof Vents',
-      'Comfortable 3-Row Seating',
-      'Economical for Small Groups',
-      'Experienced Chauffeur',
-    ], // PLACEHOLDER
-    confirmed: true,
-    baseFare: null, // REPLACE WITH CLIENT PRICING
-    rates: defaultRates(13, 400, 1600, 2400, 3400, 14, 180),
   },
   {
     id: 'innova-hycross',

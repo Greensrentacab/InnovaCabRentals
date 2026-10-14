@@ -11,7 +11,7 @@ import { siteConfig } from '@/lib/siteConfig';
 import { fleetPhotos } from '@/lib/fleetPhotos';
 import PageHero from '@/components/ds/PageHero';
 import CtaBand from '@/components/ds/CtaBand';
-import VehiclePhotoCard from '@/components/ds/VehiclePhotoCard';
+import CarGallery from '@/components/CarGallery';
 import Reveal from '@/components/home/Reveal';
 import RateList from '@/components/ds/RateList';
 
@@ -46,7 +46,6 @@ export default function VehicleDetailTemplate({
     `Hello ${siteConfig.brand.name}, I am interested in renting the ${vehicle.name} in Bangalore. Please share tariff and availability.`
   )}`;
   const photos = fleetPhotos[vehicle.id] ?? [];
-  const [mainPhoto, ...galleryPhotos] = photos;
 
   return (
     <div className="bg-porcelain">
@@ -61,14 +60,8 @@ export default function VehicleDetailTemplate({
           </>
         }
         aside={
-          mainPhoto ? (
-            <VehiclePhotoCard
-              photo={mainPhoto}
-              eyebrow={vehicle.type}
-              title={vehicle.name}
-              badge={`${vehicle.seats} seats`}
-              priority
-            />
+          photos.length > 0 ? (
+            <CarGallery photos={photos} title={vehicle.name} badge={`${vehicle.seats} + driver`} />
           ) : undefined
         }
       >
@@ -85,18 +78,6 @@ export default function VehicleDetailTemplate({
       <section className="section py-16 sm:py-20">
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           <div className="space-y-8">
-            {galleryPhotos.length > 0 && (
-              <Reveal>
-                <div>
-                  <h2 className="text-xl font-extrabold tracking-tight">{vehicle.name} photo gallery</h2>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {galleryPhotos.map((photo) => (
-                      <VehiclePhotoCard key={photo.src} photo={photo} title={photo.label} showNote={false} className="rounded-3xl" />
-                    ))}
-                  </div>
-                </div>
-              </Reveal>
-            )}
 
             <Reveal>
               <div className="card-float p-6 sm:p-8">

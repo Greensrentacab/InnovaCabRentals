@@ -49,7 +49,8 @@ import AuthPanel from '@/components/auth/AuthPanel';
 import UserAvatar from '@/components/auth/UserAvatar';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/cn';
-import { formatTime12 } from '@/lib/time';
+import { formatDateLong, formatTime12 } from '@/lib/time';
+import { primaryPhoto } from '@/lib/fleetPhotos';
 
 const STEP_LABELS = ['Vehicle', 'Your Details', 'Review', 'Sign in & Confirm'];
 
@@ -390,68 +391,137 @@ export default function BookingFlowModal() {
             )}
 
             {/* STEP 3: REVIEW WITH EDIT LINKS */}
-            {state.step === 'review' && (
-              <div key="review" className="animate-step-in space-y-4">
-                <div>
-                  <h3 className="text-base font-extrabold">Review Trip Details</h3>
-                  <p className="text-xs text-slate-500">Verify your travel schedule before sending your booking request.</p>
-                </div>
-
-                <div className="divide-y divide-slate-100 rounded-3xl border border-slate-200/80">
-                  <ReviewRow
-                    icon={MapPin}
-                    label={`Route & Journey (${tripLabel})`}
-                    value={routeText}
-                    hint={`Pickup: ${state.pickupLocation?.address}`}
-                    onEdit={closeBookingFlow}
-                  />
-                  <ReviewRow
-                    icon={Calendar}
-                    label="Departure Schedule"
-                    value={`${state.pickupDate || 'Date not set'} at ${formatTime12(state.pickupTime) || 'Time not set'}${
-                      state.returnDate ? ` · Return ${state.returnDate}` : ''
-                    }`}
-                    onEdit={closeBookingFlow}
-                  />
-                  <ReviewRow
-                    icon={Car}
-                    label="Selected Vehicle"
-                    value={`${state.selectedVehicle?.name} (${state.selectedVehicle?.seats} Seater)`}
-                    onEdit={() => setStep('vehicle')}
-                  />
-                  <ReviewRow
-                    icon={User}
-                    label="Passenger Contact"
-                    value={state.customerName}
-                    hint={`+91 ${state.customerPhone}`}
-                    onEdit={() => setStep('details')}
-                  />
-                </div>
-
-                <div className="space-y-1.5 rounded-2xl bg-slate-50 p-4">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-500">Estimated Tariff</span>
-                    <span className="font-extrabold text-ink">
-                      {selectedFare !== null ? `₹${selectedFare.toLocaleString('en-IN')}` : 'Price on request'}
-                    </span>
+            {state.step === 'review' && (() => {
+              const points = [state.pickupLocation?.name, ...state.stops.map((s) => s.name), state.dropLocation?.name].filter(
+                (n): n is string => Boolean(n)
+              );
+              if (state.serviceType === 'outstation' && state.pickupLocation?.name) points.push(state.pickupLocation.name);
+              const vehiclePhoto = state.selectedVehicle ? primaryPhoto(state.selectedVehicle.id) : undefined;
+              return (
+                <div key="review" className="animate-step-in space-y-4">
+                  <div>
+                    <h3 className="text-xl font-extrabold tracking-tight">Review your trip</h3>
+                    <p className="mt-0.5 text-sm text-slate-500">Check everything below, then continue to confirm.</p>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-500">Advance payment</span>
-                    <span className="font-bold text-live-600">No Upfront Payment Required</span>
+
+                  {/* Route timeline */}
+                  <ReviewCard icon={MapPin} label={tripLabel} onEdit={closeBookingFlow}>
+                    <ol className="relative space-y-3.5 pl-7">
+                      <span className="absolute bottom-2 left-[7px] top-2 w-px bg-slate-200" aria-hidden="true" />
+                      {points.map((name, i) => (
+                        <li key={`${name}-${i}`} className="relative">
+                          <span
+                            className={cn(
+                              'absolute -left-7 top-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-brand-600',
+                              i === points.length - 1 ? 'bg-brand-600' : 'bg-white'
+                            )}
+                            aria-hidden="true"
+                          />
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                            {i === 0 ? 'Pickup' : i === points.length - 1 ? (state.serviceType === 'outstation' ? 'Return' : 'Drop') : `Stop ${i}`}
+                          </p>
+                          <p className="text-sm font-bold leading-snug text-ink">{name}</p>
+                          {i === 0 && state.pickupLocation?.address && state.pickupLocation.address !== name && (
+                            <p className="mt-0.5 text-xs leading-snug text-slate-500">{state.pickupLocation.address}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                    {state.distanceKm ? (
+                      <p className="mt-3 inline-flex rounded-md bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">
+                        ~{state.distanceKm} km
+                      </p>
+                    ) : null}
+                  </ReviewCard>
+
+                  {/* Date & time */}
+                  <ReviewCard icon={Calendar} label="When" onEdit={closeBookingFlow}>
+                    <div className={cn('grid gap-2', state.returnDate ? 'grid-cols-3' : 'grid-cols-2')}>
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{state.returnDate ? 'Pickup' : 'Date'}</p>
+                        <p className="mt-0.5 text-sm font-extrabold leading-tight text-ink">{formatDateLong(state.pickupDate) || 'Not set'}</p>
+                      </div>
+                      {state.returnDate && (
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Return</p>
+                          <p className="mt-0.5 text-sm font-extrabold leading-tight text-ink">{formatDateLong(state.returnDate)}</p>
+                        </div>
+                      )}
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Time</p>
+                        <p className="mt-0.5 text-sm font-extrabold leading-tight text-ink">{formatTime12(state.pickupTime) || 'Not set'}</p>
+                      </div>
+                    </div>
+                  </ReviewCard>
+
+                  {/* Vehicle */}
+                  <ReviewCard icon={Car} label="Your car" onEdit={() => setStep('vehicle')} editLabel="Change">
+                    <div className="flex items-center gap-3">
+                      {vehiclePhoto && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={vehiclePhoto.src}
+                          alt={vehiclePhoto.alt}
+                          width={vehiclePhoto.width}
+                          height={vehiclePhoto.height}
+                          style={{ objectPosition: vehiclePhoto.position }}
+                          className="h-16 w-24 shrink-0 rounded-lg bg-slate-100 object-cover"
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-base font-extrabold leading-tight text-ink">{state.selectedVehicle?.name}</p>
+                        <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-slate-600">
+                          <Users className="h-3.5 w-3.5 text-brand-600" /> {state.selectedVehicle?.seats} seater
+                        </p>
+                      </div>
+                    </div>
+                  </ReviewCard>
+
+                  {/* Passenger */}
+                  <ReviewCard icon={User} label="Passenger" onEdit={() => setStep('details')}>
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-base font-extrabold uppercase text-brand-700">
+                        {state.customerName.trim().charAt(0) || <User className="h-5 w-5" />}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-base font-extrabold leading-tight text-ink">{state.customerName}</p>
+                        <p className="mt-0.5 text-sm font-semibold tabular-nums text-slate-500">+91 {state.customerPhone}</p>
+                      </div>
+                    </div>
+                  </ReviewCard>
+
+                  {/* Fare */}
+                  <div className="rounded-2xl bg-ink p-5 text-white shadow-float">
+                    <div className="flex items-end justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Estimated tariff</p>
+                        <p className="mt-1 text-3xl font-extrabold leading-none tracking-tight tabular-nums">
+                          {selectedFare !== null ? `₹${selectedFare.toLocaleString('en-IN')}` : <span className="text-lg">Price on request</span>}
+                        </p>
+                      </div>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-live-500/20 px-2.5 py-1 text-[11px] font-bold text-live-400">
+                        <Check className="h-3 w-3" strokeWidth={3} /> ₹0 advance
+                      </span>
+                    </div>
+                    <p className="mt-3 border-t border-white/10 pt-3 text-xs text-slate-400">
+                      No upfront payment required. Tolls, parking &amp; permits are paid by you.
+                    </p>
+                  </div>
+
+                  {/* What happens next */}
+                  <div className="rounded-2xl border border-brand-100 bg-brand-50/70 p-4">
+                    <p className="flex items-center gap-1.5 text-xs font-bold text-brand-800">
+                      <ShieldCheck className="h-4 w-4 text-brand-600" /> What happens next
+                    </p>
+                    <ol className="mt-2 space-y-1.5 text-xs leading-relaxed text-brand-900/80">
+                      <li className="flex gap-2"><span className="font-extrabold text-brand-700">1</span> Sign in to confirm your request</li>
+                      <li className="flex gap-2"><span className="font-extrabold text-brand-700">2</span> Our team checks car availability</li>
+                      <li className="flex gap-2"><span className="font-extrabold text-brand-700">3</span> Driver details reach you on WhatsApp</li>
+                    </ol>
                   </div>
                 </div>
-
-                <div className="rounded-2xl border border-brand-100 bg-brand-50/70 p-4">
-                  <p className="flex items-center gap-1.5 text-xs font-bold text-brand-800">
-                    <ShieldCheck className="h-4 w-4 text-brand-600" /> Request Status: PENDING Confirmation
-                  </p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-brand-800/80">
-                    Next, sign in to confirm. Our dispatch manager will then verify car availability and send direct driver
-                    assignment via WhatsApp.
-                  </p>
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* STEP 4: SIGN IN & CONFIRM */}
             {state.step === 'auth' && (
@@ -700,36 +770,37 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ReviewRow({
+function ReviewCard({
   icon: Icon,
   label,
-  value,
-  hint,
   onEdit,
+  editLabel = 'Edit',
+  children,
 }: {
   icon: React.ElementType;
   label: string;
-  value: string;
-  hint?: string;
   onEdit: () => void;
+  editLabel?: string;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 p-4">
-      <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
-        <p className="mt-0.5 flex items-center gap-2 text-sm font-bold text-ink">
-          <Icon className="h-4 w-4 shrink-0 text-brand-600" />
-          <span className="truncate">{value}</span>
-        </p>
-        {hint && <p className="truncate pl-6 text-xs text-slate-500">{hint}</p>}
+    <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h4 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+            <Icon className="h-3.5 w-3.5" />
+          </span>
+          {label}
+        </h4>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold text-brand-700 transition hover:bg-brand-50"
+        >
+          <Edit2 className="h-3 w-3" /> {editLabel}
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={onEdit}
-        className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-bold text-brand-700 transition hover:bg-brand-50"
-      >
-        <Edit2 className="h-3 w-3" /> Edit
-      </button>
-    </div>
+      {children}
+    </section>
   );
 }

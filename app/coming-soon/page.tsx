@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, Clock, MessageCircle, Phone } from 'lucide-react';
+import { ArrowRight, Clock, Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
@@ -33,7 +34,7 @@ export default function ComingSoonPage() {
             <Phone className="h-4 w-4" /> Call Us
           </a>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> WhatsApp
+            <WhatsAppIcon className="h-4 w-4" /> WhatsApp
           </a>
         </div>
       </div>

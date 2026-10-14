@@ -22,16 +22,17 @@ import {
   ArrowLeftRight,
   ArrowDownUp,
   ArrowRight,
+  Check,
   Clock,
-  Hourglass,
   MapPin,
-  Mountain,
+  MountainSnow,
   Navigation,
   Plane,
   PlaneLanding,
   PlaneTakeoff,
   Plus,
   Repeat,
+  Route,
   ShieldCheck,
   X,
 } from 'lucide-react';
@@ -84,8 +85,8 @@ const DEFAULT_TIME = '09:00';
 
 const SERVICE_TABS: { value: HomeService; label: string; icon: typeof Plane }[] = [
   { value: 'airport', label: 'Airport Taxi', icon: Plane },
-  { value: 'outstation', label: 'Outstation', icon: Mountain },
-  { value: 'local', label: 'Local & Hourly', icon: Hourglass },
+  { value: 'outstation', label: 'Outstation', icon: MountainSnow },
+  { value: 'local', label: 'Local & Hourly', icon: Clock },
 ];
 
 const TERMINALS: Record<Terminal, string> = {
@@ -152,7 +153,7 @@ function LocationTrigger({
             aria-label={`${label}: ${value?.name ?? placeholder}`}
             onClick={onOpen}
             className={cn(
-              'field flex h-full min-h-[76px] flex-col justify-start gap-1 px-3 py-2.5 text-left',
+              'field flex h-full min-h-[56px] flex-col justify-start gap-0.5 px-3.5 py-2 text-left sm:min-h-[76px] sm:gap-1.5 sm:px-3 sm:py-3',
               value && 'pr-8',
               error && 'field-error'
             )}
@@ -160,13 +161,13 @@ function LocationTrigger({
             <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">
               <span
                 className={cn(
-                  'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
+                  'flex h-4 w-4 shrink-0 items-center justify-center rounded-full sm:h-5 sm:w-5',
                   tone === 'pickup' && 'bg-brand-50 text-brand-700',
                   tone === 'drop' && 'bg-live-500/10 text-live-600',
                   tone === 'stop' && 'bg-amber-100 text-amber-700'
                 )}
               >
-                <Icon className="h-3 w-3" strokeWidth={2.5} />
+                <Icon className="h-2.5 w-2.5 sm:h-3 sm:w-3" strokeWidth={2.5} />
               </span>
               {label}
             </span>
@@ -245,6 +246,141 @@ function LocationTrigger({
   );
 }
 
+/**
+ * One stop in the stacked route card (pickup above drop, joined by a dotted
+ * timeline). Opens the location search on tap; X clears a chosen place.
+ */
+function StackRow({
+  position,
+  label,
+  value,
+  placeholder,
+  error,
+  onOpen,
+  onClear,
+  clearLabel = 'Clear location',
+  trailing,
+  staticText,
+  hint,
+}: {
+  position: 'top' | 'bottom';
+  label: string;
+  value?: LocationData | null;
+  placeholder?: string;
+  error?: string;
+  onOpen?: () => void;
+  onClear?: () => void;
+  clearLabel?: string;
+  /** Control beside the main text (e.g. terminal choice) */
+  trailing?: React.ReactNode;
+  /** Fixed text instead of a location picker (the airport) */
+  staticText?: string;
+  hint?: string;
+}) {
+  const top = position === 'top';
+  const main = staticText ? (
+    <span className="block text-[16px] font-semibold leading-snug text-ink sm:text-[17px]">{staticText}</span>
+  ) : value ? (
+    <span className="block truncate text-[16px] font-semibold leading-snug text-ink sm:text-[17px]">{value.name}</span>
+  ) : (
+    <span className="block text-[16px] leading-snug text-slate-500 sm:text-[17px]">{placeholder}</span>
+  );
+  const sub = staticText ? hint : value && value.address && value.address !== value.name ? value.address : undefined;
+
+  return (
+    <div className={cn('relative pl-12 pr-4', top ? 'pb-4 pt-4' : 'pb-4 pt-3.5')}>
+      {/* Timeline: blue dot + dotted line on the top stop, green pin on the bottom one */}
+      <span className="pointer-events-none absolute inset-y-0 left-[18px] flex w-5 flex-col items-center" aria-hidden="true">
+        {top ? (
+          <>
+            <span className="mt-[18px] flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100">
+              <span className="h-3 w-3 rounded-full bg-brand-600" />
+            </span>
+            <span className="mt-1.5 w-0 flex-1 border-l-2 border-dotted border-slate-300" />
+          </>
+        ) : (
+          <>
+            <span className="h-[16px] w-0 shrink-0 border-l-2 border-dotted border-slate-300" />
+            <MapPin className="mt-1 h-5 w-5 shrink-0 fill-live-600 text-live-600" strokeWidth={1.5} />
+          </>
+        )}
+      </span>
+
+      <span className="block text-[13px] font-medium leading-5 text-slate-600">{label}</span>
+      <div className="mt-0.5 flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          {staticText ? (
+            main
+          ) : (
+            <button
+              type="button"
+              role="combobox"
+              data-location-trigger
+              aria-expanded={false}
+              aria-invalid={!!error}
+              aria-label={`${label}: ${value?.name ?? placeholder}`}
+              onClick={onOpen}
+              className={cn('block w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-600', value && 'pr-8')}
+            >
+              {main}
+            </button>
+          )}
+        </div>
+        {trailing}
+      </div>
+      {sub && <span className="mt-0.5 block truncate text-[13px] text-slate-500">{sub}</span>}
+      {error && <span className="mt-1 block text-[12px] font-medium text-rose-600">{error}</span>}
+
+      {!staticText && value && onClear && (
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label={clearLabel}
+          className="absolute right-3 top-[38px] flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Pickup/drop card: two stacked rows, a hairline between them and a swap button on it. */
+function RouteStack({
+  top,
+  bottom,
+  onSwap,
+  swapLabel,
+  dropdown,
+}: {
+  top: React.ReactNode;
+  bottom: React.ReactNode;
+  onSwap: () => void;
+  swapLabel: string;
+  dropdown?: React.ReactNode;
+}) {
+  return (
+    <div className="relative">
+      <div className="relative rounded-2xl border border-slate-300/70 bg-white">
+        {top}
+        <div className="relative ml-12 mr-16 border-t border-slate-200">
+          <button
+            type="button"
+            aria-label={swapLabel}
+            title={swapLabel}
+            onClick={onSwap}
+            className="absolute -right-14 top-0 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-brand-50 text-brand-700 transition duration-300 hover:rotate-180 hover:bg-brand-100"
+          >
+            <ArrowDownUp className="h-5 w-5" strokeWidth={2.25} />
+          </button>
+        </div>
+        {bottom}
+      </div>
+      {dropdown}
+    </div>
+  );
+}
+
 function SwapButton({
   onClick,
   label,
@@ -265,12 +401,19 @@ function SwapButton({
       title={label}
       onClick={onClick}
       className={cn(
-        'absolute z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-sky-200 bg-white text-brand-700 shadow-[0_6px_16px_-4px_rgba(56,189,248,0.55)] transition duration-300 hover:rotate-180 hover:border-brand-300',
-        horizontal ? 'left-1/2 top-[38px] -translate-x-1/2' : '-right-2.5',
+        'absolute z-10 flex h-7 w-7 -translate-y-1/2 sm:h-8 sm:w-8 items-center justify-center rounded-full border border-sky-200 bg-white text-brand-700 shadow-[0_6px_16px_-4px_rgba(56,189,248,0.55)] transition duration-300 hover:rotate-180 hover:border-brand-300',
+        horizontal ? 'left-1/2 top-1/2 -translate-x-1/2 sm:top-[38px]' : '-right-2.5',
         !horizontal && (className ?? 'top-1/2')
       )}
     >
-      <Icon className="h-4 w-4" />
+      {horizontal ? (
+        <>
+          <ArrowDownUp className="h-4 w-4 sm:hidden" />
+          <ArrowLeftRight className="hidden h-4 w-4 sm:block" />
+        </>
+      ) : (
+        <Icon className="h-4 w-4" />
+      )}
     </button>
   );
 }
@@ -296,7 +439,7 @@ export default function QuickBookingWidget({
   const airportFirst = airportMode === 'pickup' || (airportMode === 'round' && roundFromAirport);
   const [terminal, setTerminal] = useState<Terminal>('T1');
   const [localPackageId, setLocalPackageId] = useState(
-    () => localPackages.find((p) => p.label === 'Full-day')?.id ?? localPackages[0]?.id ?? ''
+    () => localPackages.find((p) => p.label === 'Standard')?.id ?? localPackages[0]?.id ?? ''
   );
 
   // Stored location data: { name, address (incl. pincode), lat, lng }
@@ -526,20 +669,18 @@ export default function QuickBookingWidget({
     });
   };
 
-  const airportRow = (
-    <div className="field flex h-full min-h-[76px] min-w-0 flex-col justify-start gap-1.5 border-brand-100 bg-brand-50/70 px-2 py-2.5 sm:px-3">
-      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
-          <Plane className="h-3 w-3" />
-        </span>
-        {airportFirst ? 'Pickup' : 'Drop'}
-      </span>
-      {/* "BLR Airport" with the terminal choice beside it */}
-      <span className="flex min-w-0 items-center justify-between gap-1">
-        <span className="whitespace-nowrap text-[12px] font-bold text-ink min-[400px]:text-[13px]" title="Kempegowda Intl. Airport (BLR)">
-          BLR Airport
-        </span>
-        <span role="radiogroup" aria-label="Terminal" className="flex shrink-0 rounded-full border border-slate-200/80 bg-white p-0.5">
+  const airportStackRow = (position: 'top' | 'bottom') => (
+    <StackRow
+      position={position}
+      label={airportFirst ? 'Pickup' : 'Drop'}
+      staticText="Kempegowda Intl. Airport (BLR)"
+      hint={terminal === 'T1' ? 'Terminal 1 · Domestic' : 'Terminal 2 · Domestic & International'}
+      trailing={
+        <span
+          role="radiogroup"
+          aria-label="Terminal"
+          className="flex shrink-0 rounded-xl bg-slate-100 p-1"
+        >
           {(['T1', 'T2'] as Terminal[]).map((t) => (
             <button
               key={t}
@@ -548,24 +689,24 @@ export default function QuickBookingWidget({
               aria-checked={terminal === t}
               onClick={() => setTerminal(t)}
               className={cn(
-                'rounded-full px-[5px] py-0.5 text-[10.5px] font-bold leading-none transition sm:px-2 sm:text-[11px]',
-                terminal === t ? 'bg-brand-600 text-white shadow-[0_4px_10px_-3px_rgba(56,189,248,0.8)]' : 'text-slate-500 hover:text-slate-800'
+                'rounded-lg px-3.5 py-2 text-sm font-semibold leading-none transition',
+                terminal === t ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
               )}
             >
               {t}
             </button>
           ))}
         </span>
-      </span>
-    </div>
+      }
+    />
   );
 
-  const airportAddressField = (
-    <LocationTrigger
-      value={cityLocation}
+  const airportAddressRow = (position: 'top' | 'bottom') => (
+    <StackRow
+      position={position}
       label={airportFirst ? 'Drop' : 'Pickup'}
-      tone={airportFirst ? 'drop' : 'pickup'}
-      placeholder="Address or pincode in Bangalore"
+      value={cityLocation}
+      placeholder={airportFirst ? 'Drop address or pincode (BLR)' : 'Pickup address or pincode (BLR)'}
       error={airportFirst ? errors.drop : errors.pickup}
       onOpen={() => setActiveModal({ kind: 'city' })}
       onClear={() => setCityLocation(null)}
@@ -580,23 +721,23 @@ export default function QuickBookingWidget({
       id="book"
       onSubmit={handleSubmit}
       noValidate
-      className="glass-strong relative animate-fade-up scroll-mt-28 rounded-4xl p-4 shadow-[0_24px_60px_-18px_rgba(56,189,248,0.55),0_0_0_1px_rgba(186,230,253,0.9)] [animation-delay:150ms] sm:p-6"
+      className="glass-strong relative animate-fade-up scroll-mt-28 rounded-4xl p-4 max-lg:border-slate-200 max-lg:bg-white max-lg:shadow-[0_6px_18px_-8px_rgba(0,0,0,0.35)] max-lg:backdrop-blur-none shadow-[0_24px_60px_-18px_rgba(56,189,248,0.55),0_0_0_1px_rgba(186,230,253,0.9)] [animation-delay:150ms] sm:p-6"
     >
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-extrabold tracking-tight text-ink">Quick Fare Estimate</h2>
           <p className="text-xs font-medium text-slate-500">Know your fare before you book</p>
         </div>
-        <span className="chip-live">
+        <span className="chip-live max-sm:hidden">
           <span className="h-1.5 w-1.5 rounded-full bg-live-500" /> Live
         </span>
       </div>
 
       {/* Service tabs */}
-      <div role="tablist" aria-label="Service" className="relative mb-4 grid grid-cols-3 gap-1 rounded-2xl bg-slate-100/80 p-1">
+      <div role="tablist" aria-label="Service" className="relative mb-2 grid grid-cols-3 gap-1 rounded-2xl bg-slate-100/80 p-1 sm:mb-4">
         <span
           aria-hidden="true"
-          className="absolute bottom-1 left-1 top-1 rounded-xl bg-brand-600 shadow-[0_8px_20px_-6px_rgba(56,189,248,0.8)] ring-1 ring-sky-300 transition-transform duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
+          className="absolute bottom-1 left-1 top-1 rounded-xl bg-brand-600 shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
           style={{
             width: 'calc((100% - 16px) / 3)',
             transform: `translateX(calc(${activeTabIndex} * (100% + 4px)))`,
@@ -625,7 +766,7 @@ export default function QuickBookingWidget({
       </div>
 
       {/* Service panel */}
-      <div key={service} role="tabpanel" className="relative z-20 animate-panel-in space-y-3">
+      <div key={service} role="tabpanel" className="relative z-20 animate-panel-in space-y-2 sm:space-y-3">
         {service === 'airport' && (
           <>
             <SegmentedControl
@@ -641,29 +782,17 @@ export default function QuickBookingWidget({
                 { value: 'round', label: 'Round', icon: Repeat },
               ]}
             />
-            <div className="relative grid grid-cols-2 items-stretch gap-2">
-              {airportFirst ? (
-                <>
-                  {airportRow}
-                  {airportAddressField}
-                </>
-              ) : (
-                <>
-                  {airportAddressField}
-                  {airportRow}
-                </>
-              )}
-              <SwapButton
-                horizontal
-                label="Swap pickup and drop"
-                onClick={() => {
-                  if (airportMode === 'round') setRoundFromAirport((v) => !v);
-                  else setAirportMode(airportMode === 'pickup' ? 'drop' : 'pickup');
-                  setErrors({});
-                }}
-              />
-              {locationDropdown(activeModal?.kind === 'city')}
-            </div>
+            <RouteStack
+              top={airportFirst ? airportStackRow('top') : airportAddressRow('top')}
+              bottom={airportFirst ? airportAddressRow('bottom') : airportStackRow('bottom')}
+              swapLabel="Swap pickup and drop"
+              onSwap={() => {
+                if (airportMode === 'round') setRoundFromAirport((v) => !v);
+                else setAirportMode(airportMode === 'pickup' ? 'drop' : 'pickup');
+                setErrors({});
+              }}
+              dropdown={locationDropdown(activeModal?.kind === 'city')}
+            />
           </>
         )}
 
@@ -673,31 +802,36 @@ export default function QuickBookingWidget({
               <Repeat className="h-3.5 w-3.5 text-brand-600" /> Round trip · we drive you there and back
             </p>
 
-            <div className="relative grid grid-cols-2 items-stretch gap-2">
-              <LocationTrigger
-                value={outPickup}
-                label="Pickup"
-                tone="pickup"
-                placeholder="Address or pincode"
-                error={errors.pickup}
-                onOpen={() => setActiveModal({ kind: 'pickup' })}
-                onClear={() => setOutPickup(null)}
-              />
-              <LocationTrigger
-                value={outDrop}
-                label="Destination"
-                tone="drop"
-                placeholder="City or address"
-                error={errors.drop}
-                onOpen={() => setActiveModal({ kind: 'drop' })}
-                onClear={() => {
-                  setOutDrop(null);
-                  setRouteSlug(undefined);
-                }}
-              />
-              <SwapButton horizontal label="Swap pickup and destination" onClick={swapOutstation} />
-              {locationDropdown(activeModal?.kind === 'pickup' || activeModal?.kind === 'drop')}
-            </div>
+            <RouteStack
+              top={
+                <StackRow
+                  position="top"
+                  label="Pickup"
+                  value={outPickup}
+                  placeholder="Pickup address or pincode"
+                  error={errors.pickup}
+                  onOpen={() => setActiveModal({ kind: 'pickup' })}
+                  onClear={() => setOutPickup(null)}
+                />
+              }
+              bottom={
+                <StackRow
+                  position="bottom"
+                  label="Destination"
+                  value={outDrop}
+                  placeholder="City or address"
+                  error={errors.drop}
+                  onOpen={() => setActiveModal({ kind: 'drop' })}
+                  onClear={() => {
+                    setOutDrop(null);
+                    setRouteSlug(undefined);
+                  }}
+                />
+              }
+              swapLabel="Swap pickup and destination"
+              onSwap={swapOutstation}
+              dropdown={locationDropdown(activeModal?.kind === 'pickup' || activeModal?.kind === 'drop')}
+            />
 
             {outStops.some(Boolean) && (
               <div className="space-y-2">
@@ -747,8 +881,10 @@ export default function QuickBookingWidget({
                         clearError('drop');
                       }}
                       className={cn(
-                        'flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200/80 bg-white py-1.5 pl-1.5 pr-3 text-left transition hover:border-brand-300',
-                        selected && 'border-brand-600 bg-brand-600 shadow-[0_8px_18px_-6px_rgba(56,189,248,0.8)]'
+                        'flex shrink-0 items-center gap-2 rounded-2xl border py-1.5 pl-1.5 pr-3 text-left transition',
+                        selected
+                          ? 'border-brand-600 bg-brand-600 shadow-sm'
+                          : 'border-slate-200/80 bg-white hover:border-brand-300'
                       )}
                     >
                       {d.photo && (
@@ -782,9 +918,12 @@ export default function QuickBookingWidget({
               />
               {locationDropdown(activeModal?.kind === 'city')}
             </div>
-            <div role="radiogroup" aria-label="Local package" className="grid grid-cols-3 gap-2">
+            <div role="radiogroup" aria-label="Local package" className="grid grid-cols-3 gap-2.5 pt-1.5">
               {localPackages.map((pkg) => {
                 const selected = pkg.id === selectedPackage?.id;
+                const hasFare = pkg.fareLabel !== 'On request';
+                const metaLines = pkg.meta.split(' · ');
+                const fareMatch = pkg.fareLabel.match(/^from\s+(.+)$/i);
                 return (
                   <button
                     key={pkg.id}
@@ -793,27 +932,47 @@ export default function QuickBookingWidget({
                     aria-checked={selected}
                     onClick={() => setLocalPackageId(pkg.id)}
                     className={cn(
-                      'relative rounded-2xl border px-2.5 py-2.5 text-left transition-all',
+                      'relative flex min-h-[124px] flex-col rounded-2xl border-2 px-3 pb-3 pt-3.5 text-left transition-all',
                       selected
-                        ? 'border-brand-600 bg-brand-600 shadow-[0_10px_22px_-8px_rgba(56,189,248,0.85)]'
-                        : 'border-slate-200/80 bg-white hover:border-brand-300'
+                        ? 'border-brand-600 bg-brand-50 shadow-[0_10px_22px_-12px_rgba(37,99,235,0.6)]'
+                        : 'border-slate-200 bg-white hover:border-brand-300'
                     )}
                   >
-                    <span
-                      aria-hidden="true"
-                      className={cn(
-                        'absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full border-2',
-                        selected ? 'border-white' : 'border-slate-300'
-                      )}
-                    >
-                      {selected && <span className="h-2 w-2 rounded-full bg-white" />}
-                    </span>
-                    <span className={cn('block pr-5 text-[13px] font-extrabold', selected ? 'text-white' : 'text-ink')}>{pkg.label}</span>
-                    <span className={cn('block text-[11px] font-semibold', selected ? 'text-sky-100' : 'text-slate-500')}>{pkg.meta}</span>
-                    {/* Price shown only once set in Admin → Pricing */}
-                    {pkg.fareLabel !== 'On request' && (
-                      <span className={cn('mt-1 block text-[11px] font-bold', selected ? 'text-white' : 'text-brand-700')}>{pkg.fareLabel}</span>
+                    {selected && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 ring-2 ring-white"
+                      >
+                        <Check className="h-3 w-3 text-white" strokeWidth={4} />
+                      </span>
                     )}
+                    <span className="block text-[15px] font-extrabold leading-tight tracking-tight text-ink">{pkg.label}</span>
+                    <span className="mt-2 block space-y-1">
+                      {metaLines.map((line, i) => {
+                        const Icon = i === 0 ? Clock : Route;
+                        return (
+                          <span key={line} className="flex items-center gap-1.5 text-[12.5px] font-semibold leading-tight text-slate-700">
+                            <Icon className="h-3.5 w-3.5 shrink-0 text-brand-600" aria-hidden="true" />
+                            <span className={metaLines.length > 1 ? 'whitespace-nowrap' : ''}>{line}</span>
+                          </span>
+                        );
+                      })}
+                    </span>
+                    {/* Price shown only once set in Admin → Pricing */}
+                    <span className="mt-auto block border-t border-slate-200/80 pt-2">
+                      {hasFare && fareMatch ? (
+                        <>
+                          <span className="block text-[10px] font-bold uppercase leading-none tracking-wide text-slate-400">from</span>
+                          <span className="mt-1 block whitespace-nowrap text-[15px] font-extrabold leading-none tabular-nums text-brand-700">
+                            {fareMatch[1]}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="block whitespace-nowrap text-[13px] font-bold leading-none text-slate-400">
+                          {hasFare ? pkg.fareLabel : 'On request'}
+                        </span>
+                      )}
+                    </span>
                   </button>
                 );
               })}
@@ -852,7 +1011,7 @@ export default function QuickBookingWidget({
           <div className={cn('shimmer h-[56px] rounded-2xl', showReturn && 'col-span-2')} />
         )}
 
-        <label className="field relative flex min-h-[56px] cursor-pointer items-center gap-2 px-2.5 py-2 focus-within:border-brand-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-500/10 sm:px-3">
+        <label className="field relative flex min-h-[56px] cursor-pointer items-center gap-2 px-3.5 py-2 focus-within:border-brand-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-500/10">
           
           <span className="min-w-0 flex-1 leading-tight">
             <span className="block truncate text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">Pickup time</span>
@@ -876,7 +1035,7 @@ export default function QuickBookingWidget({
       <button
         type="submit"
         disabled={search.status === 'loading'}
-        className="btn-primary group mt-5 w-full py-3.5 text-[15px] shadow-[0_14px_30px_-8px_rgba(56,189,248,0.75)]"
+        className="btn-primary group mt-5 w-full py-3.5 text-[15px] max-lg:shadow-none lg:shadow-[0_14px_30px_-8px_rgba(56,189,248,0.75)]"
       >
         {search.status === 'loading' ? (
           <>

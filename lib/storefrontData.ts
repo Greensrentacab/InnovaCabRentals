@@ -23,7 +23,7 @@ export const minFare = (values: Array<number | null | undefined>) => {
 export const fareOrRequest = (n: number | null | undefined) =>
   typeof n === 'number' && n > 0 ? formatINR(n) : 'On request';
 
-const PACKAGE_LABELS: Record<number, string> = { 0: 'Custom', 8: 'Full-day', 12: 'Extended' };
+const PACKAGE_LABELS: Record<number, string> = { 0: 'Custom', 8: 'Standard', 12: 'Extended' };
 
 export const packageLabel = (pkg: LocalPackage) => PACKAGE_LABELS[pkg.durationHours] ?? `${pkg.durationHours} hr`;
 
@@ -113,7 +113,7 @@ export function buildRouteCards(routes: Route[], fleet: Vehicle[]): SliderRoute[
   });
 }
 
-/** Fleet card view-model with Airport / Per km / Full-day fare trio. */
+/** Fleet card view-model with Airport / Per km / 8 hr package fare trio. */
 export function buildFleetCards(fleet: Vehicle[]): FleetCardData[] {
   return fleet.map((v) => ({
     id: v.id,
@@ -130,7 +130,7 @@ export function buildFleetCards(fleet: Vehicle[]): FleetCardData[] {
     fares: [
       { label: 'Airport', value: fareOrRequest(v.rates?.airportFare) },
       { label: 'Per km', value: fareOrRequest(v.rates?.outstationPerKm) },
-      { label: 'Full-day', value: fareOrRequest(v.rates?.local8h) },
+      { label: '8 hr package', value: fareOrRequest(v.rates?.local8h) },
     ],
   }));
 }

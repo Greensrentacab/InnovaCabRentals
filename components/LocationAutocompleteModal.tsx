@@ -24,6 +24,7 @@ import {
   AlertCircle,
   RotateCcw,
   Loader2,
+  Pencil,
 } from 'lucide-react';
 import {
   LocationData,
@@ -311,6 +312,22 @@ export default function LocationAutocompleteModal({
         </span>
       </button>
 
+      {query.trim().length >= 2 && (
+        <button
+          type="button"
+          onClick={() => handleSelectLocation({ name: query.trim(), address: query.trim(), lat: null, lng: null })}
+          className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-2.5 text-left transition hover:border-brand-300"
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 group-hover:bg-brand-50 group-hover:text-brand-700">
+            <Pencil className="h-4 w-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-ink group-hover:text-brand-700">Use &ldquo;{query.trim()}&rdquo;</span>
+            <span className="block text-xs text-slate-500">Enter this address manually</span>
+          </span>
+        </button>
+      )}
+
       {isLoading && (
         <div className="space-y-2" aria-live="polite">
           <p className="flex items-center gap-2 px-1 text-xs font-semibold text-slate-500">
@@ -330,7 +347,7 @@ export default function LocationAutocompleteModal({
           </span>
           <p className="mt-3 text-sm font-bold text-ink">We couldn&apos;t find that location</p>
           <p className="mx-auto mt-1 max-w-xs text-xs text-slate-500">
-            Try checking for spelling errors or search for a nearby major road, landmark, or area.
+            Check the spelling, try a nearby road, landmark or area, or use what you typed as the address.
           </p>
           <button type="button" onClick={handleRetry} className="btn-ghost mt-4 px-4 py-2.5">
             <RotateCcw className="h-3.5 w-3.5" /> Retry Search

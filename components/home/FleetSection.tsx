@@ -4,7 +4,7 @@
  */
 
 import Link from 'next/link';
-import { ArrowRight, Check, Luggage, Users } from 'lucide-react';
+import { ArrowRight, Check, Clock, Luggage, Plane, Route, Users } from 'lucide-react';
 import Reveal from '@/components/home/Reveal';
 import BookButton from '@/components/home/BookButton';
 import { rateRows } from '@/components/ds/RateList';
@@ -63,47 +63,54 @@ export default function FleetSection({ vehicles }: { vehicles: FleetCardData[] }
                     style={{ objectPosition: v.photo.position }}
                     className="h-full w-full object-cover transition-transform duration-700 ease-premium group-hover:scale-105"
                   />
-                  <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-ink shadow-sm backdrop-blur">
-                    {v.seats} + driver
+                  <span className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-slate-950/75 via-slate-950/30 to-transparent" />
+                  <span className="absolute inset-x-4 bottom-3 block text-[1.35rem] font-extrabold leading-tight tracking-tight text-white drop-shadow">
+                    {v.name}
                   </span>
                 </Link>
               )}
-              <div className="flex flex-1 flex-col p-5 sm:p-6">
+              <div className="flex min-w-0 flex-1 flex-col p-5">
               <p className="w-fit rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-brand-700">{v.type}</p>
-              <h3 className="mt-2 text-xl font-extrabold tracking-tight sm:text-2xl">{v.name}</h3>
-              <p className="mt-1 text-sm text-slate-600">{v.tagline}</p>
+              <p className="mt-2 text-sm leading-snug text-slate-600">{v.tagline}</p>
 
-              <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                <span className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 font-medium text-slate-700">
-                  <Users className="h-4 w-4 shrink-0 text-brand-600" /> {v.seats} seats + driver
+              <div className="mt-4 grid grid-cols-2 gap-2 text-[13px] font-semibold text-slate-700">
+                <span className="flex items-center gap-2 whitespace-nowrap rounded-xl bg-brand-50/70 px-3 py-2.5">
+                  <Users className="h-4 w-4 shrink-0 text-brand-600" /> {v.seats} + driver
                 </span>
-                <span className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 font-medium text-slate-700">
-                  <Luggage className="h-4 w-4 shrink-0 text-brand-600" /> {v.luggage} large bags
+                <span className="flex items-center gap-2 whitespace-nowrap rounded-xl bg-brand-50/70 px-3 py-2.5">
+                  <Luggage className="h-4 w-4 shrink-0 text-brand-600" /> {v.luggage} bags
                 </span>
               </div>
 
-              <ul className="mt-5 grid gap-y-2">
+              <ul className="mt-4 grid gap-y-1.5">
                 {v.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-sm font-medium text-slate-700">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-live-600" strokeWidth={2.5} />
+                  <li key={feature} className="flex items-start gap-2 text-[13px] font-medium leading-snug text-slate-700">
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-live-600" strokeWidth={3} />
                     {feature}
                   </li>
                 ))}
               </ul>
 
-              <div className="mt-auto pt-6">
-                <div className="grid grid-cols-3 divide-x divide-slate-200/80 rounded-2xl border border-slate-200/80 text-center">
-                  {v.fares.map((fare) => (
-                    <div key={fare.label} className="p-2.5">
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{fare.label}</p>
-                      <p className="text-sm font-extrabold tabular-nums">{fare.value}</p>
-                    </div>
-                  ))}
+              <div className="mt-auto pt-5">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Starting fares</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {v.fares.map((fare, fi) => {
+                    const FareIcon = [Plane, Route, Clock][fi] ?? Clock;
+                    return (
+                      <div key={fare.label} className="rounded-xl border border-slate-200/80 bg-white px-1.5 py-2.5 text-center shadow-sm">
+                        <FareIcon className="mx-auto h-4 w-4 text-brand-600" aria-hidden="true" />
+                        <p className="mt-1.5 text-[15px] font-extrabold leading-none tabular-nums text-ink">{fare.value}</p>
+                        <p className="mt-1.5 text-[10px] font-bold uppercase leading-tight tracking-wide text-slate-400">
+                          {fare.label.replace(/\s*package/i, '')}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="mt-5 grid grid-cols-2 gap-2">
-                  <Link href={v.href} className="btn-ghost group px-3">
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Link href={v.href} className="btn-ghost group whitespace-nowrap px-3">
                     View details
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 xl:hidden 2xl:block" />
                   </Link>
                   <BookButton className="btn-primary px-3">Book</BookButton>
                 </div>
@@ -121,18 +128,19 @@ export default function FleetSection({ vehicles }: { vehicles: FleetCardData[] }
             <p className="mt-1 text-sm text-slate-600">
               Seats, luggage and current rates. Tolls, parking &amp; state permits are paid by the customer.
             </p>
-            <div className="card-float mt-5 overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-sm">
-                <thead className="border-b border-slate-100 bg-slate-50/70">
+            <p className="mt-3 text-xs font-semibold text-slate-400 md:hidden">Swipe sideways to compare all cars →</p>
+            <div className="card-float mt-2 overflow-x-auto overscroll-x-contain md:mt-5">
+              <table className="w-full min-w-[620px] border-separate border-spacing-0 text-left text-sm md:min-w-[760px]">
+                <thead>
                   <tr>
-                    <th className="w-[22%] px-4 py-3 align-bottom text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                    <th className="sticky left-0 z-20 w-[96px] min-w-[96px] border-b border-slate-100 bg-white px-3 py-3 align-bottom text-[10px] font-bold uppercase tracking-wide text-slate-400 md:w-[22%] md:px-4">
                       Feature
                     </th>
                     {vehicles.map((v) => (
-                      <th key={v.id} className="px-4 py-3 align-bottom">
+                      <th key={v.id} className="min-w-[132px] border-b border-slate-100 bg-slate-50/70 px-3 py-3 align-top md:px-4">
                         <Link href={v.href} className="group block">
                           {v.photo && (
-                            <span className="mb-2 block aspect-[16/10] w-full max-w-[180px] overflow-hidden rounded-xl bg-slate-100">
+                            <span className="mb-2 block aspect-[16/10] w-full max-w-[180px] overflow-hidden rounded-lg bg-slate-100">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={v.photo.src}
@@ -146,7 +154,7 @@ export default function FleetSection({ vehicles }: { vehicles: FleetCardData[] }
                               />
                             </span>
                           )}
-                          <span className="text-sm font-extrabold tracking-tight text-ink group-hover:text-brand-700">
+                          <span className="block min-h-[2.5em] text-[13px] font-extrabold leading-tight tracking-tight text-ink group-hover:text-brand-700 md:text-sm">
                             {v.name}
                           </span>
                         </Link>
@@ -154,30 +162,36 @@ export default function FleetSection({ vehicles }: { vehicles: FleetCardData[] }
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody>
                   <tr>
-                    <th className="px-4 py-3 font-medium text-slate-500">Type</th>
-                    {vehicles.map((v) => (
-                      <td key={v.id} className="px-4 py-3 font-semibold">{v.type}</td>
-                    ))}
+                    <th colSpan={vehicles.length + 1} className="sticky left-0 bg-slate-50 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-700 md:px-4">
+                      Specifications
+                    </th>
                   </tr>
+                  {[
+                    { label: 'Type', get: (v: FleetCardData) => v.type },
+                    { label: 'Passengers', get: (v: FleetCardData) => `${v.seats} + driver` },
+                    { label: 'Luggage', get: (v: FleetCardData) => `${v.luggage} bags` },
+                  ].map((row) => (
+                    <tr key={row.label}>
+                      <th className="sticky left-0 z-10 border-b border-slate-100 bg-white px-3 py-3 align-top text-xs font-semibold text-slate-500 md:px-4 md:text-sm">{row.label}</th>
+                      {vehicles.map((v) => (
+                        <td key={v.id} className="border-b border-slate-100 px-3 py-3 align-top text-[13px] font-semibold leading-snug md:px-4 md:text-sm">{row.get(v)}</td>
+                      ))}
+                    </tr>
+                  ))}
                   <tr>
-                    <th className="px-4 py-3 font-medium text-slate-500">Passengers</th>
-                    {vehicles.map((v) => (
-                      <td key={v.id} className="px-4 py-3 font-semibold tabular-nums">{v.seats} + driver</td>
-                    ))}
-                  </tr>
-                  <tr>
-                    <th className="px-4 py-3 font-medium text-slate-500">Luggage</th>
-                    {vehicles.map((v) => (
-                      <td key={v.id} className="px-4 py-3 font-semibold tabular-nums">{v.luggage} bags</td>
-                    ))}
+                    <th colSpan={vehicles.length + 1} className="sticky left-0 bg-slate-50 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-700 md:px-4">
+                      Rates
+                    </th>
                   </tr>
                   {rateRows().map((row, i) => (
                     <tr key={row.label}>
-                      <th className="px-4 py-3 font-medium text-slate-500">{row.label}</th>
+                      <th className="sticky left-0 z-10 border-b border-slate-100 bg-white px-3 py-3 align-top text-xs font-semibold leading-snug text-slate-500 md:px-4 md:text-sm">{row.label}</th>
                       {vehicles.map((v) => (
-                        <td key={v.id} className="px-4 py-3 font-extrabold tabular-nums">{rateRows(v.rates)[i].value}</td>
+                        <td key={v.id} className="border-b border-slate-100 px-3 py-3 align-top text-[13px] font-extrabold tabular-nums md:px-4 md:text-sm">
+                          {rateRows(v.rates)[i].value}
+                        </td>
                       ))}
                     </tr>
                   ))}

@@ -19,14 +19,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { doc, onSnapshot, Firestore } from 'firebase/firestore';
 import {
-
   Clock,
   MapPin,
   Calendar,
   Car,
   User,
   Phone,
-  MessageCircle,
   Copy,
   Check,
   ShieldCheck,
@@ -38,6 +36,7 @@ import {
   Navigation,
   BadgeCheck,
 } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import { BookingStatus } from '@/lib/types';
 import { formatTime12 } from '@/lib/time';
@@ -330,7 +329,7 @@ export default function BookingTrackingPage({
             rel="noopener noreferrer"
             className="btn-whatsapp"
           >
-            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+            <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
           </a>
           <a href={siteConfig.contact.phone.tel} className="btn-primary">
             <Phone className="h-4 w-4" /> Call Dispatch: +91 {siteConfig.contact.phone.raw}
@@ -498,7 +497,7 @@ export default function BookingTrackingPage({
               rel="noopener noreferrer"
               className="btn-whatsapp"
             >
-              <MessageCircle className="h-4 w-4" /> WhatsApp Driver
+              <WhatsAppIcon className="h-4 w-4" /> WhatsApp Driver
             </a>
           </div>
         </div>
@@ -560,7 +559,7 @@ export default function BookingTrackingPage({
         </p>
         <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
           <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+            <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
           </a>
           <a href={siteConfig.contact.phone.tel} className="btn-primary">
             <Phone className="h-4 w-4" /> Call Dispatch: +91 {siteConfig.contact.phone.raw}

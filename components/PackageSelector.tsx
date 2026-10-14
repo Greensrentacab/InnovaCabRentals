@@ -7,7 +7,8 @@
  */
 
 import { useState } from 'react';
-import { Check, Clock, MessageCircle, Navigation, Phone } from 'lucide-react';
+import { Check, Clock, Navigation, Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { LocalPackage, Vehicle } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/cn';
@@ -101,7 +102,7 @@ export default function PackageSelector({ packages, vehicles }: PackageSelectorP
                     rel="noopener noreferrer"
                     className="btn-whatsapp mt-4 w-full"
                   >
-                    <MessageCircle className="h-4 w-4" /> WhatsApp Quick Quote
+                    <WhatsAppIcon className="h-4 w-4" /> WhatsApp Quick Quote
                   </a>
                 </div>
               </article>
@@ -140,7 +141,7 @@ export default function PackageSelector({ packages, vehicles }: PackageSelectorP
               rel="noopener noreferrer"
               className="btn-whatsapp"
             >
-              <MessageCircle className="h-4 w-4" /> WhatsApp Instant Booking
+              <WhatsAppIcon className="h-4 w-4" /> WhatsApp Instant Booking
             </a>
           </div>
         </div>

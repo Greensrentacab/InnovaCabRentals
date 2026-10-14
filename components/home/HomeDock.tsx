@@ -3,11 +3,13 @@
 /**
  * HomeDock.tsx — mobile/tablet quick-action dock + desktop WhatsApp FAB
  * (design.md §3.5). The dock slides up after 240px of scroll; both hide
- * while the booking flow modal is open.
+ * while the booking flow modal is open, and the dock also hides while the
+ * fare results (#fares) are on screen.
  */
 
 import { useEffect, useState } from 'react';
-import { MessageCircle, Phone, ReceiptText } from 'lucide-react';
+import { Phone, ReceiptText } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/cn';
 import { useBookingFlow } from '@/context/BookingFlowContext';
@@ -19,15 +21,29 @@ const itemClass =
 export default function HomeDock() {
   const { state } = useBookingFlow();
   const [scrolledPast, setScrolledPast] = useState(false);
+  const [inFares, setInFares] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolledPast(window.scrollY > 240);
+    const onScroll = () => {
+      setScrolledPast(window.scrollY > 240);
+      // Keep the dock out of the way while the customer is looking at the car results
+      const fares = document.getElementById('fares');
+      const r = fares?.getBoundingClientRect();
+      setInFares(!!r && r.top < window.innerHeight && r.bottom > 0);
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener('resize', onScroll);
+    // Results render after a search (no scroll event yet), so re-check periodically
+    const id = window.setInterval(onScroll, 400);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      window.clearInterval(id);
+    };
   }, []);
 
-  const dockVisible = scrolledPast && !state.isOpen;
+  const dockVisible = scrolledPast && !inFares && !state.isOpen;
 
   return (
     <div className="ds-scope">
@@ -54,7 +70,7 @@ export default function HomeDock() {
             tabIndex={dockVisible ? 0 : -1}
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-whatsapp/15 text-[#128C4A]">
-              <MessageCircle className="h-4 w-4" />
+              <WhatsAppIcon className="h-4 w-4" />
             </span>
             WhatsApp
           </a>
@@ -84,7 +100,7 @@ export default function HomeDock() {
           aria-label="Chat on WhatsApp"
           className="fixed bottom-6 right-6 z-40 hidden h-14 w-14 items-center justify-center rounded-full bg-whatsapp text-white shadow-float-lg transition hover:-translate-y-0.5 hover:brightness-95 lg:flex"
         >
-          <MessageCircle className="h-6 w-6" />
+          <WhatsAppIcon className="h-6 w-6" />
         </a>
       )}
     </div>

@@ -5,7 +5,10 @@
  */
 
 import Link from 'next/link';
-import { Car, ChevronDown, Clock, Crown, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
+import BrandMark from '@/components/BrandMark';
+import Logo from '@/components/Logo';
+import { Car, ChevronDown, Clock, Mail, MapPin, Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import { catalogRoutes } from '@/lib/routeCatalog';
 
@@ -79,25 +82,18 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="ds-scope bg-ink pb-[calc(8rem+env(safe-area-inset-bottom))] pt-14 text-slate-300 lg:pb-14">
+    <footer className="ds-scope bg-ink pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-14 text-slate-300 lg:pb-14">
       <div className="section grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-[1.4fr_repeat(3,1fr)_1.4fr]">
         {/* Brand */}
         <div className="col-span-2 md:col-span-3 lg:col-span-1">
           <Link href="/" className="flex items-center gap-2.5" aria-label={`${siteConfig.brand.name} home`}>
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-900 text-white shadow-glow">
-              <Car className="h-5 w-5" strokeWidth={2.2} />
-            </span>
-            <span className="leading-none">
-              <span className="block text-[15px] font-extrabold tracking-tight text-white">{siteConfig.brand.name}</span>
-              <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-400">
-                <Crown className="h-2.5 w-2.5" /> Premium · Bangalore
-              </span>
-            </span>
+            <BrandMark className="h-12" />
+            <Logo variant="mark" className="h-12 w-auto" />
           </Link>
           <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-400">{siteConfig.brand.tagline}</p>
           <p className="mt-3 max-w-sm text-sm font-semibold text-slate-200">&ldquo;{siteConfig.brand.closingLine}&rdquo;</p>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp mt-6">
-            <MessageCircle className="h-4 w-4" /> WhatsApp Quick Quote
+            <WhatsAppIcon className="h-4 w-4" /> WhatsApp Quick Quote
           </a>
         </div>
 
@@ -132,7 +128,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 hover:text-white"
               >
-                <MessageCircle className="h-4 w-4 shrink-0 text-whatsapp" /> WhatsApp
+                <WhatsAppIcon className="h-4 w-4 shrink-0 text-whatsapp" /> WhatsApp
               </a>
             </li>
             <li>
@@ -191,11 +187,16 @@ export default function Footer() {
         </div>
       </nav>
 
-      <div className="section mt-10 flex flex-col gap-2 border-t border-white/10 pt-6 text-xs text-slate-500 sm:flex-row sm:justify-between">
-        <p>
-          © {currentYear} {siteConfig.brand.name}. All rights reserved.
+      <div className="section mt-10 border-t border-white/10 pt-6 text-xs text-slate-500">
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
+          <p>
+            © {currentYear} {siteConfig.brand.name}. All rights reserved.
+          </p>
+          <p>Payments: {siteConfig.payments.methods.join(' · ')}</p>
+        </div>
+        <p className="mt-4 border-t border-white/5 pt-4 text-slate-400">
+          Website developed by <span className="font-bold text-white">Texnoid Solutions LLP</span>
         </p>
-        <p>Payments: {siteConfig.payments.methods.join(' · ')}</p>
       </div>
     </footer>
   );

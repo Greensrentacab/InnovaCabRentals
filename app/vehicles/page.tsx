@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, Check, ChevronRight, Clock, Luggage, MessageCircle, Mountain, Phone, Plane, Users } from 'lucide-react';
+import { ArrowRight, Check, ChevronRight, Clock, Luggage, Mountain, Phone, Plane, Users } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { formatINR } from '@/lib/storefrontData';
 import { getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
@@ -84,7 +85,7 @@ export default async function VehiclesPage() {
             <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
           </a>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
+            <WhatsAppIcon className="h-4 w-4" /> {siteConfig.cta.quickQuote}
           </a>
         </div>
       </PageHero>
@@ -232,7 +233,7 @@ export default async function VehiclesPage() {
                     rel="noopener noreferrer"
                     className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-live-600 hover:text-live-500"
                   >
-                    <MessageCircle className="h-4 w-4" /> WhatsApp Quick Quote
+                    <WhatsAppIcon className="h-4 w-4" /> WhatsApp Quick Quote
                   </a>
 
                   <div className="mt-5 grid grid-cols-2 gap-2">

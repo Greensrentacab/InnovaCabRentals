@@ -10,7 +10,8 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CalendarClock, Check, LogOut, MessageCircle, UserRound } from 'lucide-react';
+import { CalendarClock, Check, LogOut, UserRound } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import AuthPanel from '@/components/auth/AuthPanel';
 import UserAvatar from '@/components/auth/UserAvatar';
 import { useAuth, type AuthMode } from '@/context/AuthContext';
@@ -93,7 +94,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
           </div>
 
           <p className="mx-auto mt-6 flex max-w-[440px] items-center justify-center gap-1.5 text-center text-xs text-slate-500">
-            <MessageCircle className="h-3.5 w-3.5 text-live-600" /> Prefer not to sign in? Call or WhatsApp {siteConfig.contact.phone.display} to book.
+            <WhatsAppIcon className="h-3.5 w-3.5 text-live-600" /> Prefer not to sign in? Call or WhatsApp {siteConfig.contact.phone.display} to book.
           </p>
         </div>
       </section>

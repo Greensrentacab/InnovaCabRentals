@@ -6,7 +6,7 @@ import { siteConfig } from '@/lib/siteConfig';
 import { siteUrl } from '@/lib/siteUrl';
 import { BusinessJsonLd } from '@/components/seo/JsonLd';
 
-// Design-system typeface (design.md §1.3)
+// Site typeface (Plus Jakarta Sans), exposed as --font-jakarta for the Tailwind font-sans stack.
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800'],

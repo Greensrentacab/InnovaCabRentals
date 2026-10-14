@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, MessageCircle, Phone } from 'lucide-react';
+import { ArrowRight, Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import PageHero from '@/components/ds/PageHero';
 import CtaBand from '@/components/ds/CtaBand';
@@ -119,7 +120,7 @@ export default function FaqPage() {
             <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}
           </a>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+            <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
           </a>
         </div>
       </PageHero>
@@ -160,7 +161,7 @@ export default function FaqPage() {
                   <Phone className="h-4 w-4" /> Call Us Now
                 </a>
                 <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-                  <MessageCircle className="h-4 w-4" /> Message on WhatsApp
+                  <WhatsAppIcon className="h-4 w-4" /> Message on WhatsApp
                 </a>
                 <Link href="/contact" className="btn border border-white/20 bg-white/10 text-white hover:bg-white/15">
                   Submit Request <ArrowRight className="h-4 w-4" />

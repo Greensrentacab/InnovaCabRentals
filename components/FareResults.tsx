@@ -11,13 +11,15 @@
  * request is also saved to Admin → Bookings.
  */
 
-import { useEffect, useId, useRef, useState } from 'react';
-import { ArrowRight, Calendar, Check, ChevronDown, Clock, FileText, Info, Luggage, MapPin, MessageCircle, Pencil, Route as RouteIcon, Users } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowRight, Calendar, ChevronRight, Clock, FileText, Info, Luggage, MapPin, Pencil, Route as RouteIcon, Users } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { cn } from '@/lib/cn';
 import { useBookingFlow, type FareResult, type TripParams } from '@/context/BookingFlowContext';
 import { siteConfig } from '@/lib/siteConfig';
 import { fleetPhotos } from '@/lib/fleetPhotos';
-import PhotoCarousel from '@/components/home/PhotoCarousel';
+import CardGallery from '@/components/ds/CardGallery';
+import TermsSheet from '@/components/ds/TermsSheet';
 import { formatDateLong, formatTime12 } from '@/lib/time';
 import { scrollToBook } from '@/components/home/scrollToBook';
 
@@ -82,7 +84,7 @@ function ResultCard({
 }) {
   const { requestBooking } = useBookingFlow();
   const [showTerms, setShowTerms] = useState(false);
-  const termsId = useId();
+  const closeTerms = useCallback(() => setShowTerms(false), []);
   // Car photo carousel (our own fleet photos where available)
   const photos = (fleetPhotos[car.vehicleId] ?? []).slice(0, 5);
   const waUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
@@ -91,106 +93,75 @@ function ResultCard({
 
   // Same layout as the homepage "Our fleet" cards, plus the trip fare
   return (
-    <article className="card-float card-float-hover flex h-full flex-col overflow-hidden">
+    <article className="card-float card-float-hover flex h-full flex-col overflow-hidden !rounded-xl">
       {photos.length > 0 && (
-        <PhotoCarousel photos={photos} label={`${car.vehicleName} photos`} delay={index * 900} className="aspect-[16/10]">
+        <CardGallery photos={photos} label={`${car.vehicleName} photos`} delay={index * 900} className="aspect-[4/3]">
           {car.seats ? (
-            <span className="absolute left-3 top-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-ink shadow-sm backdrop-blur">
+            <span className="absolute left-2.5 top-2.5 z-10 rounded-md bg-white/95 px-2.5 py-1 text-[10px] font-bold text-ink shadow-sm">
               {car.seats} + driver
             </span>
           ) : null}
-        </PhotoCarousel>
+        </CardGallery>
       )}
 
-      <div className="flex flex-1 flex-col p-5 sm:p-6">
-        {car.vehicleType && (
-          <p className="w-fit rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-brand-700">
-            {car.vehicleType}
-          </p>
-        )}
-        <h3 className="mt-2 text-xl font-extrabold tracking-tight sm:text-2xl">{car.vehicleName}</h3>
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        <h3 className="min-h-[2.5em] text-[15px] font-extrabold leading-tight tracking-tight sm:text-lg">{car.vehicleName}</h3>
 
         {(car.seats || car.luggage) ? (
-          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-600">
             {car.seats ? (
-              <span className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 font-medium text-slate-700">
-                <Users className="h-4 w-4 shrink-0 text-brand-600" /> {car.seats} seats + driver
+              <span className="inline-flex items-center gap-1">
+                <Users className="h-3.5 w-3.5 shrink-0 text-brand-600" /> {car.seats} seats
               </span>
             ) : null}
             {car.luggage ? (
-              <span className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 font-medium text-slate-700">
-                <Luggage className="h-4 w-4 shrink-0 text-brand-600" /> {car.luggage} large bags
+              <span className="inline-flex items-center gap-1">
+                <Luggage className="h-3.5 w-3.5 shrink-0 text-brand-600" /> {car.luggage} bags
               </span>
             ) : null}
-          </div>
+          </p>
         ) : null}
 
-        {car.features && car.features.length > 0 && (
-          <ul className="mt-4 grid gap-y-2">
-            {car.features.map((feature) => (
-              <li key={feature} className="flex items-start gap-2 text-sm font-medium text-slate-700">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-live-600" strokeWidth={2.5} />
-                {feature}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className="mt-auto pt-5">
-          <div className="rounded-2xl border border-slate-200/80 p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Estimated fare</p>
-            <p className="text-2xl font-extrabold tracking-tight tabular-nums text-ink">
-              {car.fare !== null ? inr(car.fare) : <span className="text-lg">Price on request</span>}
-            </p>
-            {car.breakdown.length > 0 && (
-              <ul className="mt-1 space-y-0.5 text-[11px] text-slate-500">
-                {car.breakdown.map((line) => (
-                  <li key={line} className="tabular-nums">
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            )}
+        <div className="mt-auto pt-3">
+          <div className="border-t border-slate-100 pt-3">
+            <p className="whitespace-nowrap text-[10px] font-bold uppercase tracking-wide text-slate-400">Estimated fare</p>
+            <div className="mt-0.5 flex items-center justify-between gap-2">
+              <p className="text-xl font-extrabold leading-tight tracking-tight tabular-nums text-ink sm:text-2xl">
+                {car.fare !== null ? inr(car.fare) : <span className="text-sm">Price on request</span>}
+              </p>
+            {/* Terms & conditions: hidden until the customer taps the button */}
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              onClick={() => setShowTerms(true)}
+              className="inline-flex shrink-0 items-center gap-0.5 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600 transition hover:text-brand-700"
+            >
+              <FileText className="h-3 w-3" /> Terms
+              <ChevronRight className="h-3 w-3" />
+            </button>
+            </div>
           </div>
+          <TermsSheet
+            open={showTerms}
+            onClose={closeTerms}
+            title={car.vehicleName}
+            subtitle={car.fare !== null ? `Estimated fare ${inr(car.fare)}` : undefined}
+            terms={car.terms}
+          />
 
-          {/* Terms & conditions: hidden until the customer taps the button */}
-          <button
-            type="button"
-            aria-expanded={showTerms}
-            aria-controls={termsId}
-            onClick={() => setShowTerms((v) => !v)}
-            className="mt-3 inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-slate-600 transition hover:border-brand-300 hover:text-brand-700"
-          >
-            <FileText className="h-3.5 w-3.5" /> Terms &amp; conditions
-            <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', showTerms && 'rotate-180')} />
-          </button>
-          {showTerms && (
-            <ul id={termsId} className="mt-2 animate-fade-in space-y-1.5 rounded-2xl bg-slate-50 p-3">
-              {car.terms.map((term) => (
-                <li key={term} className="flex items-start gap-2 text-xs leading-relaxed text-slate-600">
-                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-live-500/10 text-live-600">
-                    <Check className="h-2.5 w-2.5" strokeWidth={3} />
-                  </span>
-                  {term}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <div className="mt-4 grid grid-cols-[auto_1fr] gap-2">
+          <div className="mt-3 grid grid-cols-[auto_1fr] gap-2">
             <a
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-whatsapp h-12 w-12 p-0"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-[#25D366] transition-colors hover:border-[#25D366] hover:bg-[#25D366]/5"
               aria-label={`Send ${car.vehicleName} booking details on WhatsApp`}
               title="Send trip & car details on WhatsApp"
             >
-              <MessageCircle className="h-5 w-5" />
+              <WhatsAppIcon className="h-5 w-5" />
             </a>
-            <button type="button" onClick={() => requestBooking(car.vehicleId)} className="btn-primary group">
-              Request Booking
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <button type="button" onClick={() => requestBooking(car.vehicleId)} className="h-10 rounded-md bg-brand-600 px-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700 active:bg-brand-800">
+              Book
             </button>
           </div>
         </div>
@@ -218,49 +189,71 @@ export default function FareResults() {
 
   return (
     <section ref={sectionRef} id="fares" aria-live="polite" className="ds-scope section scroll-mt-24 pb-4 pt-10">
-      <div className="card-float p-5 sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <span className="eyebrow">Available cars</span>
-            <h2 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">{tripTypeLabel(trip)}</h2>
-            <ul className="mt-3 space-y-1.5 text-sm text-slate-600">
-              <li className="flex items-start gap-2">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                <span className="min-w-0">
-                  {[trip.pickup, ...(trip.stops ?? []), trip.drop].map((p) => p.name).join(' → ')}
-                  {trip.serviceType === 'outstation' && ` → ${trip.pickup.name}`}
-                </span>
-              </li>
-              <li className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                <span className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-brand-600" /> {formatDateLong(trip.date)}
-                  {trip.returnDate && ` – ${formatDateLong(trip.returnDate)}`}
-                </span>
-                <span className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-brand-600" /> {formatTime12(trip.time)}
-                </span>
-                {trip.serviceType === 'outstation' && search.totalKm !== null && (
-                  <span className="flex items-center gap-2">
-                    <RouteIcon className="h-4 w-4 text-brand-600" /> ~{search.totalKm} km round trip · {search.days} day
-                    {search.days > 1 ? 's' : ''}
-                  </span>
-                )}
-              </li>
-            </ul>
+      <div className="card-float overflow-hidden">
+        <div className="p-4 sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-brand-700">Available cars</p>
+              <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">{tripTypeLabel(trip)}</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => scrollToBook()}
+              className="inline-flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 transition hover:border-brand-300 hover:text-brand-700"
+            >
+              <Pencil className="h-3.5 w-3.5" /> Edit
+            </button>
           </div>
-          <button type="button" onClick={() => scrollToBook()} className="btn-ghost shrink-0">
-            <Pencil className="h-4 w-4" /> Edit trip
-          </button>
+
+          {/* Route as a simple timeline */}
+          {(() => {
+            const points = [trip.pickup, ...(trip.stops ?? []), trip.drop].map((p) => p.name);
+            if (trip.serviceType === 'outstation') points.push(trip.pickup.name);
+            return (
+              <ol className="relative mt-4 space-y-2.5 pl-6">
+                <span className="absolute bottom-2 left-[5px] top-2 w-px bg-slate-300" aria-hidden="true" />
+                {points.map((name, i) => (
+                  <li key={`${name}-${i}`} className="relative text-sm font-semibold leading-snug text-ink">
+                    <span
+                      className={cn(
+                        'absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-brand-600',
+                        i === points.length - 1 ? 'bg-brand-600' : 'bg-white'
+                      )}
+                      aria-hidden="true"
+                    />
+                    {name}
+                  </li>
+                ))}
+              </ol>
+            );
+          })()}
+
+          {/* Date, time and distance chips */}
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
+              <Calendar className="h-3.5 w-3.5 text-brand-600" /> {formatDateLong(trip.date)}
+              {trip.returnDate && ` – ${formatDateLong(trip.returnDate)}`}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
+              <Clock className="h-3.5 w-3.5 text-brand-600" /> {formatTime12(trip.time)}
+            </span>
+            {trip.serviceType === 'outstation' && search.totalKm !== null && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
+                <RouteIcon className="h-3.5 w-3.5 text-brand-600" /> ~{search.totalKm} km round trip · {search.days} day
+                {search.days > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
         </div>
 
-        <p className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
-          <Info className="mt-px h-4 w-4 shrink-0" />
+        <p className="flex items-start gap-2 border-t border-amber-100 bg-amber-50/80 px-4 py-2.5 text-[11px] font-semibold leading-snug text-amber-800 sm:px-6">
+          <Info className="mt-px h-3.5 w-3.5 shrink-0" />
           Toll fees, parking and state permits are paid by the customer and are not included in these fares.
         </p>
       </div>
 
       {search.status === 'loading' && (
-        <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="card-float overflow-hidden">
               <div className="shimmer aspect-[16/9]" />
@@ -279,20 +272,22 @@ export default function FareResults() {
         <div className="card-float mt-5 p-6 text-center">
           <p className="text-sm font-semibold text-rose-600">{search.error}</p>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp mt-4">
-            <MessageCircle className="h-4 w-4" /> WhatsApp for a Quick Quote
+            <WhatsAppIcon className="h-4 w-4" /> WhatsApp for a Quick Quote
           </a>
         </div>
       )}
 
       {search.status === 'done' && (
-        <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {search.results.map((car, i) => (
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
+          {[...search.results]
+            .sort((a, b) => (a.fare ?? Infinity) - (b.fare ?? Infinity))
+            .map((car, i) => (
             <div key={car.vehicleId} className="min-w-0 animate-fade-up">
               <ResultCard car={car} trip={trip} totalKm={search.totalKm} days={search.days} index={i} />
             </div>
           ))}
           {search.results.length === 0 && (
-            <p className="card-float p-6 text-sm text-slate-600 md:col-span-2 xl:col-span-4">
+            <p className="card-float p-6 text-sm text-slate-600 col-span-2 xl:col-span-4">
               No cars are available for this trip right now. Please WhatsApp us and we&apos;ll arrange one.
             </p>
           )}

@@ -1,4 +1,5 @@
-import { MessageCircle, Phone } from 'lucide-react';
+import { Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import RoutesSearchList from '@/components/RoutesSearchList';
 import PageHero from '@/components/ds/PageHero';
 import CtaBand from '@/components/ds/CtaBand';
@@ -53,7 +54,7 @@ export default async function RoutesPage() {
             <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
           </a>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
+            <WhatsAppIcon className="h-4 w-4" /> {siteConfig.cta.quickQuote}
           </a>
         </div>
       </PageHero>

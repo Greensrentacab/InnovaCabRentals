@@ -100,27 +100,28 @@ function LiveDot({ tone = 'bg-live-500' }: { tone?: string }) {
   );
 }
 
-function NavDropdown({ group }: { group: NavGroup }) {
-  const [open, setOpen] = useState(false);
+/** Desktop nav: one dropdown open at a time (hover-intent, click, Esc, outside tap). */
+function DesktopNav() {
+  const [openLabel, setOpenLabel] = useState<string | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout>>();
-  const wrapRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
 
-  const show = () => {
+  const show = (label: string) => {
     clearTimeout(closeTimer.current);
-    setOpen(true);
+    setOpenLabel(label);
   };
   const hideSoon = () => {
     clearTimeout(closeTimer.current);
-    closeTimer.current = setTimeout(() => setOpen(false), 140);
+    closeTimer.current = setTimeout(() => setOpenLabel(null), 160);
   };
 
   useEffect(() => () => clearTimeout(closeTimer.current), []);
 
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    if (!openLabel) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpenLabel(null);
     const onPointer = (e: PointerEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!navRef.current?.contains(e.target as Node)) setOpenLabel(null);
     };
     document.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onPointer);
@@ -128,15 +129,44 @@ function NavDropdown({ group }: { group: NavGroup }) {
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('pointerdown', onPointer);
     };
-  }, [open]);
+  }, [openLabel]);
 
   return (
-    <div ref={wrapRef} className="relative" onMouseEnter={show} onMouseLeave={hideSoon}>
+    <nav ref={navRef} className="ml-4 hidden items-center gap-0.5 lg:flex" aria-label="Main" onMouseLeave={hideSoon}>
+      {navGroups.map((group) => (
+        <NavDropdown
+          key={group.label}
+          group={group}
+          open={openLabel === group.label}
+          onEnter={() => show(group.label)}
+          onToggle={() => setOpenLabel((cur) => (cur === group.label ? null : group.label))}
+          onClose={() => setOpenLabel(null)}
+        />
+      ))}
+    </nav>
+  );
+}
+
+function NavDropdown({
+  group,
+  open,
+  onEnter,
+  onToggle,
+  onClose,
+}: {
+  group: NavGroup;
+  open: boolean;
+  onEnter: () => void;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="relative" onMouseEnter={onEnter}>
       <button
         type="button"
         aria-expanded={open}
         aria-haspopup="true"
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         className={cn(
           'flex items-center gap-1 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors',
           open ? 'bg-slate-100 text-ink' : 'text-slate-600 hover:text-ink'
@@ -147,14 +177,14 @@ function NavDropdown({ group }: { group: NavGroup }) {
       </button>
 
       {open && (
-        <div className="glass-strong absolute left-0 top-[calc(100%+10px)] w-80 bg-white/95 animate-drop-in rounded-3xl p-2">
+        <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-80 animate-drop-in rounded-3xl border border-slate-200/80 bg-white p-2 shadow-float-lg">
           {group.items.map((item) => {
             const Icon = item.icon;
             return (
               <Link
                 key={item.label}
                 href={item.href}
-                onClick={() => setOpen(false)}
+                onClick={onClose}
                 className="group flex w-full items-center gap-3 rounded-2xl p-2.5 text-left transition-colors hover:bg-slate-50"
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700 transition group-hover:bg-brand-600 group-hover:text-white">
@@ -234,11 +264,7 @@ export default function HomeHeader() {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="ml-4 hidden items-center gap-0.5 lg:flex" aria-label="Main">
-            {navGroups.map((group) => (
-              <NavDropdown key={group.label} group={group} />
-            ))}
-          </nav>
+          <DesktopNav />
 
           {/* Utilities */}
           <div className="ml-auto flex items-center gap-2">

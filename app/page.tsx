@@ -170,16 +170,16 @@ export default async function HomePage() {
                   <HeroLead />
                 </p>
 
-                {/* Phones/tablets: trust symbols in the hero, over the picture (desktop has its own strip below) */}
-                <ul className="mt-5 grid grid-cols-3 gap-x-2 text-center text-[11px] font-semibold leading-tight text-white sm:max-w-md sm:text-xs lg:hidden [&>li]:whitespace-nowrap">
+                {/* Phones/tablets: trust points in the hero, two per row */}
+                <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 whitespace-nowrap text-[12px] font-semibold text-white sm:max-w-md sm:text-sm lg:hidden [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
                   {trustList.map(({ icon: Icon, tone, label }) => (
-                    <li key={label} className="flex flex-col items-center gap-1.5">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25 backdrop-blur">
-                        <Icon className={`h-[18px] w-[18px] ${tone}`} />
-                      </span>
-                      {label}
+                    <li key={label} className="flex items-center gap-2">
+                      <Icon className={`h-[18px] w-[18px] shrink-0 ${tone}`} /> {label}
                     </li>
                   ))}
+                  <li className="flex items-center gap-2">
+                    <Users className="h-[18px] w-[18px] shrink-0 text-sky-300" /> {siteConfig.trustClaims.customersServed.label}
+                  </li>
                 </ul>
 
                 {/* Phones/tablets: room for the car in the picture */}
@@ -204,12 +204,6 @@ export default async function HomePage() {
           <div className="relative z-10 -mt-[100px] min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:pt-4">
             <QuickBookingWidget {...widgetData} />
 
-            {/* Phones/tablets: customers served under the card (trust symbols are in the hero) */}
-            <div className="mt-5 space-y-4 lg:hidden">
-              <p className="flex items-center justify-center gap-2 whitespace-nowrap text-xs font-bold text-ink">
-                <Users className="h-4 w-4 text-brand-600" /> {siteConfig.trustClaims.customersServed.label}
-              </p>
-            </div>
           </div>
         </div>
       </section>

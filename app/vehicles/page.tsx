@@ -253,7 +253,7 @@ export default async function VehiclesPage() {
       </section>
 
       {/* Side-by-side comparison of the confirmed fleet */}
-      <section id="compare" className="section scroll-mt-24 pb-16 sm:pb-20">
+      <section id="compare" className="section scroll-mt-24 pb-10 sm:pb-20">
         <SectionHeading
           eyebrow="Compare fleet"
           title="Innova vs Crysta vs Ertiga"

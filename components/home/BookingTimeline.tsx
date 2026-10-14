@@ -93,7 +93,7 @@ export default function BookingTimeline() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="how-it-works" className="relative scroll-mt-24 overflow-hidden bg-white py-16 sm:py-24">
+    <section ref={sectionRef} id="how-it-works" className="relative scroll-mt-24 overflow-hidden bg-white py-10 sm:py-24">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
       <div className="section">
         <div className="mx-auto max-w-2xl text-center">

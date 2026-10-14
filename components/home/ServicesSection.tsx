@@ -98,7 +98,7 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
   ];
 
   return (
-    <section id="services" className="section scroll-mt-24 pb-16 pt-8 sm:pb-20 sm:pt-10">
+    <section id="services" className="section scroll-mt-24 pb-10 pt-8 sm:pb-20 sm:pt-10">
       <div className="mx-auto max-w-2xl text-center">
         <span className="eyebrow">Our services</span>
         <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">One fleet. Every kind of trip.</h2>

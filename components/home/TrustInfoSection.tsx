@@ -110,7 +110,7 @@ function ItemGrid({ items }: { items: Item[] }) {
 
 export default function TrustInfoSection() {
   return (
-    <section id="trust" className="section scroll-mt-24 py-16 sm:py-20">
+    <section id="trust" className="section scroll-mt-24 py-10 sm:py-20">
       <div className="max-w-2xl">
         <span className="eyebrow">Why book with us</span>
         <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Clear terms. Reliable rides.</h2>

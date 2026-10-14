@@ -112,7 +112,7 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
           return (
             <Reveal key={card.title} delay={i * 0.1} className="h-full">
               <article className="card-float card-float-hover group flex h-full flex-col overflow-hidden">
-                <PhotoCarousel photos={card.photos} label={`${card.title} photos`} delay={i * 1300} className="h-48">
+                <PhotoCarousel photos={card.photos} label={`${card.title} photos`} delay={i * 1300} className="h-32 sm:h-36">
                   {/* Whole picture opens the service page (dots stay clickable above it) */}
                   <Link href={card.href} aria-label={`Open ${card.title}`} className="absolute inset-0 z-[5]" />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-900/5 to-transparent" />

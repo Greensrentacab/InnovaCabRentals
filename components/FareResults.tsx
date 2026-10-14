@@ -13,6 +13,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { Calendar, Check, ChevronDown, Clock, FileText, Info, Luggage, MapPin, MessageCircle, Pencil, Route as RouteIcon, Snowflake, Users } from 'lucide-react';
+import Link from 'next/link';
 import { cn } from '@/lib/cn';
 import { useBookingFlow, type FareResult, type TripParams } from '@/context/BookingFlowContext';
 import { siteConfig } from '@/lib/siteConfig';
@@ -111,8 +112,14 @@ function ResultCard({
     <article className="card-float flex h-full min-w-0 flex-col overflow-hidden rounded-3xl">
       {photos.length > 0 && (
         <PhotoCarousel photos={photos} label={`${car.vehicleName} photos`} delay={index * 900} className="aspect-[4/3]">
+          {/* Photo opens the car's page (dots stay clickable above it) */}
+          <Link
+            href={`/${car.vehicleId}-rental-bangalore`}
+            aria-label={`View ${car.vehicleName} details`}
+            className="absolute inset-0 z-[5]"
+          />
           {tag && (
-            <span className="absolute left-2 top-2 z-10 rounded-full bg-ink/80 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur sm:left-3 sm:top-3 sm:px-2.5 sm:text-[11px]">
+            <span className="pointer-events-none absolute left-2 top-2 z-10 rounded-full bg-ink/80 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur sm:left-3 sm:top-3 sm:px-2.5 sm:text-[11px]">
               {tag}
             </span>
           )}

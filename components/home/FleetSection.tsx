@@ -51,7 +51,7 @@ export default function FleetSection({ vehicles }: { vehicles: FleetCardData[] }
           <Reveal key={v.id} delay={i * 0.1} className="h-full">
             <article className="card-float card-float-hover relative flex h-full flex-col overflow-hidden">
               {v.photo && (
-                <Link href={v.href} className="group relative block aspect-[16/10] overflow-hidden bg-slate-100">
+                <Link href={v.href} className="group relative block aspect-[2/1] overflow-hidden bg-slate-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={v.photo.src}

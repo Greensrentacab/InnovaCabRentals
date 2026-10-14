@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from 'next';
-import { Manrope } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import StorefrontShell from '@/components/StorefrontShell';
 import { siteConfig } from '@/lib/siteConfig';
 import { siteUrl } from '@/lib/siteUrl';
 import { BusinessJsonLd } from '@/components/seo/JsonLd';
 
-// Site typeface. The CSS variable keeps its old name (--font-jakarta) so existing Tailwind font classes still apply.
-const jakarta = Manrope({
+// Site typeface (Plus Jakarta Sans), exposed as --font-jakarta for the Tailwind font-sans stack.
+const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800'],
   variable: '--font-jakarta',

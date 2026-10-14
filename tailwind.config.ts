@@ -42,7 +42,7 @@ const config: Config = {
         whatsapp: "#25D366",
       },
       fontFamily: {
-        sans: ["var(--font-jakarta)", "Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-jakarta)", "Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
         jakarta: ["var(--font-jakarta)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       minHeight: {

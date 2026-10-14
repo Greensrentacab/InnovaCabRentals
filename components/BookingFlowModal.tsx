@@ -150,13 +150,10 @@ export default function BookingFlowModal() {
     .join(' → ');
 
   return (
-    <div className="ds-scope fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-labelledby="booking-flow-title">
-      <div className="absolute inset-0 animate-fade-in bg-slate-900/40 backdrop-blur-sm" onClick={closeBookingFlow} />
-
-      <div className="pointer-events-none absolute inset-0 flex items-end md:items-stretch md:justify-end md:p-3">
-        <div className="pointer-events-auto flex max-h-[92dvh] w-full animate-drawer-in flex-col overflow-hidden rounded-t-4xl bg-white shadow-float-lg md:max-h-none md:w-[460px] md:rounded-4xl">
+    <div className="ds-scope fixed inset-0 z-[60] bg-porcelain" role="dialog" aria-modal="true" aria-labelledby="booking-flow-title">
+      <div className="mx-auto flex h-full w-full max-w-2xl flex-col bg-white md:border-x md:border-slate-100 md:shadow-float">
           {/* Header */}
-          <div className="shrink-0 border-b border-slate-100 px-5 pb-4 pt-5">
+          <div className="shrink-0 border-b border-slate-100 px-5 pb-4 pt-5 md:px-8">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-brand-700">{siteConfig.brand.name}</p>
@@ -168,7 +165,7 @@ export default function BookingFlowModal() {
                 type="button"
                 onClick={closeBookingFlow}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-ink transition hover:bg-slate-200"
-                aria-label="Close booking modal"
+                aria-label="Close booking"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -211,7 +208,7 @@ export default function BookingFlowModal() {
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto px-5 py-5">
+          <div className="flex-1 overflow-y-auto px-5 py-5 md:px-8 md:py-6">
             {/* LOADING */}
             {state.step === 'loading' && (
               <div className="space-y-3 py-6">
@@ -623,7 +620,7 @@ export default function BookingFlowModal() {
 
           {/* Sticky footer actions */}
           {stepNumber > 0 && (
-            <div className="pb-safe flex shrink-0 items-center gap-2 border-t border-slate-100 bg-white/90 px-5 py-4 backdrop-blur md:pb-4">
+            <div className="pb-safe flex shrink-0 items-center gap-2 border-t border-slate-100 bg-white/90 px-5 py-4 backdrop-blur md:px-8 md:pb-4">
               {state.step === 'vehicle' && (
                 <>
                   <button type="button" onClick={closeBookingFlow} className="btn-ghost px-4">
@@ -689,7 +686,6 @@ export default function BookingFlowModal() {
               )}
             </div>
           )}
-        </div>
       </div>
     </div>
   );

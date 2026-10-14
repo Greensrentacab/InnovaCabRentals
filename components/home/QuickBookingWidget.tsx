@@ -22,6 +22,7 @@ import {
   ArrowLeftRight,
   ArrowDownUp,
   ArrowRight,
+  Check,
   Clock,
   MapPin,
   MountainSnow,
@@ -31,6 +32,7 @@ import {
   PlaneTakeoff,
   Plus,
   Repeat,
+  Route,
   ShieldCheck,
   X,
 } from 'lucide-react';
@@ -790,9 +792,12 @@ export default function QuickBookingWidget({
               />
               {locationDropdown(activeModal?.kind === 'city')}
             </div>
-            <div role="radiogroup" aria-label="Local package" className="grid grid-cols-3 gap-2">
+            <div role="radiogroup" aria-label="Local package" className="grid grid-cols-3 gap-2.5 pt-1.5">
               {localPackages.map((pkg) => {
                 const selected = pkg.id === selectedPackage?.id;
+                const hasFare = pkg.fareLabel !== 'On request';
+                const metaLines = pkg.meta.split(' · ');
+                const fareMatch = pkg.fareLabel.match(/^from\s+(.+)$/i);
                 return (
                   <button
                     key={pkg.id}
@@ -801,27 +806,47 @@ export default function QuickBookingWidget({
                     aria-checked={selected}
                     onClick={() => setLocalPackageId(pkg.id)}
                     className={cn(
-                      'relative rounded-2xl border px-2.5 py-2.5 text-left transition-all',
+                      'relative flex min-h-[124px] flex-col rounded-2xl border-2 px-3 pb-3 pt-3.5 text-left transition-all',
                       selected
-                        ? 'border-brand-600 bg-brand-600 shadow-[0_10px_22px_-8px_rgba(56,189,248,0.85)]'
-                        : 'border-slate-200/80 bg-white hover:border-brand-300'
+                        ? 'border-brand-600 bg-brand-50 shadow-[0_10px_22px_-12px_rgba(37,99,235,0.6)]'
+                        : 'border-slate-200 bg-white hover:border-brand-300'
                     )}
                   >
-                    <span
-                      aria-hidden="true"
-                      className={cn(
-                        'absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full border-2',
-                        selected ? 'border-white' : 'border-slate-300'
-                      )}
-                    >
-                      {selected && <span className="h-2 w-2 rounded-full bg-white" />}
-                    </span>
-                    <span className={cn('block pr-5 text-[13px] font-extrabold', selected ? 'text-white' : 'text-ink')}>{pkg.label}</span>
-                    <span className={cn('block text-[11px] font-semibold', selected ? 'text-sky-100' : 'text-slate-500')}>{pkg.meta}</span>
-                    {/* Price shown only once set in Admin → Pricing */}
-                    {pkg.fareLabel !== 'On request' && (
-                      <span className={cn('mt-1 block text-[11px] font-bold', selected ? 'text-white' : 'text-brand-700')}>{pkg.fareLabel}</span>
+                    {selected && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 ring-2 ring-white"
+                      >
+                        <Check className="h-3 w-3 text-white" strokeWidth={4} />
+                      </span>
                     )}
+                    <span className="block text-[15px] font-extrabold leading-tight tracking-tight text-ink">{pkg.label}</span>
+                    <span className="mt-2 block space-y-1">
+                      {metaLines.map((line, i) => {
+                        const Icon = i === 0 ? Clock : Route;
+                        return (
+                          <span key={line} className="flex items-center gap-1.5 text-[12.5px] font-semibold leading-tight text-slate-700">
+                            <Icon className="h-3.5 w-3.5 shrink-0 text-brand-600" aria-hidden="true" />
+                            <span className={metaLines.length > 1 ? 'whitespace-nowrap' : ''}>{line}</span>
+                          </span>
+                        );
+                      })}
+                    </span>
+                    {/* Price shown only once set in Admin → Pricing */}
+                    <span className="mt-auto block border-t border-slate-200/80 pt-2">
+                      {hasFare && fareMatch ? (
+                        <>
+                          <span className="block text-[10px] font-bold uppercase leading-none tracking-wide text-slate-400">from</span>
+                          <span className="mt-1 block whitespace-nowrap text-[15px] font-extrabold leading-none tabular-nums text-brand-700">
+                            {fareMatch[1]}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="block whitespace-nowrap text-[13px] font-bold leading-none text-slate-400">
+                          {hasFare ? pkg.fareLabel : 'On request'}
+                        </span>
+                      )}
+                    </span>
                   </button>
                 );
               })}

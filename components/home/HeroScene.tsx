@@ -157,11 +157,12 @@ export function HeroPicture({
  * from the top so white text stays readable; the car shows clearly below it.
  * Fills its (relative) parent.
  */
-export function HeroCover({ className }: { className?: string }) {
-  const service = useHeroService();
+export function HeroCover({ className, scene }: { className?: string; scene?: HomeService }) {
+  const tab = useHeroService();
+  const service = scene ?? tab;
   return (
     <div className={cn('pointer-events-none absolute inset-0 overflow-hidden bg-slate-900', className)} aria-hidden="true">
-      <SceneImages service={service} pos="88% 72%" />
+      <SceneImages service={service} only={scene} pos="88% 72%" />
       {/* Portrait airport picture made for phones (sky on top for the copy, car at the bottom) */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img

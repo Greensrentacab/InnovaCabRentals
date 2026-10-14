@@ -1,11 +1,12 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Check, Clock, IndianRupee, Luggage, MessageCircle, Phone, Route as RouteIcon, Users } from 'lucide-react';
+import { ArrowRight, BadgeIndianRupee, Check, ChevronRight, Clock, IndianRupee, Luggage, MessageCircle, Phone, Radar, Route as RouteIcon, ShieldCheck, Users } from 'lucide-react';
 import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import FaqAccordion from '@/components/home/FaqAccordion';
 import Reveal from '@/components/home/Reveal';
-import PageHero from '@/components/ds/PageHero';
+import { BreadcrumbJsonLd } from '@/components/seo/JsonLd';
+import { HeroBand, HeroCover } from '@/components/home/HeroScene';
 import SectionHeading, { Hairline } from '@/components/ds/SectionHeading';
 import CtaBand from '@/components/ds/CtaBand';
 import { PhotoCredit } from '@/components/ds/VehiclePhotoCard';
@@ -373,6 +374,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
   const vehicles = confirmedFleet(allVehicles);
   const widgetData = buildWidgetData(routes, localPackages, vehicles);
   const isAirportRoute = params.slug.includes('airport');
+  const heroScene = isAirportRoute ? 'airport' : 'outstation';
   const routeFrom = routeFromFare(route, vehicles);
 
   const customDetails = routeDetailMap[params.slug] || {
@@ -421,91 +423,125 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
 
   return (
     <div className="bg-porcelain">
-      <PageHero
-        breadcrumbs={[{ label: 'Outstation Routes', href: '/routes' }, { label: customDetails.h1 }]}
-        eyebrow={`${route.origin} → ${route.destination}`}
-        title={customDetails.h1}
-        lead={
-          <>
-            <p className="font-bold text-brand-700">{customDetails.tagline}</p>
-            <p className="mt-3">
-              Travel in premium air-conditioned comfort with our verified chauffeurs. Fixed transparent billing, zero surge,
-              and dependable 24/7 service.
-            </p>
-          </>
-        }
-        aside={
-          <QuickBookingWidget
-            {...widgetData}
-            initialService={isAirportRoute ? 'airport' : 'outstation'}
-            initialOutstation={
-              isAirportRoute
-                ? undefined
-                : { pickup: customDetails.pickupData, drop: customDetails.dropData, routeSlug: params.slug }
-            }
-          />
-        }
-      >
-        <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <a href={siteConfig.contact.phone.tel} className="btn-primary">
-            <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
-          </a>
-          <a href={whatsappRouteUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
-          </a>
-        </div>
+      {/* Hero: same layout as the homepage — fare form right under the heading */}
+      <section className="ds-scope relative isolate z-10 pb-4 pt-0 lg:pb-8 lg:pt-32">
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-20 h-[760px] bg-gradient-to-b from-sky-100 via-sky-50 to-porcelain max-lg:bg-none" aria-hidden="true" />
+        <HeroBand scene={heroScene} flip plain className="inset-x-0 top-0 -z-10 hidden h-[clamp(640px,52vw,780px)] lg:block" />
 
-        {/* Distance / duration / fare (null fare = "Price on request") */}
-        <dl className="mt-8 grid grid-cols-3 divide-x divide-slate-200/80 rounded-2xl border border-slate-200/80 bg-white text-center shadow-float">
-          <div className="p-3 sm:p-4">
-            <dt className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
-              <RouteIcon className="h-3 w-3" /> Distance
-            </dt>
-            <dd className="mt-1 text-lg font-extrabold tabular-nums sm:text-xl">{route.distanceKm} km</dd>
-            <dd className="text-[11px] text-slate-500">From Bangalore</dd>
-          </div>
-          <div className="p-3 sm:p-4">
-            <dt className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
-              <Clock className="h-3 w-3" /> Duration
-            </dt>
-            <dd className="mt-1 text-lg font-extrabold sm:text-xl">{route.durationText}</dd>
-            <dd className="text-[11px] text-slate-500">Standard driving time</dd>
-          </div>
-          <div className="p-3 sm:p-4">
-            <dt className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
-              <IndianRupee className="h-3 w-3" /> Tariff
-            </dt>
-            <dd className="mt-1 text-lg font-extrabold text-brand-700 sm:text-xl">
-              {routeFrom ? `from ${formatINR(routeFrom)}` : 'On request'}
-            </dd>
-            <dd className="text-[11px] text-slate-500">Round trip · tolls extra</dd>
-          </div>
-        </dl>
+        <div className="section grid items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,450px)] lg:gap-10">
+          <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4 lg:[text-shadow:0_1px_12px_rgba(255,255,255,0.95)]">
+            <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
+              <HeroCover scene={heroScene} className="lg:hidden" />
+              <div className="pointer-events-none absolute inset-x-0 top-full h-24 bg-gradient-to-b from-black/70 to-transparent lg:hidden" aria-hidden="true" />
+              <div className="relative">
+                <BreadcrumbJsonLd items={[{ label: 'Outstation Routes', href: '/routes' }, { label: customDetails.h1 }]} />
+                <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs font-semibold text-white/80 [text-shadow:none] lg:text-slate-500">
+                  <Link href="/" className="hover:text-white lg:hover:text-brand-700">Home</Link>
+                  <ChevronRight className="h-3 w-3" />
+                  <Link href="/routes" className="hover:text-white lg:hover:text-brand-700">Outstation Routes</Link>
+                </nav>
+                <h1 className="text-balance animate-fade-up text-[2.15rem] font-extrabold leading-[1.02] tracking-tight text-white sm:text-5xl lg:text-[3.25rem] lg:text-ink">
+                  {customDetails.h1}
+                </h1>
+                <span className="mt-3 block h-1 w-12 rounded-full bg-sky-300 lg:hidden" aria-hidden="true" />
+                <p className="mt-3 max-w-xl animate-fade-up text-[13px] font-medium leading-snug text-white/90 [animation-delay:160ms] sm:mt-5 sm:text-lg lg:text-slate-700">
+                  {customDetails.tagline}
+                </p>
 
-        {destPhoto && (
-          <figure className="mt-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-float">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={destPhoto.src}
-              alt={destPhoto.alt}
-              width={800}
-              height={500}
-              loading="lazy"
-              decoding="async"
-              className="aspect-[16/9] w-full object-cover"
+                <div className="h-14 sm:h-56 lg:hidden" aria-hidden="true" />
+                <div className="hidden lg:block lg:h-[340px] xl:h-[380px]" aria-hidden="true" />
+                <ul className="mt-2 hidden grid-cols-3 divide-x divide-amber-200/70 rounded-2xl border border-amber-200/70 bg-amber-50/95 py-3 text-sm font-semibold leading-tight text-slate-700 shadow-sm backdrop-blur [text-shadow:none] lg:grid">
+                  <li className="flex items-center justify-center gap-1.5 px-2"><ShieldCheck className="h-4 w-4 text-live-600" /> Verified drivers</li>
+                  <li className="flex items-center justify-center gap-1.5 px-2"><Radar className="h-4 w-4 text-brand-600" /> Flight tracking</li>
+                  <li className="flex items-center justify-center gap-1.5 px-2"><BadgeIndianRupee className="h-4 w-4 text-brand-600" /> Transparent price</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative z-10 -mt-[100px] min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:pt-4">
+            <QuickBookingWidget
+              {...widgetData}
+              initialService={isAirportRoute ? 'airport' : 'outstation'}
+              initialOutstation={
+                isAirportRoute
+                  ? undefined
+                  : { pickup: customDetails.pickupData, drop: customDetails.dropData, routeSlug: params.slug }
+              }
             />
-            <figcaption className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 text-[11px] text-slate-500">
-              <span className="font-semibold text-slate-700">{destPhoto.alt}</span>
-              <a href={destPhoto.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-700">
-                Photo: {destPhoto.author} / Wikimedia Commons, {destPhoto.license}
-              </a>
-            </figcaption>
-          </figure>
-        )}
-      </PageHero>
+          </div>
+        </div>
+      </section>
 
       {/* Available cars, prices & T&Cs (after "See Fares") */}
       <FareResults />
+
+      {/* Route facts */}
+      <section className="section py-10 sm:py-14">
+        <div className="max-w-3xl">
+          <div className="space-y-5">
+            <p className="text-slate-600">
+              Travel in premium air-conditioned comfort with our verified chauffeurs. Fixed transparent billing, zero surge,
+              and dependable 24/7 service.
+            </p>
+        {/* Distance / duration / fare (null fare = "Price on request") */}
+            <dl className="grid grid-cols-3 divide-x divide-slate-200/80 rounded-2xl border border-slate-200/80 bg-white text-center shadow-float">
+              <div className="p-3 sm:p-4">
+                <dt className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                  <RouteIcon className="h-3 w-3" /> Distance
+                </dt>
+                <dd className="mt-1 text-lg font-extrabold tabular-nums sm:text-xl">{route.distanceKm} km</dd>
+                <dd className="text-[11px] text-slate-500">From Bangalore</dd>
+              </div>
+              <div className="p-3 sm:p-4">
+                <dt className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                  <Clock className="h-3 w-3" /> Duration
+                </dt>
+                <dd className="mt-1 text-lg font-extrabold sm:text-xl">{route.durationText}</dd>
+                <dd className="text-[11px] text-slate-500">Standard driving time</dd>
+              </div>
+              <div className="p-3 sm:p-4">
+                <dt className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                  <IndianRupee className="h-3 w-3" /> Tariff
+                </dt>
+                <dd className="mt-1 text-lg font-extrabold text-brand-700 sm:text-xl">
+                  {routeFrom ? `from ${formatINR(routeFrom)}` : 'On request'}
+                </dd>
+                <dd className="text-[11px] text-slate-500">Round trip · tolls extra</dd>
+              </div>
+            </dl>
+
+            {destPhoto && (
+              <figure className="mt-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-float">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={destPhoto.src}
+                  alt={destPhoto.alt}
+                  width={800}
+                  height={500}
+                  loading="lazy"
+                  decoding="async"
+                  className="aspect-[16/9] w-full object-cover"
+                />
+                <figcaption className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 text-[11px] text-slate-500">
+                  <span className="font-semibold text-slate-700">{destPhoto.alt}</span>
+                  <a href={destPhoto.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-700">
+                    Photo: {destPhoto.author} / Wikimedia Commons, {destPhoto.license}
+                  </a>
+                </figcaption>
+              </figure>
+            )}
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <a href={siteConfig.contact.phone.tel} className="btn-primary">
+                <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
+              </a>
+              <a href={whatsappRouteUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+                <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Why book this route */}
       <section className="section py-16 sm:py-20">

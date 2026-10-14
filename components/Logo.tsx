@@ -2,7 +2,7 @@
  * Logo.tsx
  *
  * Vector (inline SVG) wordmark for Innova Cab Rentals.
- * Stacked lockup: INNOVA (white) / CABS (orange) / BANGALORE (gray, letter-spaced).
+ * Lockup: "INNOVA CABS" (white + orange) over BANGALORE (gray, letter-spaced).
  *
  * Rendered inline (not as an <img>) so it stays crisp at any size, inherits no
  * network request, and can be dropped on any background.
@@ -27,33 +27,23 @@ export default function Logo({
     <>
       <text
         x="4"
-        y="34"
+        y="32"
         fontFamily="var(--font-inter), Inter, Arial, sans-serif"
         fontWeight={800}
         fontSize="30"
         letterSpacing="-0.5"
         fill="#FFFFFF"
       >
-        INNOVA
+        INNOVA <tspan fill="#F0562B">CABS</tspan>
       </text>
       <text
         x="4"
-        y="68"
+        y="58"
         fontFamily="var(--font-inter), Inter, Arial, sans-serif"
-        fontWeight={800}
-        fontSize="30"
-        letterSpacing="-0.5"
-        fill="#F0562B"
-      >
-        CABS
-      </text>
-      <text
-        x="4"
-        y="90"
-        fontFamily="var(--font-inter), Inter, Arial, sans-serif"
-        fontWeight={600}
-        fontSize="12"
-        letterSpacing="3"
+        fontWeight={700}
+        fontSize="20"
+        textLength="206"
+        lengthAdjust="spacing"
         fill="#9CA3AF"
       >
         BANGALORE
@@ -64,14 +54,14 @@ export default function Logo({
   if (variant === 'full') {
     return (
       <svg
-        viewBox="0 0 190 110"
+        viewBox="0 0 230 90"
         role="img"
         aria-label={title}
         className={className}
         xmlns="http://www.w3.org/2000/svg"
       >
         <title>{title}</title>
-        <rect x="0" y="0" width="190" height="110" rx="16" fill="#0B1B33" />
+        <rect x="0" y="0" width="230" height="90" rx="16" fill="#0B1B33" />
         {content}
       </svg>
     );
@@ -79,7 +69,7 @@ export default function Logo({
 
   return (
     <svg
-      viewBox="0 0 170 96"
+      viewBox="0 0 214 66"
       role="img"
       aria-label={title}
       className={className}

@@ -197,19 +197,19 @@ export default async function HomePage() {
             <QuickBookingWidget {...widgetData} />
 
             {/* Phones/tablets: trust symbols + customers served under the card (desktop has them beside the copy) */}
-            <div className="mt-4 space-y-2.5 lg:hidden">
-              <ul className="grid grid-cols-3 gap-2 text-center text-[11px] font-semibold leading-tight text-slate-700">
-                <li className="flex flex-col items-center gap-1">
+            <div className="mt-5 space-y-4 lg:hidden">
+              <ul className="grid grid-cols-3 gap-x-3 text-center text-[11px] font-semibold leading-tight text-slate-700 [&>li]:whitespace-nowrap">
+                <li className="flex flex-col items-center gap-1.5">
                   <ShieldCheck className="h-5 w-5 text-live-600" /> Verified drivers
                 </li>
-                <li className="flex flex-col items-center gap-1">
+                <li className="flex flex-col items-center gap-1.5">
                   <Radar className="h-5 w-5 text-brand-600" /> Flight tracking
                 </li>
-                <li className="flex flex-col items-center gap-1">
+                <li className="flex flex-col items-center gap-1.5">
                   <BadgeIndianRupee className="h-5 w-5 text-brand-600" /> Transparent price
                 </li>
               </ul>
-              <p className="flex items-center justify-center gap-1.5 text-xs font-bold text-ink">
+              <p className="flex items-center justify-center gap-2 whitespace-nowrap text-xs font-bold text-ink">
                 <Users className="h-4 w-4 text-brand-600" /> {siteConfig.trustClaims.customersServed.label}
               </p>
             </div>

@@ -721,7 +721,7 @@ export default function QuickBookingWidget({
       id="book"
       onSubmit={handleSubmit}
       noValidate
-      className="glass-strong relative animate-fade-up scroll-mt-28 rounded-4xl p-4 max-lg:border-slate-200 max-lg:bg-white max-lg:shadow-[0_6px_18px_-8px_rgba(0,0,0,0.35)] max-lg:backdrop-blur-none shadow-[0_24px_60px_-18px_rgba(56,189,248,0.55),0_0_0_1px_rgba(186,230,253,0.9)] [animation-delay:150ms] sm:p-6"
+      className="relative animate-fade-up scroll-mt-28 rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_6px_18px_-8px_rgba(0,0,0,0.35)] [animation-delay:150ms] sm:p-6 lg:border-white/20 lg:shadow-[0_30px_70px_-20px_rgba(0,0,0,0.7)]"
     >
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
@@ -1035,7 +1035,7 @@ export default function QuickBookingWidget({
       <button
         type="submit"
         disabled={search.status === 'loading'}
-        className="btn-primary group mt-5 w-full py-3.5 text-[15px] max-lg:shadow-none lg:shadow-[0_14px_30px_-8px_rgba(56,189,248,0.75)]"
+        className="btn-primary group mt-5 w-full py-3.5 text-[15px] shadow-none"
       >
         {search.status === 'loading' ? (
           <>

@@ -212,7 +212,7 @@ export default function LandingTemplate({
       {/* 2. LOCAL RENTAL PACKAGES                                         */}
       {/* ================================================================ */}
       {showPackages && localPackages.length > 0 && (
-        <section id="packages" className="relative scroll-mt-24 bg-white py-16 sm:py-20">
+        <section id="packages" className="relative scroll-mt-24 bg-white py-10 sm:py-20">
           {hairline}
           <div className="section">
             <SectionHeading
@@ -230,7 +230,7 @@ export default function LandingTemplate({
       {/* ================================================================ */}
       {/* 3. BENEFITS                                                      */}
       {/* ================================================================ */}
-      <section className="section py-16 sm:py-20">
+      <section className="section py-10 sm:py-20">
         <SectionHeading eyebrow="Service highlights" title={benefitsTitle} subtitle={benefitsSubtitle} />
         <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {benefits.map((item, i) => {
@@ -254,7 +254,7 @@ export default function LandingTemplate({
       {/* 4. RELEVANT ROUTES                                               */}
       {/* ================================================================ */}
       {routeCards.length > 0 && (
-        <section id="routes" className="relative scroll-mt-24 bg-white py-16 sm:py-20">
+        <section id="routes" className="relative scroll-mt-24 bg-white py-10 sm:py-20">
           {hairline}
           <div className="section">
             <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
@@ -279,7 +279,7 @@ export default function LandingTemplate({
       {/* 5. LOCAL COVERAGE (airport + local pages)                        */}
       {/* ================================================================ */}
       {showLocalAreas && (
-        <section className="section py-16 sm:py-20">
+        <section className="section py-10 sm:py-20">
           <SectionHeading
             eyebrow="Doorstep pickup across Bangalore"
             title={localAreasTitle}
@@ -312,7 +312,7 @@ export default function LandingTemplate({
       {/* ================================================================ */}
       {/* 7. FAQ                                                           */}
       {/* ================================================================ */}
-      <section id="faq" className="section scroll-mt-24 py-16 sm:py-20">
+      <section id="faq" className="section scroll-mt-24 py-10 sm:py-20">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="max-w-2xl">
             <span className="eyebrow">Got questions?</span>

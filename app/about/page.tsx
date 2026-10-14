@@ -78,7 +78,7 @@ export default function AboutPage() {
       />
 
       {/* Our story */}
-      <section className="section py-16 sm:py-20">
+      <section className="section py-10 sm:py-20">
         <Reveal>
           <div className="card-float grid gap-8 p-6 sm:p-10 lg:grid-cols-[0.8fr_1.2fr]">
             <SectionHeading eyebrow="Our journey" title="15 Years of Punctuality, Safety & Comfort" centered={false} />
@@ -106,7 +106,7 @@ export default function AboutPage() {
       </section>
 
       {/* Pillars */}
-      <section className="relative bg-white py-16 sm:py-20">
+      <section className="relative bg-white py-10 sm:py-20">
         <Hairline />
         <div className="section">
           <SectionHeading eyebrow="Core principles" title="What Sets Our Chauffeur Service Apart" />
@@ -132,7 +132,7 @@ export default function AboutPage() {
       </section>
 
       {/* Coverage */}
-      <section className="section py-16 sm:py-20">
+      <section className="section py-10 sm:py-20">
         <div className="grid gap-5 lg:grid-cols-2">
           <Reveal className="h-full">
             <div className="card-float h-full p-6 sm:p-8">

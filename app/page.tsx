@@ -34,7 +34,7 @@ import {
   minFare,
   routeFromFare,
 } from '@/lib/storefrontData';
-import { HeroBand, HeroCover, HeroLead, HeroTitle } from '@/components/home/HeroScene';
+import { HeroCover, HeroLead, HeroTitle } from '@/components/home/HeroScene';
 
 export const revalidate = 60; // Revalidate dynamic Firestore data every minute
 
@@ -123,19 +123,11 @@ export default async function HomePage() {
 
 
   // Hero trust strip (client-supplied claims only; no star ratings)
-  const trustItems = (
-    <>
-      <li className="flex items-center justify-center gap-1 whitespace-nowrap px-1 sm:gap-1.5 sm:px-2">
-        <ShieldCheck className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 text-live-600" /> Verified drivers
-      </li>
-      <li className="flex items-center justify-center gap-1 whitespace-nowrap px-1 sm:gap-1.5 sm:px-2">
-        <Radar className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 text-brand-600" /> Flight tracking
-      </li>
-      <li className="flex items-center justify-center gap-1 whitespace-nowrap px-1 sm:gap-1.5 sm:px-2">
-        <BadgeIndianRupee className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 text-brand-600" /> Transparent price
-      </li>
-    </>
-  );
+  const trustList = [
+    { icon: ShieldCheck, tone: 'text-emerald-300', label: 'Verified drivers' },
+    { icon: Radar, tone: 'text-sky-300', label: 'Flight tracking' },
+    { icon: BadgeIndianRupee, tone: 'text-sky-300', label: 'Transparent price' },
+  ];
 
   return (
     <div className="ds-scope bg-porcelain">
@@ -143,51 +135,67 @@ export default async function HomePage() {
       {/* 1. HERO + QUICK BOOKING WIDGET — light sky-blue & white theme    */}
       {/*    (no overflow-hidden: the calendar pop-up must extend past it) */}
       {/* ================================================================ */}
-      <section className="relative isolate z-10 pb-4 pt-0 lg:pb-8 lg:pt-32">
+      <section className="relative isolate z-10 pb-4 pt-0 lg:flex lg:min-h-[100svh] lg:items-center lg:pb-14 lg:pt-28">
         {/* Picture follows the selected service tab. Desktop: whole picture across the top, car on the right */}
         {/* Start loading the default (airport) picture before the page script runs */}
         <link rel="preload" as="image" href="/images/hero/hero-airport-mobile.webp" media="(max-width: 1023px)" />
         <link rel="preload" as="image" href="/images/hero/hero-airport-1920.webp" media="(min-width: 1024px)" />
-        {/* Soft sky behind the whole hero (the form side on desktop) */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 -z-20 h-[760px] bg-gradient-to-b from-sky-100 via-sky-50 to-porcelain max-lg:bg-none" aria-hidden="true" />
-
-        {/* Desktop: the picture spans the full hero width behind both columns */}
-        <HeroBand flip plain className="inset-x-0 top-0 -z-10 hidden h-[clamp(640px,52vw,780px)] lg:block" />
+        {/* Desktop: full-bleed picture with a dark wash, same look as phones */}
+        <HeroCover desktop className="-z-10 hidden lg:block" />
 
         {/* Copy + picture on the left, booking form on the right (desktop) */}
-        <div className="section grid items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,450px)] lg:gap-10">
-          <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4 lg:[text-shadow:0_1px_12px_rgba(255,255,255,0.95)]">
+        <div className="section grid w-full items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:items-center lg:gap-12">
+          <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4">
             {/* Phones/tablets: picture runs edge to edge from the top with the copy on it; desktop uses the band above */}
             <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
               <HeroCover className="lg:hidden" />
               {/* Dark fade continuing below the picture so it blends into the section underneath */}
               <div className="pointer-events-none absolute inset-x-0 top-full h-24 bg-gradient-to-b from-black/70 to-transparent lg:hidden" aria-hidden="true" />
               <div className="relative">
-                <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border max-sm:hidden border-live-500/20 bg-white/90 px-3 py-1.5 text-xs font-bold text-live-600 shadow-sm backdrop-blur-md [text-shadow:none] lg:bg-white/80">
+                <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border max-sm:hidden border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white shadow-sm backdrop-blur-md [text-shadow:none]">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-live-500" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-live-500" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                   </span>
                   Booking open now · 24 hours
                 </span>
 
                 {/* Heading + subheading follow the selected tab (server HTML = Airport Taxi, the SEO default) */}
-                <h1 className="text-balance mt-0 animate-fade-up text-[2.15rem] font-extrabold leading-[1.02] tracking-tight text-white [animation-delay:80ms] sm:mt-6 sm:text-5xl lg:text-[3.25rem] lg:text-ink">
+                <h1 className="text-balance mt-0 animate-fade-up text-[2.15rem] font-extrabold leading-[1.02] tracking-tight text-white [animation-delay:80ms] sm:mt-6 sm:text-5xl lg:text-[3.25rem]">
                   <HeroTitle />
                 </h1>
 
                 <span className="mt-3 block h-1 w-12 rounded-full bg-sky-300 lg:hidden" aria-hidden="true" />
-                <p className="mt-3 line-clamp-4 max-w-xl animate-fade-up text-[13px] font-medium leading-snug sm:line-clamp-none text-white/90 [animation-delay:160ms] sm:mt-5 sm:text-lg lg:text-slate-700">
+                <p className="mt-3 line-clamp-4 max-w-xl animate-fade-up text-[13px] font-medium leading-snug sm:line-clamp-none text-white/90 [animation-delay:160ms] sm:mt-5 sm:text-lg">
                   <HeroLead />
                 </p>
 
-                {/* Phones/tablets: room for the car in the picture (no trust strip here; desktop only) */}
-                <div className="h-14 sm:h-56 lg:hidden" aria-hidden="true" />
+                {/* Phones/tablets: trust symbols in the hero, over the picture (desktop has its own strip below) */}
+                <ul className="mt-5 grid grid-cols-3 gap-x-2 text-center text-[11px] font-semibold leading-tight text-white sm:max-w-md sm:text-xs lg:hidden [&>li]:whitespace-nowrap">
+                  {trustList.map(({ icon: Icon, tone, label }) => (
+                    <li key={label} className="flex flex-col items-center gap-1.5">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25 backdrop-blur">
+                        <Icon className={`h-[18px] w-[18px] ${tone}`} />
+                      </span>
+                      {label}
+                    </li>
+                  ))}
+                </ul>
 
-                {/* Desktop: room for the car in the full-width picture, then the trust strip */}
-                <div className="hidden lg:block lg:h-[340px] xl:h-[380px]" aria-hidden="true" />
-                <ul className="mt-2 hidden grid-cols-3 divide-x divide-amber-200/70 rounded-2xl border border-amber-200/70 bg-amber-50/95 py-3 text-sm font-semibold leading-tight text-slate-700 shadow-sm backdrop-blur [text-shadow:none] lg:grid">
-                  {trustItems}
+                {/* Phones/tablets: room for the car in the picture */}
+                <div className="h-12 sm:h-48 lg:hidden" aria-hidden="true" />
+
+                {/* Desktop: room for the car in the full-width picture, then the trust points along the bottom */}
+                <div className="hidden lg:block lg:h-[clamp(140px,26vh,300px)]" aria-hidden="true" />
+                <ul className="hidden items-center gap-x-6 gap-y-2 whitespace-nowrap text-[13px] font-semibold text-white lg:flex xl:text-sm [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
+                  {trustList.map(({ icon: Icon, tone, label }) => (
+                    <li key={label} className="flex items-center gap-2">
+                      <Icon className={`h-[18px] w-[18px] shrink-0 ${tone}`} /> {label}
+                    </li>
+                  ))}
+                  <li className="flex items-center gap-2 text-white/85">
+                    <Users className="h-[18px] w-[18px] shrink-0 text-sky-300" /> {siteConfig.trustClaims.customersServed.label}
+                  </li>
                 </ul>
               </div>
             </div>
@@ -196,19 +204,8 @@ export default async function HomePage() {
           <div className="relative z-10 -mt-[100px] min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:pt-4">
             <QuickBookingWidget {...widgetData} />
 
-            {/* Phones/tablets: trust symbols + customers served under the card (desktop has them beside the copy) */}
+            {/* Phones/tablets: customers served under the card (trust symbols are in the hero) */}
             <div className="mt-5 space-y-4 lg:hidden">
-              <ul className="grid grid-cols-3 gap-x-3 text-center text-[11px] font-semibold leading-tight text-slate-700 [&>li]:whitespace-nowrap">
-                <li className="flex flex-col items-center gap-1.5">
-                  <ShieldCheck className="h-5 w-5 text-live-600" /> Verified drivers
-                </li>
-                <li className="flex flex-col items-center gap-1.5">
-                  <Radar className="h-5 w-5 text-brand-600" /> Flight tracking
-                </li>
-                <li className="flex flex-col items-center gap-1.5">
-                  <BadgeIndianRupee className="h-5 w-5 text-brand-600" /> Transparent price
-                </li>
-              </ul>
               <p className="flex items-center justify-center gap-2 whitespace-nowrap text-xs font-bold text-ink">
                 <Users className="h-4 w-4 text-brand-600" /> {siteConfig.trustClaims.customersServed.label}
               </p>
@@ -239,7 +236,7 @@ export default async function HomePage() {
       {/* ================================================================ */}
       {/* 4. FEATURED ROUTES SLIDER                                        */}
       {/* ================================================================ */}
-      <section id="routes" className="section scroll-mt-24 py-16 sm:py-20">
+      <section id="routes" className="section scroll-mt-24 py-10 sm:py-20">
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
           <div className="max-w-2xl">
             <span className="eyebrow">Featured routes</span>
@@ -267,7 +264,7 @@ export default async function HomePage() {
       {/* 6. TRUST — stats + why us (testimonials stay hidden until real   */}
       {/*    client reviews are supplied in siteConfig.testimonials)       */}
       {/* ================================================================ */}
-      <section className="section py-16 sm:py-20">
+      <section className="section py-10 sm:py-20">
         <Reveal>
           <div className="card-float overflow-hidden p-6 sm:p-10">
             <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
@@ -327,7 +324,7 @@ export default async function HomePage() {
       {/* ================================================================ */}
       {/* 7. FAQ                                                           */}
       {/* ================================================================ */}
-      <section id="faq" className="section scroll-mt-24 pb-16 sm:pb-20">
+      <section id="faq" className="section scroll-mt-24 pb-10 sm:pb-20">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="max-w-2xl">
             <span className="eyebrow">Good to know</span>

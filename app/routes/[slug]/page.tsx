@@ -7,7 +7,7 @@ import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import FaqAccordion from '@/components/home/FaqAccordion';
 import Reveal from '@/components/home/Reveal';
 import { BreadcrumbJsonLd } from '@/components/seo/JsonLd';
-import { HeroBand, HeroCover } from '@/components/home/HeroScene';
+import { HeroCover } from '@/components/home/HeroScene';
 import SectionHeading, { Hairline } from '@/components/ds/SectionHeading';
 import CtaBand from '@/components/ds/CtaBand';
 import { PhotoCredit } from '@/components/ds/VehiclePhotoCard';
@@ -425,36 +425,36 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
   return (
     <div className="bg-porcelain">
       {/* Hero: same layout as the homepage — fare form right under the heading */}
-      <section className="ds-scope relative isolate z-10 pb-4 pt-0 lg:pb-8 lg:pt-32">
-        <div className="pointer-events-none absolute inset-x-0 top-0 -z-20 h-[760px] bg-gradient-to-b from-sky-100 via-sky-50 to-porcelain max-lg:bg-none" aria-hidden="true" />
-        <HeroBand scene={heroScene} flip plain className="inset-x-0 top-0 -z-10 hidden h-[clamp(640px,52vw,780px)] lg:block" />
+      <section className="ds-scope relative isolate z-10 pb-4 pt-0 lg:flex lg:min-h-[100svh] lg:items-center lg:pb-14 lg:pt-28">
+        {/* Desktop: full-bleed picture with a dark wash, same look as phones */}
+        <HeroCover desktop scene={heroScene} className="-z-10 hidden lg:block" />
 
-        <div className="section grid items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,450px)] lg:gap-10">
-          <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4 lg:[text-shadow:0_1px_12px_rgba(255,255,255,0.95)]">
+        <div className="section grid w-full items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:items-center lg:gap-12">
+          <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4">
             <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
               <HeroCover scene={heroScene} className="lg:hidden" />
               <div className="pointer-events-none absolute inset-x-0 top-full h-24 bg-gradient-to-b from-black/70 to-transparent lg:hidden" aria-hidden="true" />
               <div className="relative">
                 <BreadcrumbJsonLd items={[{ label: 'Outstation Routes', href: '/routes' }, { label: customDetails.h1 }]} />
-                <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs font-semibold text-white/80 [text-shadow:none] lg:text-slate-500">
-                  <Link href="/" className="hover:text-white lg:hover:text-brand-700">Home</Link>
+                <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs font-semibold text-white/80 [text-shadow:none]">
+                  <Link href="/" className="hover:text-white">Home</Link>
                   <ChevronRight className="h-3 w-3" />
-                  <Link href="/routes" className="hover:text-white lg:hover:text-brand-700">Outstation Routes</Link>
+                  <Link href="/routes" className="hover:text-white">Outstation Routes</Link>
                 </nav>
-                <h1 className="text-balance animate-fade-up text-[2.15rem] font-extrabold leading-[1.02] tracking-tight text-white sm:text-5xl lg:text-[3.25rem] lg:text-ink">
+                <h1 className="text-balance animate-fade-up text-[2.15rem] font-extrabold leading-[1.02] tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">
                   {customDetails.h1}
                 </h1>
                 <span className="mt-3 block h-1 w-12 rounded-full bg-sky-300 lg:hidden" aria-hidden="true" />
-                <p className="mt-3 max-w-xl animate-fade-up text-[13px] font-medium leading-snug text-white/90 [animation-delay:160ms] sm:mt-5 sm:text-lg lg:text-slate-700">
+                <p className="mt-3 max-w-xl animate-fade-up text-[13px] font-medium leading-snug text-white/90 [animation-delay:160ms] sm:mt-5 sm:text-lg">
                   {customDetails.tagline}
                 </p>
 
                 <div className="h-14 sm:h-56 lg:hidden" aria-hidden="true" />
-                <div className="hidden lg:block lg:h-[340px] xl:h-[380px]" aria-hidden="true" />
-                <ul className="mt-2 hidden grid-cols-3 divide-x divide-amber-200/70 rounded-2xl border border-amber-200/70 bg-amber-50/95 py-3 text-sm font-semibold leading-tight text-slate-700 shadow-sm backdrop-blur [text-shadow:none] lg:grid">
-                  <li className="flex items-center justify-center gap-1.5 px-2"><ShieldCheck className="h-4 w-4 text-live-600" /> Verified drivers</li>
-                  <li className="flex items-center justify-center gap-1.5 px-2"><Radar className="h-4 w-4 text-brand-600" /> Flight tracking</li>
-                  <li className="flex items-center justify-center gap-1.5 px-2"><BadgeIndianRupee className="h-4 w-4 text-brand-600" /> Transparent price</li>
+                <div className="hidden lg:block lg:h-[clamp(120px,22vh,260px)]" aria-hidden="true" />
+                <ul className="mt-2 hidden max-w-xl grid-cols-3 divide-x divide-white/15 rounded-2xl border border-white/15 bg-white/10 py-3 text-sm font-semibold leading-tight text-white backdrop-blur-md lg:grid">
+                  <li className="flex items-center justify-center gap-1.5 px-2"><ShieldCheck className="h-4 w-4 text-emerald-400" /> Verified drivers</li>
+                  <li className="flex items-center justify-center gap-1.5 px-2"><Radar className="h-4 w-4 text-sky-300" /> Flight tracking</li>
+                  <li className="flex items-center justify-center gap-1.5 px-2"><BadgeIndianRupee className="h-4 w-4 text-sky-300" /> Transparent price</li>
                 </ul>
               </div>
             </div>
@@ -545,7 +545,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
       </section>
 
       {/* Why book this route */}
-      <section className="section py-16 sm:py-20">
+      <section className="section py-10 sm:py-20">
         <Reveal>
           <div className="card-float p-6 sm:p-10">
             <SectionHeading
@@ -572,7 +572,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
       </section>
 
       {/* Vehicle options for this route */}
-      <section className="relative bg-white py-16 sm:py-20">
+      <section className="relative bg-white py-10 sm:py-20">
         <Hairline />
         <div className="section">
           <SectionHeading
@@ -647,7 +647,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
       </section>
 
       {/* Route FAQ */}
-      <section className="section py-16 sm:py-20">
+      <section className="section py-10 sm:py-20">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="max-w-2xl">
             <span className="eyebrow">Route information</span>

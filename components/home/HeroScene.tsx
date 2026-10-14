@@ -157,9 +157,23 @@ export function HeroPicture({
  * from the top so white text stays readable; the car shows clearly below it.
  * Fills its (relative) parent.
  */
-export function HeroCover({ className, scene }: { className?: string; scene?: HomeService }) {
+export function HeroCover({ className, scene, desktop }: { className?: string; scene?: HomeService; desktop?: boolean }) {
   const tab = useHeroService();
   const service = scene ?? tab;
+  if (desktop) {
+    // Desktop: landscape picture across the whole hero (car on the left), dark wash
+    // from the top-left so white copy reads, booking card on the right.
+    return (
+      <div className={cn('pointer-events-none absolute inset-0 overflow-hidden bg-slate-900', className)} aria-hidden="true">
+        <div className="absolute inset-0 -scale-x-100">
+          <SceneImages service={service} only={scene} pos="100% 70%" />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/25" />
+        <div className="absolute inset-x-0 top-0 h-2/3 bg-gradient-to-b from-black/70 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent" />
+      </div>
+    );
+  }
   return (
     <div className={cn('pointer-events-none absolute inset-0 overflow-hidden bg-slate-900', className)} aria-hidden="true">
       <SceneImages service={service} only={scene} pos="88% 72%" />
@@ -204,7 +218,7 @@ export function HeroTitle() {
   const service = useHeroService();
   return (
     <>
-      {COPY[service].title} <span className="text-sky-300 lg:text-brand-700">Bangalore</span>
+      {COPY[service].title} <span className="text-sky-300 lg:bg-brand-600 lg:text-white">Bangalore</span>
     </>
   );
 }

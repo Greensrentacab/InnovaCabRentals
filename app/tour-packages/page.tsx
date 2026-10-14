@@ -134,7 +134,7 @@ export default function TourPackagesPage() {
       </PageHero>
 
       {/* Curated itineraries */}
-      <section className="relative bg-white py-16 sm:py-20">
+      <section className="relative bg-white py-10 sm:py-20">
         <Hairline />
         <div className="section">
           <SectionHeading
@@ -173,7 +173,7 @@ export default function TourPackagesPage() {
         </div>
       </section>
 
-      <div className="pt-16 sm:pt-20">
+      <div className="pt-10 sm:pt-20">
         <CtaBand title="Plan your South India getaway" whatsappUrl={tourWhatsApp} service="outstation" />
       </div>
     </div>

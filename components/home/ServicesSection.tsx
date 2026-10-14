@@ -6,7 +6,8 @@
 import Link from 'next/link';
 import { ArrowRight, Check, Hourglass, Mountain, Plane, type LucideIcon } from 'lucide-react';
 import Reveal from '@/components/home/Reveal';
-import PhotoCarousel, { type CarouselPhoto } from '@/components/home/PhotoCarousel';
+import CardGallery from '@/components/ds/CardGallery';
+import type { CarouselPhoto } from '@/components/home/PhotoCarousel';
 import { fleetPhotos, type FleetPhoto } from '@/lib/fleetPhotos';
 
 const scene = (name: string, alt: string): CarouselPhoto => ({
@@ -112,9 +113,7 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
           return (
             <Reveal key={card.title} delay={i * 0.1} className="h-full">
               <article className="card-float card-float-hover group flex h-full flex-col overflow-hidden">
-                <PhotoCarousel photos={card.photos} label={`${card.title} photos`} delay={i * 1300} className="h-48">
-                  {/* Whole picture opens the service page (dots stay clickable above it) */}
-                  <Link href={card.href} aria-label={`Open ${card.title}`} className="absolute inset-0 z-[5]" />
+                <CardGallery photos={card.photos} label={`${card.title} photos`} href={card.href} delay={i * 1300} className="h-48">
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-900/5 to-transparent" />
                   <div className="pointer-events-none absolute left-4 top-4 z-[6] flex flex-wrap gap-1.5">
                     {card.badges.map((badge) =>
@@ -135,7 +134,7 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
                     </span>
                     <h3 className="text-xl font-extrabold tracking-tight">{card.title}</h3>
                   </div>
-                </PhotoCarousel>
+                </CardGallery>
 
                 <div className="flex flex-1 flex-col p-5">
                   <p className="text-sm text-slate-600">{card.description}</p>

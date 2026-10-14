@@ -6,6 +6,7 @@
  * as soon as the visitor touches, drags, hovers or taps a dot.
  */
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { type FleetPhoto } from '@/lib/fleetPhotos';
@@ -13,13 +14,16 @@ import { type FleetPhoto } from '@/lib/fleetPhotos';
 export default function CardGallery({
   photos,
   label,
+  href,
   delay = 0,
   interval = 4000,
   className,
   children,
 }: {
-  photos: FleetPhoto[];
+  photos: Pick<FleetPhoto, 'src' | 'alt' | 'width' | 'height' | 'position'>[];
   label: string;
+  /** Makes every photo a link (swiping still scrolls; a tap follows the link) */
+  href?: string;
   /** Stagger start so neighbouring cards don't change together */
   delay?: number;
   interval?: number;
@@ -115,21 +119,32 @@ export default function CardGallery({
         onWheel={stop}
         className="flex h-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {photos.map((p, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={p.src}
-            src={p.src}
-            alt={i === active ? p.alt : ''}
-            width={p.width}
-            height={p.height}
-            loading={i === 0 ? 'eager' : 'lazy'}
-            decoding="async"
-            draggable={false}
-            style={{ objectPosition: p.position }}
-            className="h-full w-full shrink-0 snap-center snap-always select-none object-cover"
-          />
-        ))}
+        {photos.map((p, i) => {
+          const img = (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={p.src}
+              alt={i === active ? p.alt : ''}
+              width={p.width}
+              height={p.height}
+              loading={i === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+              draggable={false}
+              style={{ objectPosition: p.position }}
+              className="h-full w-full select-none object-cover"
+            />
+          );
+          const slide = 'block h-full w-full shrink-0 snap-center snap-always';
+          return href ? (
+            <Link key={p.src} href={href} draggable={false} aria-label={`Open ${label.replace(/ photos$/, '')}`} tabIndex={i === active ? 0 : -1} className={slide}>
+              {img}
+            </Link>
+          ) : (
+            <div key={p.src} className={slide}>
+              {img}
+            </div>
+          );
+        })}
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-slate-950/35 to-transparent" />

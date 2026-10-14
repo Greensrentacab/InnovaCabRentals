@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Phone, MessageCircle, Menu, X, ArrowRight } from 'lucide-react';
+import { Phone, Menu, X, ArrowRight } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import Logo from '@/components/Logo';
 
@@ -66,7 +67,7 @@ export default function Header() {
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-gray-300 hover:text-emerald-400 transition-colors"
             >
-              <MessageCircle className="w-3.5 h-3.5 text-emerald-500" />
+              <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-500" />
               <span>WhatsApp Quick Quote</span>
             </a>
           </div>
@@ -122,7 +123,7 @@ export default function Header() {
               className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-[0_4px_14px_-4px_rgba(5,150,105,0.55)] hover:shadow-[0_6px_18px_-4px_rgba(5,150,105,0.65)] transition-all"
               title="WhatsApp"
             >
-              <MessageCircle className="w-3.5 h-3.5" />
+              <WhatsAppIcon className="w-3.5 h-3.5" />
               <span>WhatsApp</span>
             </a>
 
@@ -207,7 +208,7 @@ export default function Header() {
               onClick={closeMenu}
               className="min-h-[44px] w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-base py-3 shadow-[0_4px_14px_-4px_rgba(5,150,105,0.55)]"
             >
-              <MessageCircle className="w-5 h-5" />
+              <WhatsAppIcon className="w-5 h-5" />
               <span>WhatsApp Us</span>
             </a>
 

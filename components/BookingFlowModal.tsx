@@ -35,13 +35,13 @@ import {
   Luggage,
   Mail,
   MapPin,
-  MessageCircle,
   RotateCcw,
   ShieldCheck,
   User,
   Users,
   X,
 } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import Link from 'next/link';
 import { useBookingFlow } from '@/context/BookingFlowContext';
 import { useAuth } from '@/context/AuthContext';
@@ -191,7 +191,7 @@ export default function BookingFlowModal() {
             )}
 
             {/* Trip summary */}
-            {state.pickupLocation && state.dropLocation && stepNumber > 0 && (
+            {state.pickupLocation && state.dropLocation && stepNumber > 0 && state.step !== 'review' && state.step !== 'auth' && (
               <div className="mt-3 rounded-2xl bg-slate-50 p-3">
                 <p className="flex items-center gap-2 truncate text-sm font-bold text-ink">
                   <MapPin className="h-3.5 w-3.5 shrink-0 text-brand-600" />
@@ -305,7 +305,7 @@ export default function BookingFlowModal() {
                               onClick={(e) => e.stopPropagation()}
                               className="btn-whatsapp px-3 py-2 text-xs"
                             >
-                              <MessageCircle className="h-3.5 w-3.5" /> WhatsApp for a Quick Quote
+                              <WhatsAppIcon className="h-3.5 w-3.5" /> WhatsApp for a Quick Quote
                             </a>
                           )}
                         </div>
@@ -392,140 +392,113 @@ export default function BookingFlowModal() {
 
             {/* STEP 3: REVIEW WITH EDIT LINKS */}
             {state.step === 'review' && (() => {
-              const points = [state.pickupLocation?.name, ...state.stops.map((s) => s.name), state.dropLocation?.name].filter(
-                (n): n is string => Boolean(n)
-              );
-              if (state.serviceType === 'outstation' && state.pickupLocation?.name) points.push(state.pickupLocation.name);
+              const isRound = state.serviceType === 'outstation';
+              const points: { label: string; name: string }[] = [
+                ...(state.pickupLocation?.name ? [{ label: 'Pickup', name: state.pickupLocation.name }] : []),
+                ...state.stops.map((st, i) => ({ label: `Stop ${i + 1}`, name: st.name })),
+                ...(state.dropLocation?.name ? [{ label: isRound ? 'Destination' : 'Drop', name: state.dropLocation.name }] : []),
+                ...(isRound && state.pickupLocation?.name ? [{ label: 'Return', name: state.pickupLocation.name }] : []),
+              ];
               const vehiclePhoto = state.selectedVehicle ? primaryPhoto(state.selectedVehicle.id) : undefined;
+              const when = [
+                formatDateLong(state.pickupDate) || 'Date not set',
+                state.returnDate ? `→ ${formatDateLong(state.returnDate)}` : '',
+              ]
+                .filter(Boolean)
+                .join(' ');
               return (
-                <div key="review" className="animate-step-in space-y-4">
+                <div key="review" className="animate-step-in space-y-3">
                   <div>
-                    <h3 className="text-xl font-extrabold tracking-tight">Review your trip</h3>
-                    <p className="mt-0.5 text-sm text-slate-500">Check everything below, then continue to confirm.</p>
+                    <h3 className="text-lg font-extrabold tracking-tight">Review your trip</h3>
+                    <p className="text-xs text-slate-500">Check the details, then continue to confirm.</p>
                   </div>
 
-                  {/* Route timeline */}
-                  <ReviewCard icon={MapPin} label={tripLabel} onEdit={closeBookingFlow}>
-                    <ol className="relative space-y-3.5 pl-7">
-                      <span className="absolute bottom-2 left-[7px] top-2 w-px bg-slate-200" aria-hidden="true" />
-                      {points.map((name, i) => (
-                        <li key={`${name}-${i}`} className="relative">
-                          <span
-                            className={cn(
-                              'absolute -left-7 top-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-brand-600',
-                              i === points.length - 1 ? 'bg-brand-600' : 'bg-white'
-                            )}
-                            aria-hidden="true"
-                          />
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                            {i === 0 ? 'Pickup' : i === points.length - 1 ? (state.serviceType === 'outstation' ? 'Return' : 'Drop') : `Stop ${i}`}
-                          </p>
-                          <p className="text-sm font-bold leading-snug text-ink">{name}</p>
-                          {i === 0 && state.pickupLocation?.address && state.pickupLocation.address !== name && (
-                            <p className="mt-0.5 text-xs leading-snug text-slate-500">{state.pickupLocation.address}</p>
-                          )}
-                        </li>
-                      ))}
-                    </ol>
-                    {state.distanceKm ? (
-                      <p className="mt-3 inline-flex rounded-md bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">
-                        ~{state.distanceKm} km
+                  <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white">
+                    {/* Route */}
+                    <ReviewSection
+                      icon={MapPin}
+                      label={`${tripLabel}${state.distanceKm ? ` · ~${state.distanceKm} km` : ''}`}
+                      onEdit={closeBookingFlow}
+                    >
+                      <ol className="relative space-y-2 pl-5">
+                        <span className="absolute bottom-1.5 left-[4.5px] top-1.5 w-px bg-slate-200" aria-hidden="true" />
+                        {points.map((pt, i) => (
+                          <li key={`${pt.label}-${i}`} className="relative flex items-baseline gap-2">
+                            <span
+                              className={cn(
+                                'absolute -left-5 top-[5px] h-2.5 w-2.5 rounded-full border-2 border-brand-600',
+                                i === points.length - 1 ? 'bg-brand-600' : 'bg-white'
+                              )}
+                              aria-hidden="true"
+                            />
+                            <span className="w-[74px] shrink-0 text-[10px] font-bold uppercase tracking-wide text-slate-400">{pt.label}</span>
+                            <span className="min-w-0 text-sm font-bold leading-snug text-ink">{pt.name}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </ReviewSection>
+
+                    {/* When */}
+                    <ReviewSection icon={Calendar} label="When" onEdit={closeBookingFlow}>
+                      <p className="text-sm font-bold text-ink">
+                        {when} <span className="font-semibold text-slate-500">· {formatTime12(state.pickupTime) || 'Time not set'}</span>
                       </p>
-                    ) : null}
-                  </ReviewCard>
+                    </ReviewSection>
 
-                  {/* Date & time */}
-                  <ReviewCard icon={Calendar} label="When" onEdit={closeBookingFlow}>
-                    <div className={cn('grid gap-2', state.returnDate ? 'grid-cols-3' : 'grid-cols-2')}>
-                      <div className="rounded-xl bg-slate-50 p-3">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{state.returnDate ? 'Pickup' : 'Date'}</p>
-                        <p className="mt-0.5 text-sm font-extrabold leading-tight text-ink">{formatDateLong(state.pickupDate) || 'Not set'}</p>
-                      </div>
-                      {state.returnDate && (
-                        <div className="rounded-xl bg-slate-50 p-3">
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Return</p>
-                          <p className="mt-0.5 text-sm font-extrabold leading-tight text-ink">{formatDateLong(state.returnDate)}</p>
-                        </div>
-                      )}
-                      <div className="rounded-xl bg-slate-50 p-3">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Time</p>
-                        <p className="mt-0.5 text-sm font-extrabold leading-tight text-ink">{formatTime12(state.pickupTime) || 'Not set'}</p>
-                      </div>
-                    </div>
-                  </ReviewCard>
-
-                  {/* Vehicle */}
-                  <ReviewCard icon={Car} label="Your car" onEdit={() => setStep('vehicle')} editLabel="Change">
-                    <div className="flex items-center gap-3">
-                      {vehiclePhoto && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={vehiclePhoto.src}
-                          alt={vehiclePhoto.alt}
-                          width={vehiclePhoto.width}
-                          height={vehiclePhoto.height}
-                          style={{ objectPosition: vehiclePhoto.position }}
-                          className="h-16 w-24 shrink-0 rounded-lg bg-slate-100 object-cover"
-                        />
-                      )}
-                      <div className="min-w-0">
-                        <p className="text-base font-extrabold leading-tight text-ink">{state.selectedVehicle?.name}</p>
-                        <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-slate-600">
-                          <Users className="h-3.5 w-3.5 text-brand-600" /> {state.selectedVehicle?.seats} seater
+                    {/* Car */}
+                    <ReviewSection icon={Car} label="Car" onEdit={() => setStep('vehicle')} editLabel="Change">
+                      <div className="flex items-center gap-2.5">
+                        {vehiclePhoto && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={vehiclePhoto.src}
+                            alt=""
+                            width={vehiclePhoto.width}
+                            height={vehiclePhoto.height}
+                            style={{ objectPosition: vehiclePhoto.position }}
+                            className="h-9 w-12 shrink-0 rounded-md bg-slate-100 object-cover"
+                          />
+                        )}
+                        <p className="min-w-0 text-sm font-bold text-ink">
+                          {state.selectedVehicle?.name}{' '}
+                          <span className="font-semibold text-slate-500">· {state.selectedVehicle?.seats} seater</span>
                         </p>
                       </div>
-                    </div>
-                  </ReviewCard>
+                    </ReviewSection>
 
-                  {/* Passenger */}
-                  <ReviewCard icon={User} label="Passenger" onEdit={() => setStep('details')}>
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-base font-extrabold uppercase text-brand-700">
-                        {state.customerName.trim().charAt(0) || <User className="h-5 w-5" />}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-base font-extrabold leading-tight text-ink">{state.customerName}</p>
-                        <p className="mt-0.5 text-sm font-semibold tabular-nums text-slate-500">+91 {state.customerPhone}</p>
-                      </div>
-                    </div>
-                  </ReviewCard>
+                    {/* Passenger */}
+                    <ReviewSection icon={User} label="Passenger" onEdit={() => setStep('details')}>
+                      <p className="truncate text-sm font-bold text-ink">
+                        {state.customerName} <span className="font-semibold tabular-nums text-slate-500">· +91 {state.customerPhone}</span>
+                      </p>
+                    </ReviewSection>
 
-                  {/* Fare */}
-                  <div className="rounded-2xl bg-ink p-5 text-white shadow-float">
-                    <div className="flex items-end justify-between gap-3">
+                    {/* Fare */}
+                    <div className="flex items-center justify-between gap-3 rounded-b-2xl bg-slate-50 px-4 py-3">
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Estimated tariff</p>
-                        <p className="mt-1 text-3xl font-extrabold leading-none tracking-tight tabular-nums">
-                          {selectedFare !== null ? `₹${selectedFare.toLocaleString('en-IN')}` : <span className="text-lg">Price on request</span>}
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Estimated fare</p>
+                        <p className="text-xl font-extrabold leading-tight tracking-tight tabular-nums text-ink">
+                          {selectedFare !== null ? `₹${selectedFare.toLocaleString('en-IN')}` : <span className="text-sm">Price on request</span>}
                         </p>
                       </div>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-live-500/20 px-2.5 py-1 text-[11px] font-bold text-live-400">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-live-500/10 px-2.5 py-1 text-[11px] font-bold text-live-600">
                         <Check className="h-3 w-3" strokeWidth={3} /> ₹0 advance
                       </span>
                     </div>
-                    <p className="mt-3 border-t border-white/10 pt-3 text-xs text-slate-400">
-                      No upfront payment required. Tolls, parking &amp; permits are paid by you.
-                    </p>
                   </div>
 
-                  {/* What happens next */}
-                  <div className="rounded-2xl border border-brand-100 bg-brand-50/70 p-4">
-                    <p className="flex items-center gap-1.5 text-xs font-bold text-brand-800">
-                      <ShieldCheck className="h-4 w-4 text-brand-600" /> What happens next
-                    </p>
-                    <ol className="mt-2 space-y-1.5 text-xs leading-relaxed text-brand-900/80">
-                      <li className="flex gap-2"><span className="font-extrabold text-brand-700">1</span> Sign in to confirm your request</li>
-                      <li className="flex gap-2"><span className="font-extrabold text-brand-700">2</span> Our team checks car availability</li>
-                      <li className="flex gap-2"><span className="font-extrabold text-brand-700">3</span> Driver details reach you on WhatsApp</li>
-                    </ol>
-                  </div>
+                  <p className="flex items-start gap-2 rounded-xl bg-brand-50/70 px-3 py-2.5 text-[11px] leading-relaxed text-brand-900/80">
+                    <ShieldCheck className="mt-px h-3.5 w-3.5 shrink-0 text-brand-600" />
+                    Next: sign in to confirm. Our team checks availability and sends driver details on WhatsApp. Tolls, parking &amp;
+                    permits are paid by you.
+                  </p>
                 </div>
               );
             })()}
 
             {/* STEP 4: SIGN IN & CONFIRM */}
             {state.step === 'auth' && (
-              <div key="auth" className="animate-step-in space-y-4">
+              <div key="auth" className="animate-step-in space-y-3.5">
                 {authLoading ? (
                   <p className="flex items-center gap-2 py-6 text-sm font-bold text-ink">
                     <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
@@ -583,16 +556,43 @@ export default function BookingFlowModal() {
                   </>
                 ) : (
                   <>
-                    <div className="rounded-2xl border border-brand-100 bg-brand-50/70 p-4">
-                      <p className="flex items-center gap-1.5 text-xs font-bold text-brand-800">
-                        <LockKeyhole className="h-4 w-4 text-brand-600" /> Sign in to confirm your booking
+                    <div>
+                      <h3 className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
+                        <LockKeyhole className="h-4 w-4 text-brand-600" /> Sign in to confirm
+                      </h3>
+                      <p className="text-xs text-slate-500">Your trip is saved. Sign in to send the request and get your receipt.</p>
+                    </div>
+
+                    {/* Mini trip recap */}
+                    <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                      <p className="min-w-0 truncate text-xs font-bold text-ink">
+                        {routeText}
+                        <span className="block truncate font-medium text-slate-500">
+                          {state.selectedVehicle?.name} · {formatDateLong(state.pickupDate)} · {formatTime12(state.pickupTime)}
+                        </span>
                       </p>
-                      <p className="mt-1 text-[11px] leading-relaxed text-brand-800/80">
-                        Your trip details are saved. Sign in or create an account to submit the request, track it and get
-                        your receipt by email.
+                      <p className="shrink-0 text-base font-extrabold tabular-nums text-ink">
+                        {selectedFare !== null ? `₹${selectedFare.toLocaleString('en-IN')}` : ''}
                       </p>
                     </div>
-                    <AuthPanel idPrefix="bf-auth" initialMode="signin" />
+
+                    <div className="rounded-xl border border-slate-200/80 p-3">
+                      <p className="text-xs font-bold text-ink">Why sign in?</p>
+                      <ul className="mt-1.5 space-y-1">
+                        {[
+                          'We email your booking receipt.',
+                          'Your booking stays saved.',
+                          'It confirms the request is real.',
+                        ].map((line) => (
+                          <li key={line} className="flex items-center gap-2 text-xs text-slate-600">
+                            <Check className="h-3.5 w-3.5 shrink-0 text-live-600" strokeWidth={3} />
+                            {line}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <AuthPanel idPrefix="bf-auth" initialMode="signin" compact />
                   </>
                 )}
               </div>
@@ -650,7 +650,7 @@ export default function BookingFlowModal() {
                   </Link>
                   {state.adminWhatsAppUrl && (
                     <a href={state.adminWhatsAppUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-                      <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+                      <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
                     </a>
                   )}
                   <button type="button" onClick={closeBookingFlow} className="btn-ghost">
@@ -681,7 +681,7 @@ export default function BookingFlowModal() {
                     Review Details
                   </button>
                   <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-                    <MessageCircle className="h-4 w-4" /> WhatsApp Us
+                    <WhatsAppIcon className="h-4 w-4" /> WhatsApp Us
                   </a>
                 </div>
               </div>
@@ -770,7 +770,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ReviewCard({
+function ReviewSection({
   icon: Icon,
   label,
   onEdit,
@@ -784,18 +784,16 @@ function ReviewCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h4 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
-          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
-            <Icon className="h-3.5 w-3.5" />
-          </span>
-          {label}
+    <section className="px-4 py-3">
+      <div className="mb-1.5 flex items-center justify-between gap-3">
+        <h4 className="flex min-w-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+          <Icon className="h-3.5 w-3.5 shrink-0 text-brand-600" />
+          <span className="truncate">{label}</span>
         </h4>
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold text-brand-700 transition hover:bg-brand-50"
+          className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold text-brand-700 transition hover:bg-brand-50"
         >
           <Edit2 className="h-3 w-3" /> {editLabel}
         </button>

@@ -10,7 +10,8 @@ import React from 'react';
 import Link from 'next/link';
 import { BreadcrumbJsonLd } from '@/components/seo/JsonLd';
 import { HeroBand } from '@/components/home/HeroScene';
-import { ArrowRight, ChevronRight, MapPin, MessageCircle, Phone, ShieldCheck, Users, BadgeIndianRupee } from 'lucide-react';
+import { ArrowRight, ChevronRight, MapPin, Phone, ShieldCheck, Users, BadgeIndianRupee } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import PackageSelector from '@/components/PackageSelector';
 import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import FleetSection from '@/components/home/FleetSection';
@@ -181,7 +182,7 @@ export default function LandingTemplate({
                 <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
               </a>
               <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-                <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
+                <WhatsAppIcon className="h-4 w-4" /> {siteConfig.cta.quickQuote}
               </a>
             </div>
 
@@ -322,7 +323,7 @@ export default function LandingTemplate({
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-                <MessageCircle className="h-4 w-4" /> Ask on WhatsApp
+                <WhatsAppIcon className="h-4 w-4" /> Ask on WhatsApp
               </a>
             </div>
           </div>
@@ -351,7 +352,7 @@ export default function LandingTemplate({
                 <Phone className="h-4 w-4" /> Call 24/7
               </a>
               <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-                <MessageCircle className="h-4 w-4" /> WhatsApp
+                <WhatsAppIcon className="h-4 w-4" /> WhatsApp
               </a>
             </div>
           </div>

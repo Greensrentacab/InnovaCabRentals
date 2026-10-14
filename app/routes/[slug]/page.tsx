@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, BadgeIndianRupee, Check, ChevronRight, Clock, IndianRupee, Luggage, MessageCircle, Phone, Radar, Route as RouteIcon, ShieldCheck, Users } from 'lucide-react';
+import { ArrowRight, BadgeIndianRupee, Check, ChevronRight, Clock, IndianRupee, Luggage, Phone, Radar, Route as RouteIcon, ShieldCheck, Users } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import FaqAccordion from '@/components/home/FaqAccordion';
 import Reveal from '@/components/home/Reveal';
@@ -536,7 +537,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
                 <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
               </a>
               <a href={whatsappRouteUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-                <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
+                <WhatsAppIcon className="h-4 w-4" /> {siteConfig.cta.quickQuote}
               </a>
             </div>
           </div>
@@ -632,7 +633,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
                           <span className="text-lg font-extrabold tabular-nums">{fareOrRequest(routeRoundTripFare(route, v))}</span>
                         </span>
                         <a href={whatsappVehicleUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp px-4 py-2.5">
-                          <MessageCircle className="h-4 w-4" /> Quick Quote
+                          <WhatsAppIcon className="h-4 w-4" /> Quick Quote
                         </a>
                       </div>
                       {photo && <PhotoCredit photo={photo} className="mt-3 block" />}

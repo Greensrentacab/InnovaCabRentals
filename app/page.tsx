@@ -4,7 +4,6 @@ import {
   ArrowRight,
   CalendarCheck,
   Luggage,
-  MessageCircle,
   Phone,
   ShieldCheck,
   Radar,
@@ -12,6 +11,7 @@ import {
   Star,
   Users,
 } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import ServicesSection from '@/components/home/ServicesSection';
 import BookingTimeline from '@/components/home/BookingTimeline';
@@ -60,7 +60,7 @@ const whyChooseUs = [
     desc: 'Driver allowance and night charges shared upfront; tolls paid by the customer. No surge pricing, ever.',
   },
   {
-    icon: MessageCircle,
+    icon: WhatsAppIcon,
     title: 'Easy Booking by Call or WhatsApp',
     desc: 'No apps or logins. Reach our dispatch desk directly for instant reservations.',
   },
@@ -339,7 +339,7 @@ export default async function HomePage() {
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-                <MessageCircle className="h-4 w-4" /> Ask on WhatsApp
+                <WhatsAppIcon className="h-4 w-4" /> Ask on WhatsApp
               </a>
             </div>
           </div>
@@ -370,7 +370,7 @@ export default async function HomePage() {
                 <Phone className="h-4 w-4" /> Call 24/7
               </a>
               <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-                <MessageCircle className="h-4 w-4" /> WhatsApp
+                <WhatsAppIcon className="h-4 w-4" /> WhatsApp
               </a>
             </div>
           </div>

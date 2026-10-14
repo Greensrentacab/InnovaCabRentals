@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowUpRight, Clock, HeartHandshake, MapPin, MessageCircle, Mountain, Phone, ShieldCheck, Users } from 'lucide-react';
+import { ArrowUpRight, Clock, HeartHandshake, MapPin, Mountain, Phone, ShieldCheck, Users } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import PageHero from '@/components/ds/PageHero';
 import SectionHeading, { Hairline } from '@/components/ds/SectionHeading';
@@ -182,7 +183,7 @@ export default function AboutPage() {
             <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
           </a>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
+            <WhatsAppIcon className="h-4 w-4" /> {siteConfig.cta.quickQuote}
           </a>
         </div>
       </section>

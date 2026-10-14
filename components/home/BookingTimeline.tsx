@@ -7,7 +7,8 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Car, IndianRupee, MessageCircle, Phone, Route as RouteIcon, Siren, Wallet, type LucideIcon } from 'lucide-react';
+import { Car, IndianRupee, Phone, Route as RouteIcon, Siren, Wallet, type LucideIcon } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/cn';
 
@@ -193,7 +194,7 @@ export default function BookingTimeline() {
                 rel="noopener noreferrer"
                 className="btn-whatsapp"
               >
-                <MessageCircle className="h-4 w-4" /> WhatsApp
+                <WhatsAppIcon className="h-4 w-4" /> WhatsApp
               </a>
             </div>
           </div>

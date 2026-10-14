@@ -12,7 +12,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, Calendar, ChevronRight, Clock, FileText, Info, Luggage, MapPin, MessageCircle, Pencil, Route as RouteIcon, Users } from 'lucide-react';
+import { ArrowRight, Calendar, ChevronRight, Clock, FileText, Info, Luggage, MapPin, Pencil, Route as RouteIcon, Users } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { cn } from '@/lib/cn';
 import { useBookingFlow, type FareResult, type TripParams } from '@/context/BookingFlowContext';
 import { siteConfig } from '@/lib/siteConfig';
@@ -153,13 +154,13 @@ function ResultCard({
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-whatsapp !min-h-0 h-11 w-11 !rounded-lg p-0"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-[#25D366] transition-colors hover:border-[#25D366] hover:bg-[#25D366]/5"
               aria-label={`Send ${car.vehicleName} booking details on WhatsApp`}
               title="Send trip & car details on WhatsApp"
             >
-              <MessageCircle className="h-[18px] w-[18px]" />
+              <WhatsAppIcon className="h-5 w-5" />
             </a>
-            <button type="button" onClick={() => requestBooking(car.vehicleId)} className="btn-primary !min-h-0 h-11 !rounded-lg !px-3 text-sm">
+            <button type="button" onClick={() => requestBooking(car.vehicleId)} className="h-10 rounded-md bg-brand-600 px-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700 active:bg-brand-800">
               Book
             </button>
           </div>
@@ -271,7 +272,7 @@ export default function FareResults() {
         <div className="card-float mt-5 p-6 text-center">
           <p className="text-sm font-semibold text-rose-600">{search.error}</p>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp mt-4">
-            <MessageCircle className="h-4 w-4" /> WhatsApp for a Quick Quote
+            <WhatsAppIcon className="h-4 w-4" /> WhatsApp for a Quick Quote
           </a>
         </div>
       )}

@@ -23,7 +23,6 @@ import {
   Calendar,
   MapPin,
   Phone,
-  MessageCircle,
   CheckCircle2,
   AlertCircle,
   RefreshCw,
@@ -43,6 +42,7 @@ import {
   Save,
   Undo2,
 } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import {
   verifyAdminSession,
   getAdminDashboardData,
@@ -818,7 +818,7 @@ export default function AdminDashboardPage() {
                               <Phone className="h-3.5 w-3.5" /> Call
                             </a>
                             <a href={confirmWaUrl} target="_blank" rel="noopener noreferrer" className={`${smallBtn} bg-[#128C4A] text-white hover:brightness-110`}>
-                              <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                              <WhatsAppIcon className="h-3.5 w-3.5" /> WhatsApp
                             </a>
                           </div>
                         </div>
@@ -1148,7 +1148,7 @@ export default function AdminDashboardPage() {
                             <Phone className="h-3.5 w-3.5" /> Call
                           </a>
                           <a href={tourWaUrl} target="_blank" rel="noopener noreferrer" className={`${smallBtn} bg-[#128C4A] text-white hover:brightness-110`}>
-                            <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                            <WhatsAppIcon className="h-3.5 w-3.5" /> WhatsApp
                           </a>
                         </div>
                       </div>

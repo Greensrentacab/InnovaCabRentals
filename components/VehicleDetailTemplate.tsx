@@ -5,7 +5,8 @@
  */
 
 import Link from 'next/link';
-import { ArrowRight, Check, ChevronRight, Clock, Luggage, MapPin, MessageCircle, Phone, Users } from 'lucide-react';
+import { ArrowRight, Check, ChevronRight, Clock, Luggage, MapPin, Phone, Users } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { Vehicle } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
 import { fleetPhotos } from '@/lib/fleetPhotos';
@@ -184,7 +185,7 @@ export default function VehicleDetailTemplate({
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp w-full">
-                  <MessageCircle className="h-4 w-4" /> WhatsApp Us for Quick Quote
+                  <WhatsAppIcon className="h-4 w-4" /> WhatsApp Us for Quick Quote
                 </a>
                 <a href={siteConfig.contact.phone.tel} className="btn-ghost w-full">
                   <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}

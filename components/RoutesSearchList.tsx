@@ -7,7 +7,8 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Clock, MapPin, MessageCircle, Plane, Search, X } from 'lucide-react';
+import { ArrowRight, Clock, MapPin, Plane, Search, X } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { Route, RouteCategory } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/cn';
@@ -147,7 +148,7 @@ export default function RoutesSearchList({ initialRoutes, fromFares }: RoutesSea
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                   <a href={whatsappRouteUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp px-3 py-2.5">
-                    <MessageCircle className="h-4 w-4" /> Quick Quote
+                    <WhatsAppIcon className="h-4 w-4" /> Quick Quote
                   </a>
                 </div>
               </article>
@@ -175,7 +176,7 @@ export default function RoutesSearchList({ initialRoutes, fromFares }: RoutesSea
               Clear Search
             </button>
             <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-              <MessageCircle className="h-4 w-4" /> WhatsApp Us
+              <WhatsAppIcon className="h-4 w-4" /> WhatsApp Us
             </a>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, Check, MapPin, MessageCircle, Phone } from 'lucide-react';
+import { ArrowRight, Check, MapPin, Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import TourEnquiryForm from '@/components/TourEnquiryForm';
 import PageHero from '@/components/ds/PageHero';
 import SectionHeading, { Hairline } from '@/components/ds/SectionHeading';
@@ -96,7 +97,7 @@ export default function TourPackagesPage() {
             <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
           </a>
           <a href={tourWhatsApp} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
+            <WhatsAppIcon className="h-4 w-4" /> {siteConfig.cta.quickQuote}
           </a>
         </div>
 
@@ -125,7 +126,7 @@ export default function TourPackagesPage() {
                 <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}
               </a>
               <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp px-3">
-                <MessageCircle className="h-4 w-4" /> WhatsApp Travel Desk
+                <WhatsAppIcon className="h-4 w-4" /> WhatsApp Travel Desk
               </a>
             </div>
           </div>

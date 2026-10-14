@@ -7,7 +7,8 @@
 import Link from 'next/link';
 import BrandMark from '@/components/BrandMark';
 import Logo from '@/components/Logo';
-import { Car, ChevronDown, Clock, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
+import { Car, ChevronDown, Clock, Mail, MapPin, Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import { catalogRoutes } from '@/lib/routeCatalog';
 
@@ -92,7 +93,7 @@ export default function Footer() {
           <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-400">{siteConfig.brand.tagline}</p>
           <p className="mt-3 max-w-sm text-sm font-semibold text-slate-200">&ldquo;{siteConfig.brand.closingLine}&rdquo;</p>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp mt-6">
-            <MessageCircle className="h-4 w-4" /> WhatsApp Quick Quote
+            <WhatsAppIcon className="h-4 w-4" /> WhatsApp Quick Quote
           </a>
         </div>
 
@@ -127,7 +128,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 hover:text-white"
               >
-                <MessageCircle className="h-4 w-4 shrink-0 text-whatsapp" /> WhatsApp
+                <WhatsAppIcon className="h-4 w-4 shrink-0 text-whatsapp" /> WhatsApp
               </a>
             </li>
             <li>

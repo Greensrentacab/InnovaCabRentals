@@ -17,7 +17,8 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowRight, Calendar, Car, Check, Clock, Copy, IndianRupee, MapPin, MessageCircle, Phone, User } from 'lucide-react';
+import { ArrowRight, Calendar, Car, Check, Clock, Copy, IndianRupee, MapPin, Phone, User } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import { Booking } from '@/lib/types';
 import { cn } from '@/lib/cn';
@@ -280,7 +281,7 @@ function BookingConfirmedContent() {
           </p>
           <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
             <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-              <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+              <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
             </a>
             <a href={siteConfig.contact.phone.tel} className="btn-primary">
               <Phone className="h-4 w-4" /> Call Dispatch: +91 {siteConfig.contact.phone.raw}

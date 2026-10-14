@@ -27,7 +27,7 @@ export default function RouteCard({ route }: { route: SliderRoute }) {
   return (
     <Link
       href={`/routes/${route.slug}`}
-      className="card-float card-float-hover group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl text-left"
+      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition-colors duration-300 hover:border-slate-300"
     >
       {/* Photo with the destination written on it */}
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-200">

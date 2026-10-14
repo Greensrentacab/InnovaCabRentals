@@ -51,27 +51,31 @@ export default function VehicleDetailTemplate({
 
   return (
     <div className="bg-porcelain">
-      <header className="section pt-28 sm:pt-32">
+      <header className="section pt-28 sm:pt-32 lg:pt-28">
         <BreadcrumbJsonLd items={[{ label: 'Vehicles', href: '/vehicles' }, { label: vehicle.name }]} />
-        <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-xs font-semibold text-slate-500">
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1 text-xs font-semibold text-slate-500">
           <Link href="/" className="hover:text-brand-700">Home</Link>
           <ChevronRight className="h-3 w-3" />
           <Link href="/vehicles" className="hover:text-brand-700">Vehicles</Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-slate-700" aria-current="page">{vehicle.name}</span>
         </nav>
-        <span className="eyebrow mb-3">
-          <span className="h-1.5 w-1.5 rounded-full bg-brand-600" />
-          {vehicle.type} · Bangalore
-        </span>
-        <h1 className="text-balance max-w-4xl text-xl font-extrabold leading-snug tracking-tight text-ink sm:text-3xl">
-          {h1}
-        </h1>
       </header>
 
-      <section className="section pb-12 pt-6 sm:pb-16 sm:pt-8">
-        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-          <div className="min-w-0 space-y-8">
+      <section className="section pb-12 pt-4 sm:pb-16 sm:pt-5">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
+          {/* Title: above the gallery on phones, beside it (over the price card) on desktop */}
+          <div className="min-w-0 lg:col-start-2 lg:row-start-1">
+            <span className="eyebrow mb-3">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-600" />
+              {vehicle.type} · Bangalore
+            </span>
+            <h1 className="text-balance text-xl font-extrabold leading-snug tracking-tight text-ink sm:text-3xl lg:text-[1.75rem] lg:leading-tight">
+              {h1}
+            </h1>
+          </div>
+
+          <div className="min-w-0 space-y-8 lg:col-start-1 lg:row-span-2 lg:row-start-1">
             <ProductGallery photos={photos} />
 
             <div>
@@ -131,7 +135,7 @@ export default function VehicleDetailTemplate({
           </div>
 
           {/* Sticky reservation card */}
-          <aside className="space-y-5 lg:sticky lg:top-28">
+          <aside className="min-w-0 space-y-5 lg:sticky lg:top-28 lg:col-start-2 lg:row-start-2">
             <div className="card-float p-6 shadow-float-lg">
               <div className="flex items-end justify-between gap-3">
                 <div>

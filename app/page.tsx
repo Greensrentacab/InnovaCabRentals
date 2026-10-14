@@ -123,19 +123,11 @@ export default async function HomePage() {
 
 
   // Hero trust strip (client-supplied claims only; no star ratings)
-  const trustItems = (
-    <>
-      <li className="flex items-center justify-center gap-1 whitespace-nowrap px-1 sm:gap-1.5 sm:px-2">
-        <ShieldCheck className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 text-emerald-400" /> Verified drivers
-      </li>
-      <li className="flex items-center justify-center gap-1 whitespace-nowrap px-1 sm:gap-1.5 sm:px-2">
-        <Radar className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 text-sky-300" /> Flight tracking
-      </li>
-      <li className="flex items-center justify-center gap-1 whitespace-nowrap px-1 sm:gap-1.5 sm:px-2">
-        <BadgeIndianRupee className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 text-sky-300" /> Transparent price
-      </li>
-    </>
-  );
+  const trustList = [
+    { icon: ShieldCheck, tone: 'text-emerald-300', label: 'Verified drivers' },
+    { icon: Radar, tone: 'text-sky-300', label: 'Flight tracking' },
+    { icon: BadgeIndianRupee, tone: 'text-sky-300', label: 'Transparent price' },
+  ];
 
   return (
     <div className="ds-scope bg-porcelain">
@@ -160,10 +152,10 @@ export default async function HomePage() {
               {/* Dark fade continuing below the picture so it blends into the section underneath */}
               <div className="pointer-events-none absolute inset-x-0 top-full h-24 bg-gradient-to-b from-black/70 to-transparent lg:hidden" aria-hidden="true" />
               <div className="relative">
-                <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border max-sm:hidden border-live-500/20 bg-white/90 px-3 py-1.5 text-xs font-bold text-live-600 shadow-sm backdrop-blur-md [text-shadow:none] lg:bg-white/80">
+                <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border max-sm:hidden border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white shadow-sm backdrop-blur-md [text-shadow:none]">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-live-500" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-live-500" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                   </span>
                   Booking open now · 24 hours
                 </span>
@@ -178,17 +170,33 @@ export default async function HomePage() {
                   <HeroLead />
                 </p>
 
-                {/* Phones/tablets: room for the car in the picture (no trust strip here; desktop only) */}
-                <div className="h-14 sm:h-56 lg:hidden" aria-hidden="true" />
+                {/* Phones/tablets: trust symbols in the hero, over the picture (desktop has its own strip below) */}
+                <ul className="mt-5 grid grid-cols-3 gap-x-2 text-center text-[11px] font-semibold leading-tight text-white sm:max-w-md sm:text-xs lg:hidden [&>li]:whitespace-nowrap">
+                  {trustList.map(({ icon: Icon, tone, label }) => (
+                    <li key={label} className="flex flex-col items-center gap-1.5">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25 backdrop-blur">
+                        <Icon className={`h-[18px] w-[18px] ${tone}`} />
+                      </span>
+                      {label}
+                    </li>
+                  ))}
+                </ul>
 
-                {/* Desktop: room for the car in the full-width picture, then the trust strip */}
-                <div className="hidden lg:block lg:h-[clamp(120px,22vh,260px)]" aria-hidden="true" />
-                <div className="mt-2 hidden max-w-xl overflow-hidden rounded-2xl border border-white/15 bg-white/10 text-sm font-semibold leading-tight text-white backdrop-blur-md lg:block">
-                  <ul className="grid grid-cols-3 divide-x divide-white/15 py-3.5">{trustItems}</ul>
-                  <p className="flex items-center justify-center gap-2 whitespace-nowrap border-t border-white/15 bg-white/5 py-2.5">
-                    <Users className="h-4 w-4 shrink-0 text-sky-300" /> {siteConfig.trustClaims.customersServed.label}
-                  </p>
-                </div>
+                {/* Phones/tablets: room for the car in the picture */}
+                <div className="h-12 sm:h-48 lg:hidden" aria-hidden="true" />
+
+                {/* Desktop: room for the car in the full-width picture, then the trust points along the bottom */}
+                <div className="hidden lg:block lg:h-[clamp(140px,26vh,300px)]" aria-hidden="true" />
+                <ul className="hidden items-center gap-x-6 gap-y-2 whitespace-nowrap text-[13px] font-semibold text-white lg:flex xl:text-sm [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
+                  {trustList.map(({ icon: Icon, tone, label }) => (
+                    <li key={label} className="flex items-center gap-2">
+                      <Icon className={`h-[18px] w-[18px] shrink-0 ${tone}`} /> {label}
+                    </li>
+                  ))}
+                  <li className="flex items-center gap-2 text-white/85">
+                    <Users className="h-[18px] w-[18px] shrink-0 text-sky-300" /> {siteConfig.trustClaims.customersServed.label}
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -196,19 +204,8 @@ export default async function HomePage() {
           <div className="relative z-10 -mt-[100px] min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:pt-4">
             <QuickBookingWidget {...widgetData} />
 
-            {/* Phones/tablets: trust symbols + customers served under the card (desktop has them beside the copy) */}
+            {/* Phones/tablets: customers served under the card (trust symbols are in the hero) */}
             <div className="mt-5 space-y-4 lg:hidden">
-              <ul className="grid grid-cols-3 gap-x-3 text-center text-[11px] font-semibold leading-tight text-slate-700 [&>li]:whitespace-nowrap">
-                <li className="flex flex-col items-center gap-1.5">
-                  <ShieldCheck className="h-5 w-5 text-live-600" /> Verified drivers
-                </li>
-                <li className="flex flex-col items-center gap-1.5">
-                  <Radar className="h-5 w-5 text-brand-600" /> Flight tracking
-                </li>
-                <li className="flex flex-col items-center gap-1.5">
-                  <BadgeIndianRupee className="h-5 w-5 text-brand-600" /> Transparent price
-                </li>
-              </ul>
               <p className="flex items-center justify-center gap-2 whitespace-nowrap text-xs font-bold text-ink">
                 <Users className="h-4 w-4 text-brand-600" /> {siteConfig.trustClaims.customersServed.label}
               </p>

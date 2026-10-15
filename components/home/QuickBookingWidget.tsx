@@ -582,6 +582,7 @@ export default function QuickBookingWidget({
       <LocationAutocompleteModal
         key={JSON.stringify(activeModal) + service}
         variant="dropdown"
+        bengaluruOnly={activeModal.kind === 'city'}
         isOpen
         onClose={handleModalClose}
         title={modalTitle}

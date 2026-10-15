@@ -127,6 +127,12 @@ export const BENGALURU_COORDINATES = {
   lng: 77.5946,
 };
 
+/** Bengaluru metro (airport, Electronic City, Kengeri, Whitefield, Hoskote side) for strict searches */
+const BENGALURU_BOUNDS = { south: 12.78, west: 77.35, north: 13.27, east: 77.88 };
+
+/** true when a place's address names Bengaluru / Bangalore */
+export const isBengaluruAddress = (text?: string | null) => /bengaluru|bangalore/i.test(text ?? '');
+
 /**
  * Fallback local dataset when Google Places API key is not configured or network is offline
  */
@@ -220,8 +226,10 @@ const MOCK_PLACES: LocationData[] = [
  */
 export async function searchPlaces(
   query: string,
-  sessionToken?: any
+  sessionToken?: any,
+  options: { bengaluruOnly?: boolean } = {}
 ): Promise<LocationData[]> {
+  const { bengaluruOnly = false } = options;
   const trimmed = query.trim();
   if (!trimmed) return [];
 
@@ -241,7 +249,9 @@ export async function searchPlaces(
           {
             input: trimmed,
             componentRestrictions: { country: 'in' }, // Restrict strictly to India
-            locationBias: bengaluruCircle.getBounds(), // Bias to Bengaluru
+            ...(bengaluruOnly
+              ? { locationRestriction: BENGALURU_BOUNDS } // Airport / local rides: Bengaluru only
+              : { locationBias: bengaluruCircle.getBounds() }), // Otherwise just bias to Bengaluru
             sessionToken: sessionToken || undefined,
           },
           (predictions: any, status: any) => {
@@ -254,7 +264,12 @@ export async function searchPlaces(
               const placesService = new window.google.maps.places.PlacesService(dummyDiv);
 
               // Map predictions to place details promises (or quick prediction format)
-              const formatted: LocationData[] = predictions.slice(0, 5).map((p: any) => ({
+              const inScope = bengaluruOnly ? predictions.filter((p: any) => isBengaluruAddress(p.description)) : predictions;
+              if (inScope.length === 0) {
+                resolve(fallbackSearch(trimmed, bengaluruOnly));
+                return;
+              }
+              const formatted: LocationData[] = inScope.slice(0, 5).map((p: any) => ({
                 name: p.structured_formatting?.main_text || p.description.split(',')[0] || p.description,
                 address: p.description,
                 lat: null, // Will be enriched on selection
@@ -265,19 +280,19 @@ export async function searchPlaces(
               resolve(formatted);
             } else {
               // No Google match (or the key is blocked): fall back to the local Bengaluru list
-              resolve(fallbackSearch(trimmed));
+              resolve(fallbackSearch(trimmed, bengaluruOnly));
             }
           }
         );
       } catch (err) {
         console.warn('[googlePlaces] Error executing AutocompleteService:', err);
-        resolve(fallbackSearch(trimmed));
+        resolve(fallbackSearch(trimmed, bengaluruOnly));
       }
     });
   }
 
   // Fallback search when Google script is not present
-  return fallbackSearch(trimmed);
+  return fallbackSearch(trimmed, bengaluruOnly);
 }
 
 /**
@@ -323,13 +338,14 @@ export async function getPlaceCoordinates(
 /** Indian pincode, e.g. "560066" or "560 066" */
 export const isPincode = (q: string) => /^\d{3}\s?\d{3}$/.test(q.trim());
 
-function fallbackSearch(query: string): LocationData[] {
+function fallbackSearch(query: string, bengaluruOnly = false): LocationData[] {
   const lower = query.toLowerCase().replace(/\s+(?=\d)/g, '');
   const curated = MOCK_PLACES.filter(
     (p) =>
-      p.name.toLowerCase().includes(lower) ||
+      (!bengaluruOnly || isBengaluruAddress(`${p.name} ${p.address}`)) &&
+      (p.name.toLowerCase().includes(lower) ||
       p.address.toLowerCase().includes(lower) ||
-      p.address.replace(/\s/g, '').includes(lower)
+      p.address.replace(/\s/g, '').includes(lower))
   );
   const seen = new Set(curated.map((p) => p.name.toLowerCase()));
   const areas: LocationData[] = searchAreas(query)

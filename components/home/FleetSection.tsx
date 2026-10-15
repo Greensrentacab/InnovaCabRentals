@@ -29,7 +29,7 @@ export interface FleetCardData {
 
 export default function FleetSection({ vehicles }: { vehicles: FleetCardData[] }) {
   return (
-    <section id="fleet" className="section scroll-mt-24 py-10 sm:py-20">
+    <section id="fleet" className="section scroll-mt-24 pb-10 pt-6 sm:py-20">
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
         <div className="max-w-2xl">
           <span className="eyebrow">Our fleet</span>

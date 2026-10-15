@@ -228,7 +228,7 @@ export default async function HomePage() {
       {/* ================================================================ */}
       {/* 4. FEATURED ROUTES SLIDER                                        */}
       {/* ================================================================ */}
-      <section id="routes" className="section scroll-mt-24 py-10 sm:py-20">
+      <section id="routes" className="section scroll-mt-24 pb-2 pt-10 sm:py-20">
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
           <div className="max-w-2xl">
             <span className="eyebrow">Featured routes</span>

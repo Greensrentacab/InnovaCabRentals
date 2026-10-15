@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, Check, ChevronRight, Clock, Luggage, Mountain, Phone, Plane, Users } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
-import { formatINR } from '@/lib/storefrontData';
+import { confirmedFleet, formatINR } from '@/lib/storefrontData';
 import { getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
 import { fleetPhotos } from '@/lib/fleetPhotos';
@@ -33,7 +33,7 @@ export const metadata = {
 export default async function VehiclesPage() {
   const allVehicles = await getVehicles();
   // Cars switched off in Admin → Fleet (confirmed:false) are hidden
-  const confirmedVehicles = allVehicles.filter((v) => v.confirmed !== false);
+  const confirmedVehicles = confirmedFleet(allVehicles);
 
   const vehicleIdealForMap: Record<string, string[]> = {
     innova: [

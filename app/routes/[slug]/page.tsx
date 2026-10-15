@@ -433,8 +433,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
           <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4">
             <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
               <HeroCover scene={heroScene} className="lg:hidden" />
-              <div className="pointer-events-none absolute inset-x-0 top-full h-24 bg-gradient-to-b from-black/70 to-transparent lg:hidden" aria-hidden="true" />
-              <div className="relative">
+              <div className="relative max-lg:[text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_2px_16px_rgba(0,0,0,0.45)]">
                 <BreadcrumbJsonLd items={[{ label: 'Outstation Routes', href: '/routes' }, { label: customDetails.h1 }]} />
                 <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs font-semibold text-white/80 [text-shadow:none]">
                   <Link href="/" className="hover:text-white">Home</Link>
@@ -445,7 +444,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
                   {customDetails.h1}
                 </h1>
                 <span className="mt-3 block h-1 w-12 rounded-full bg-sky-300 lg:hidden" aria-hidden="true" />
-                <p className="mt-3 max-w-xl animate-fade-up text-[13px] font-medium leading-snug text-white/90 [animation-delay:160ms] sm:mt-5 sm:text-lg">
+                <p className="mt-3 max-w-xl animate-fade-up text-[13px] font-medium leading-snug text-white [animation-delay:160ms] sm:mt-5 sm:text-lg">
                   {customDetails.tagline}
                 </p>
 

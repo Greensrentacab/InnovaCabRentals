@@ -177,7 +177,7 @@ export function HeroCover({ className, scene, desktop }: { className?: string; s
   return (
     <div className={cn('pointer-events-none absolute inset-0 overflow-hidden bg-slate-900', className)} aria-hidden="true">
       <SceneImages service={service} only={scene} pos="88% 72%" />
-      {/* Portrait airport picture made for phones (sky on top for the copy, car at the bottom) */}
+      {/* Portrait airport picture made for phones (sky on top for the copy, car at the bottom), kept bright; a light wash plus a text shadow keep the copy readable */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/images/hero/hero-airport-mobile.webp"
@@ -192,8 +192,9 @@ export function HeroCover({ className, scene, desktop }: { className?: string; s
           service === 'airport' ? 'opacity-100' : 'opacity-0'
         )}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 via-60% to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 to-transparent" />
+      {/* Light dark wash from the top so the copy stays readable without hiding the photo */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/45 via-60% to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/50 to-transparent" />
     </div>
   );
 }

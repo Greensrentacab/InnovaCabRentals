@@ -37,9 +37,20 @@ const VEHICLE_COPY: Record<string, { shortName: string; tagline: string }> = {
 export const vehicleShortName = (v: Pick<Vehicle, 'id' | 'name'>) =>
   VEHICLE_COPY[v.id]?.shortName ?? v.name.replace(/^(Toyota|Maruti Suzuki) /, '');
 
-/** Confirmed models only (Innova, Innova Crysta, Innova Hycross & Ertiga). */
+/** Display order everywhere (cards, compare table, pages): lowest to highest tariff. */
+const FLEET_ORDER = ['ertiga', 'innova', 'innova-crysta', 'innova-hycross'];
+
+export const sortFleet = <T extends { id: string }>(vehicles: T[]): T[] => {
+  const rank = (id: string) => {
+    const i = FLEET_ORDER.indexOf(id);
+    return i === -1 ? FLEET_ORDER.length : i;
+  };
+  return [...vehicles].sort((a, b) => rank(a.id) - rank(b.id));
+};
+
+/** Confirmed models only (Ertiga, Innova, Innova Crysta & Innova Hycross), in display order. */
 export const confirmedFleet = (vehicles: Vehicle[]) =>
-  vehicles.filter((v) => v.confirmed !== false);
+  sortFleet(vehicles.filter((v) => v.confirmed !== false));
 
 export const findAirportRoute = (routes: Route[]) => routes.find((r) => r.slug.includes('airport'));
 

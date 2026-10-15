@@ -149,9 +149,7 @@ export default async function HomePage() {
             {/* Phones/tablets: picture runs edge to edge from the top with the copy on it; desktop uses the band above */}
             <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
               <HeroCover className="lg:hidden" />
-              {/* Dark fade continuing below the picture so it blends into the section underneath */}
-              <div className="pointer-events-none absolute inset-x-0 top-full h-24 bg-gradient-to-b from-black/70 to-transparent lg:hidden" aria-hidden="true" />
-              <div className="relative">
+              <div className="relative max-lg:[text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_2px_16px_rgba(0,0,0,0.45)]">
                 <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border max-sm:hidden border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white shadow-sm backdrop-blur-md [text-shadow:none]">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-live-500" />
@@ -166,12 +164,12 @@ export default async function HomePage() {
                 </h1>
 
                 <span className="mt-3 block h-1 w-12 rounded-full bg-sky-300 lg:hidden" aria-hidden="true" />
-                <p className="mt-3 line-clamp-4 max-w-xl animate-fade-up text-[13px] font-medium leading-snug sm:line-clamp-none text-white/90 [animation-delay:160ms] sm:mt-5 sm:text-lg">
+                <p className="mt-3 line-clamp-4 max-w-xl animate-fade-up text-[13px] font-medium leading-snug sm:line-clamp-none text-white [animation-delay:160ms] sm:mt-5 sm:text-lg">
                   <HeroLead />
                 </p>
 
                 {/* Phones/tablets: trust points in the hero, two per row */}
-                <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 whitespace-nowrap text-[12px] font-semibold text-white sm:max-w-md sm:text-sm lg:hidden [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
+                <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 whitespace-nowrap text-[12px] font-semibold text-white sm:max-w-md sm:text-sm lg:hidden [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_2px_12px_rgba(0,0,0,0.5)]">
                   {trustList.map(({ icon: Icon, tone, label }) => (
                     <li key={label} className="flex items-center gap-2">
                       <Icon className={`h-[18px] w-[18px] shrink-0 ${tone}`} /> {label}

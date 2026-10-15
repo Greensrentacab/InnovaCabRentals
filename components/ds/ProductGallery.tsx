@@ -167,8 +167,8 @@ export default function ProductGallery({ photos, className }: ProductGalleryProp
               aria-label={`Show photo ${i + 1}: ${photo.label}`}
               aria-current={i === active}
               className={cn(
-                'relative aspect-[4/3] min-w-[64px] flex-1 basis-0 overflow-hidden rounded-md bg-slate-200 ring-2 ring-inset transition sm:min-w-[88px]',
-                i === active ? 'ring-brand-600' : 'opacity-60 ring-transparent hover:opacity-100'
+                'relative aspect-[4/3] min-w-[64px] flex-1 basis-0 overflow-hidden rounded-md border-2 bg-slate-200 transition sm:min-w-[88px]',
+                i === active ? 'border-brand-600' : 'border-transparent hover:border-slate-300'
               )}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}

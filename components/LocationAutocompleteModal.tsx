@@ -29,6 +29,7 @@ import {
 import {
   LocationData,
   getRecentLocations,
+  isBengaluruAddress,
   saveRecentLocation,
   searchPlaces,
   getPlaceCoordinates,
@@ -43,6 +44,8 @@ interface LocationAutocompleteModalProps {
   placeholder?: string;
   initialValue?: string;
   variant?: 'modal' | 'dropdown';
+  /** Only offer places in Bengaluru (airport transfers, local rentals) */
+  bengaluruOnly?: boolean;
 }
 
 export default function LocationAutocompleteModal({
@@ -53,6 +56,7 @@ export default function LocationAutocompleteModal({
   placeholder = 'Search location in Bengaluru or Outstation...',
   initialValue = '',
   variant = 'modal',
+  bengaluruOnly = false,
 }: LocationAutocompleteModalProps) {
   const isDropdown = variant === 'dropdown';
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -74,7 +78,7 @@ export default function LocationAutocompleteModal({
       setQuery(initialValue);
       setHasSearched(false);
       setSearchError(false);
-      setRecentLocations(getRecentLocations());
+      setRecentLocations(bengaluruOnly ? getRecentLocations().filter((l) => isBengaluruAddress(`${l.name} ${l.address}`)) : getRecentLocations());
 
       // Preload Google script
       loadGoogleMapsScript().then(() => {
@@ -105,7 +109,7 @@ export default function LocationAutocompleteModal({
     setSearchError(false);
 
     try {
-      const results = await searchPlaces(text, sessionTokenRef.current);
+      const results = await searchPlaces(text, sessionTokenRef.current, { bengaluruOnly });
       setPredictions(results);
       setHasSearched(true);
       if (results.length === 0) {
@@ -119,7 +123,7 @@ export default function LocationAutocompleteModal({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [bengaluruOnly]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;

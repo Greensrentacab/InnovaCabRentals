@@ -5,7 +5,6 @@
  */
 
 import Link from 'next/link';
-import BrandMark from '@/components/BrandMark';
 import Logo from '@/components/Logo';
 import { Car, ChevronDown, Clock, Mail, MapPin, Phone } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
@@ -87,8 +86,7 @@ export default function Footer() {
         {/* Brand */}
         <div className="col-span-2 md:col-span-3 lg:col-span-1">
           <Link href="/" className="flex items-center gap-2.5" aria-label={`${siteConfig.brand.name} home`}>
-            <BrandMark className="h-12" />
-            <Logo variant="mark" className="h-12 w-auto" />
+            <Logo tone="dark" className="h-12 w-auto" />
           </Link>
           <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-400">{siteConfig.brand.tagline}</p>
           <p className="mt-3 max-w-sm text-sm font-semibold text-slate-200">&ldquo;{siteConfig.brand.closingLine}&rdquo;</p>

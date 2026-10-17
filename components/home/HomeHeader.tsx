@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import BrandMark from '@/components/BrandMark';
+import Logo from '@/components/Logo';
 import {
   ArrowRight,
   Building2,
@@ -254,13 +254,7 @@ export default function HomeHeader() {
         >
           {/* Brand */}
           <Link href="/" className="flex items-center gap-2.5" aria-label={`${siteConfig.brand.name} home`}>
-            <BrandMark className="h-10" />
-            <span className="leading-none">
-              <span className="block text-[16px] font-extrabold tracking-tight text-ink">
-                {siteConfig.brand.headerName.replace(/\s*Bangalore$/i, '')}
-              </span>
-              <span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.18em] text-brand-700">Bangalore</span>
-            </span>
+            <Logo variant="mark" className="h-9 w-auto sm:h-10" />
           </Link>
 
           {/* Desktop nav */}

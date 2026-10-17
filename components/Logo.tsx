@@ -1,82 +1,36 @@
 /**
  * Logo.tsx
  *
- * Vector (inline SVG) wordmark for Innova Cab Rentals.
- * Lockup: "INNOVA CABS" (white + orange) over BANGALORE (gray, letter-spaced).
+ * Innova Cabs Bangalore logo, transparent PNG in two colourways:
+ * - tone="light" (default): original navy lettering — for white / light surfaces
+ *   (homepage glass bar, admin login).
+ * - tone="dark": same artwork with the navy lettering recoloured white — for navy
+ *   / black surfaces (secondary header, footer, admin sidebar).
  *
- * Rendered inline (not as an <img>) so it stays crisp at any size, inherits no
- * network request, and can be dropped on any background.
- *
- * Variants:
- * - "mark": text only, transparent background — use on the navy header/footer.
- * - "full": text on a rounded navy card — use standalone (share previews, print, favicons).
+ * `className` sizes the image (e.g. "h-10 w-auto").
  */
 
+import { cn } from '@/lib/cn';
+
 interface LogoProps {
+  /** Kept for backwards compatibility; both variants render the same artwork. */
   variant?: 'mark' | 'full';
+  /** Which background the logo sits on: 'light' surface or 'dark' surface. */
+  tone?: 'light' | 'dark';
   className?: string;
   title?: string;
 }
 
-export default function Logo({
-  variant = 'mark',
-  className,
-  title = 'Innova Cab Rentals',
-}: LogoProps) {
-  const content = (
-    <>
-      <text
-        x="4"
-        y="32"
-        fontFamily="var(--font-inter), Inter, Arial, sans-serif"
-        fontWeight={800}
-        fontSize="30"
-        letterSpacing="-0.5"
-        fill="#FFFFFF"
-      >
-        INNOVA <tspan fill="#F0562B">CABS</tspan>
-      </text>
-      <text
-        x="4"
-        y="58"
-        fontFamily="var(--font-inter), Inter, Arial, sans-serif"
-        fontWeight={700}
-        fontSize="20"
-        textLength="206"
-        lengthAdjust="spacing"
-        fill="#9CA3AF"
-      >
-        BANGALORE
-      </text>
-    </>
-  );
-
-  if (variant === 'full') {
-    return (
-      <svg
-        viewBox="0 0 230 90"
-        role="img"
-        aria-label={title}
-        className={className}
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <title>{title}</title>
-        <rect x="0" y="0" width="230" height="90" rx="16" fill="#0B1B33" />
-        {content}
-      </svg>
-    );
-  }
-
+export default function Logo({ tone = 'light', className, title = 'Innova Cabs Bangalore' }: LogoProps) {
   return (
-    <svg
-      viewBox="0 0 214 66"
-      role="img"
-      aria-label={title}
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <title>{title}</title>
-      {content}
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={tone === 'dark' ? '/logo-dark.png' : '/logo-light.png'}
+      alt={title}
+      width={1200}
+      height={349}
+      decoding="async"
+      className={cn('select-none', className)}
+    />
   );
 }

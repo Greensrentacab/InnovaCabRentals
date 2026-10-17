@@ -79,7 +79,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-[72px] md:h-20 gap-4">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center shrink-0 py-2" onClick={closeMenu}>
-            <Logo variant="mark" className="h-10 md:h-11 w-auto" />
+            <Logo tone="dark" className="h-9 md:h-11 w-auto" />
           </Link>
 
           {/* Desktop Navigation Links */}

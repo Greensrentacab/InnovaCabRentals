@@ -254,7 +254,7 @@ export default function HomeHeader() {
         >
           {/* Brand */}
           <Link href="/" className="flex items-center gap-2.5" aria-label={`${siteConfig.brand.name} home`}>
-            <Logo variant="mark" className="h-9 w-auto sm:h-10" />
+            <Logo halo={!scrolled} className="h-11 w-auto sm:h-[3.25rem]" />
           </Link>
 
           {/* Desktop nav */}

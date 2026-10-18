@@ -31,6 +31,7 @@ Commit and push this folder to GitHub (the repo already has the `origin` remote
 | `RESEND_API_KEY`, `ADMIN_EMAIL`, `NOTIFICATION_EMAIL_FROM` | Optional | New-booking email alerts. |
 | `NEXT_PUBLIC_SITE_URL` | Recommended | Your live domain, e.g. `https://www.example.com` (share previews / SEO). |
 | `RELEASED_ROUTES` | Optional | Leave unset to keep the whole site public. |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | For image uploads | Admin → Homepage images uploads go to Cloudinary (free plan is enough). Without them uploads are switched off and the built-in pictures show. |
 
 See `.env.example` for the full list with descriptions. After changing
 variables, **redeploy** (Deployments → … → Redeploy).
@@ -41,8 +42,13 @@ variables, **redeploy** (Deployments → … → Redeploy).
 2. **Pricing & Tariffs:** enter each car's rates (empty = "Price on request").
 3. Firestore: the new cars (Ertiga) and 33 routes appear automatically from the
    built-in catalogue; your edits are saved to Firestore.
-4. Optional: deploy `firestore.rules` from the Firebase console/CLI.
-5. Add your custom domain under Project Settings → Domains.
+4. **Homepage Images:** replace any homepage picture (festival pictures etc.)
+   and press Publish — live immediately, no redeploy.
+5. **Terms & Policies:** review the Terms & Conditions and each service's
+   inclusions / exclusions, then Publish (shown on `/terms`, the service
+   pages and with every fare).
+6. Optional: deploy `firestore.rules` from the Firebase console/CLI.
+7. Add your custom domain under Project Settings → Domains.
 
 ## Local development
 

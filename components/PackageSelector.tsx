@@ -12,12 +12,14 @@ import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { LocalPackage, Vehicle } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/cn';
-import { primaryPhoto } from '@/lib/fleetPhotos';
+import { primaryPhoto, type FleetPhoto } from '@/lib/fleetPhotos';
 import { vehicleShortName } from '@/lib/storefrontData';
 
 interface PackageSelectorProps {
   packages: LocalPackage[];
   vehicles: Vehicle[];
+  /** Each car's main photo (published set); built-in photo when absent */
+  vehiclePhotos?: Record<string, Pick<FleetPhoto, 'src' | 'alt' | 'width' | 'height' | 'position'> | undefined>;
 }
 
 const pointToPointPoints = [
@@ -26,7 +28,7 @@ const pointToPointPoints = [
   'Transparent distance-based fare confirmed before dispatch',
 ];
 
-export default function PackageSelector({ packages, vehicles }: PackageSelectorProps) {
+export default function PackageSelector({ packages, vehicles, vehiclePhotos }: PackageSelectorProps) {
   const [activeTab, setActiveTab] = useState<'packages' | 'point-to-point'>('packages');
   const [selectedVehicle, setSelectedVehicle] = useState<string>(vehicles[0]?.id || 'innova');
   const currentVehicle = vehicles.find((v) => v.id === selectedVehicle);
@@ -76,7 +78,7 @@ export default function PackageSelector({ packages, vehicles }: PackageSelectorP
           <div role="radiogroup" aria-label="Vehicle" className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
             {vehicles.map((v) => {
               const on = v.id === selectedVehicle;
-              const photo = primaryPhoto(v.id);
+              const photo = vehiclePhotos?.[v.id] ?? primaryPhoto(v.id);
               return (
                 <button
                   key={v.id}

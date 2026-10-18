@@ -63,7 +63,7 @@ let memoryVehicles: Vehicle[] = memoryGlobal.__icbVehicles;
  * behind the in-memory demo data, which serverless instances can't share).
  * The in-memory store is only used for local development without Firebase.
  */
-const hasFirestore = () =>
+export const hasFirestore = () =>
   Boolean(
     process.env.FIREBASE_PROJECT_ID &&
       process.env.FIREBASE_CLIENT_EMAIL &&

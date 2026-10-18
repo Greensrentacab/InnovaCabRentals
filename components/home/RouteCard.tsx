@@ -5,7 +5,7 @@
 
 import Link from 'next/link';
 import { ArrowRight, Clock, MapPin, Plane, Route } from 'lucide-react';
-import type { RoutePhoto } from '@/lib/routePhotos';
+import type { ResolvedImage } from '@/lib/siteImages';
 
 export interface SliderRoute {
   slug: string;
@@ -19,7 +19,8 @@ export interface SliderRoute {
   fromFare: string;
   fareLabel: string;
   footnote: string;
-  photo?: RoutePhoto;
+  /** Built-in destination photo or the one published in Admin → Homepage images */
+  photo?: Pick<ResolvedImage, 'src' | 'srcSet' | 'alt' | 'position'>;
 }
 
 export default function RouteCard({ route }: { route: SliderRoute }) {
@@ -35,9 +36,12 @@ export default function RouteCard({ route }: { route: SliderRoute }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={route.photo.src}
+            srcSet={route.photo.srcSet}
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
             alt={route.photo.alt}
             width={800}
             height={500}
+            style={{ objectPosition: route.photo.position }}
             loading="lazy"
             decoding="async"
             className="h-full w-full object-cover transition-transform duration-700 ease-premium group-hover:scale-105"

@@ -39,6 +39,7 @@ import {
 } from '@/lib/adminStore';
 import { siteConfig } from '@/lib/siteConfig';
 import { formatTime12 } from '@/lib/time';
+import { validateVehicleRates } from '@/lib/pricing';
 
 const ADMIN_COOKIE_NAME = 'innova_admin_session';
 const SESSION_MAX_AGE_S = 60 * 60 * 24 * 7; // 7 days
@@ -347,6 +348,8 @@ const RATE_KEYS: (keyof VehicleRates)[] = [
   'outstationMinKmPerDay',
   'driverAllowancePerDay',
   'airportFare',
+  'airportIncludedKm',
+  'airportExtraKmRate',
   'local8h',
   'local12h',
   'extraKmRate',
@@ -374,6 +377,10 @@ export async function updateVehicleRates(
       (clean as unknown as Record<string, number | null>)[key] = num;
     }
     clean.outstationMinKmPerDay = clean.outstationMinKmPerDay && clean.outstationMinKmPerDay > 0 ? clean.outstationMinKmPerDay : 300;
+
+    // Incomplete minimum-km tariffs are rejected (same check as the admin form)
+    const problem = validateVehicleRates(clean);
+    if (problem) return { success: false, error: problem.message };
 
     await updateVehicleRatesInStore(vehicleId, clean);
     revalidatePath('/', 'layout');

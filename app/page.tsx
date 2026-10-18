@@ -24,7 +24,9 @@ import FareResults from '@/components/FareResults';
 import TrustInfoSection from '@/components/home/TrustInfoSection';
 import { siteConfig } from '@/lib/siteConfig';
 import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
+import { getSiteImages } from '@/lib/siteContentStore';
 import {
+  airportFromFare,
   buildFleetCards,
   buildRouteCards,
   buildWidgetData,
@@ -96,7 +98,7 @@ export const metadata: Metadata = {
 
 
 export default async function HomePage() {
-  const [vehicles, routes, localPackages] = await Promise.all([getVehicles(), getRoutes(), getLocalPackages()]);
+  const [vehicles, routes, localPackages, images] = await Promise.all([getVehicles(), getRoutes(), getLocalPackages(), getSiteImages()]);
 
   // Fleet: confirmed models only (Toyota Innova, Innova Crysta, Maruti Suzuki Ertiga)
   const fleet = confirmedFleet(vehicles);
@@ -105,13 +107,14 @@ export default async function HomePage() {
   const outstationRoutes = routes.filter((r) => r !== airportRoute);
 
   // All prices come from the cars' admin-editable rates
-  const airportFrom = minFare(fleet.map((v) => v.rates?.airportFare));
+  const airportFrom = minFare(fleet.map(airportFromFare));
   const outstationFrom = minFare(outstationRoutes.map((r) => routeFromFare(r, fleet)));
   const localFrom = minFare(fleet.map((v) => v.rates?.local8h));
 
-  const widgetData = buildWidgetData(routes, localPackages, fleet);
-  const sliderRoutes = buildRouteCards(airportRoute ? [airportRoute, ...outstationRoutes] : outstationRoutes, fleet);
-  const fleetCards = buildFleetCards(fleet);
+  const widgetData = buildWidgetData(routes, localPackages, fleet, images);
+  const sliderRoutes = buildRouteCards(airportRoute ? [airportRoute, ...outstationRoutes] : outstationRoutes, fleet, images);
+  const fleetCards = buildFleetCards(fleet, images);
+  const heroAirport = images.hero.airport;
 
   const stats = [
     { value: `${siteConfig.trustClaims.yearsExperience.value} yrs`, label: 'Of premium Innova rentals' },
@@ -138,17 +141,17 @@ export default async function HomePage() {
       <section className="relative isolate z-10 pb-4 pt-0 lg:flex lg:min-h-[100svh] lg:items-center lg:pb-14 lg:pt-28">
         {/* Picture follows the selected service tab. Desktop: whole picture across the top, car on the right */}
         {/* Start loading the default (airport) picture before the page script runs */}
-        <link rel="preload" as="image" href="/images/hero/hero-airport-mobile.webp" media="(max-width: 1023px)" />
-        <link rel="preload" as="image" href="/images/hero/hero-airport-1920.webp" media="(min-width: 1024px)" />
+        <link rel="preload" as="image" href={(heroAirport.mobile ?? heroAirport.desktop).src} media="(max-width: 1023px)" />
+        <link rel="preload" as="image" href={heroAirport.desktop.large} media="(min-width: 1024px)" />
         {/* Desktop: full-bleed picture with a dark wash, same look as phones */}
-        <HeroCover desktop className="-z-10 hidden lg:block" />
+        <HeroCover desktop images={images.hero} className="-z-10 hidden lg:block" />
 
         {/* Copy + picture on the left, booking form on the right (desktop) */}
         <div className="section grid w-full items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:items-center lg:gap-12">
           <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4">
             {/* Phones/tablets: picture runs edge to edge from the top with the copy on it; desktop uses the band above */}
             <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
-              <HeroCover className="lg:hidden" />
+              <HeroCover images={images.hero} className="lg:hidden" />
               <div className="relative max-lg:[text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_2px_16px_rgba(0,0,0,0.45)]">
                 <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border max-sm:hidden border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white shadow-sm backdrop-blur-md [text-shadow:none]">
                   <span className="relative flex h-2 w-2">
@@ -213,6 +216,7 @@ export default async function HomePage() {
       {/* 2. OUR SERVICES (design.md §3.3)                                 */}
       {/* ================================================================ */}
       <ServicesSection
+        galleries={images.services}
         fares={{
           airport: airportFrom ? formatINR(airportFrom) : null,
           outstation: outstationFrom ? formatINR(outstationFrom) : null,

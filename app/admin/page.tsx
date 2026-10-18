@@ -11,6 +11,7 @@
  * - Pricing & Tariff Management (nullable per client policy)
  * - Fleet Activation (Innova, Crysta, Hycross toggle)
  * - Tour & Contact Enquiries Lead Management
+ * - Homepage images and Terms & policies (published without a deployment)
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -42,6 +43,8 @@ import {
   UserRound,
   Save,
   Undo2,
+  Image as ImageIcon,
+  FileText,
 } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import {
@@ -63,10 +66,16 @@ import VehicleRatesEditor, {
   RateInputs,
   toInputs,
   inputsToRates,
+  ratesProblem,
   ratesSetCount,
 } from '@/components/admin/VehicleRatesEditor';
+import HomepageImagesPanel from '@/components/admin/HomepageImagesPanel';
+import PoliciesPanel from '@/components/admin/PoliciesPanel';
 
-type AdminTab = 'overview' | 'bookings' | 'users' | 'pricing' | 'fleet' | 'enquiries';
+type AdminTab = 'overview' | 'bookings' | 'users' | 'pricing' | 'fleet' | 'enquiries' | 'images' | 'policies';
+
+/** Tabs that keep their own unpublished work, so they stay mounted once opened. */
+const PERSISTENT_TABS: AdminTab[] = ['images', 'policies'];
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: 'Pending',
@@ -104,6 +113,7 @@ export default function AdminDashboardPage() {
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [openedTabs, setOpenedTabs] = useState<AdminTab[]>([]);
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -180,6 +190,7 @@ export default function AdminDashboardPage() {
 
   const goTab = (tab: AdminTab) => {
     setActiveTab(tab);
+    if (PERSISTENT_TABS.includes(tab)) setOpenedTabs((t) => (t.includes(tab) ? t : [...t, tab]));
     setNavOpen(false);
     window.scrollTo({ top: 0 });
   };
@@ -254,8 +265,21 @@ export default function AdminDashboardPage() {
     [rateDrafts, rateBaseline]
   );
   const hasRateChanges = dirtyVehicleIds.length > 0;
+  // Incomplete tariffs (e.g. a minimum-km airport fare without its per-km rate) block saving
+  const rateProblems = useMemo(
+    () =>
+      dirtyVehicleIds
+        .map((id) => ({ id, problem: rateDrafts[id] ? ratesProblem(rateDrafts[id]) : null }))
+        .filter((r): r is { id: string; problem: NonNullable<ReturnType<typeof ratesProblem>> } => r.problem !== null),
+    [dirtyVehicleIds, rateDrafts]
+  );
 
   const saveAllRates = async () => {
+    if (rateProblems.length > 0) {
+      const first = rateProblems[0];
+      setRateError(`${data?.vehicles.find((v) => v.id === first.id)?.name || first.id}: ${first.problem.message}`);
+      return;
+    }
     setSavingRates(true);
     setRateError(null);
     const names: string[] = [];
@@ -355,6 +379,8 @@ export default function AdminDashboardPage() {
     { id: 'pricing', label: 'Pricing & Tariffs', icon: Tag },
     { id: 'fleet', label: 'Fleet & Vehicles', icon: Car },
     { id: 'enquiries', label: 'Tour Enquiries', icon: Users, count: stats?.pendingEnquiries },
+    { id: 'images', label: 'Homepage Images', icon: ImageIcon },
+    { id: 'policies', label: 'Terms & Policies', icon: FileText },
   ];
   const activeLabel = tabs.find((t) => t.id === activeTab)?.label ?? '';
 
@@ -886,6 +912,13 @@ export default function AdminDashboardPage() {
                           <p className="text-sm text-slate-600">
                             Tariff: <strong className="text-brand-700">{b.fare !== null ? `₹${b.fare}` : 'Price on request'}</strong>
                           </p>
+                          {b.fare !== null && b.fareBreakdown && b.fareBreakdown.length > 0 && (
+                            <ul className="mt-1 space-y-0.5 text-[11px] font-semibold tabular-nums text-slate-500">
+                              {b.fareBreakdown.map((line) => (
+                                <li key={line}>{line}</li>
+                              ))}
+                            </ul>
+                          )}
                           {b.driverName ? (
                             <div className="mt-2.5 rounded-xl border border-indigo-100 bg-indigo-50 p-3 text-xs text-indigo-800">
                               <p className="break-words font-bold">
@@ -968,9 +1001,14 @@ export default function AdminDashboardPage() {
             <div className="fixed inset-x-3 bottom-3 z-30 lg:left-[calc(16rem+0.75rem)] lg:right-3">
               <div className="mx-auto flex max-w-[1120px] flex-col gap-3 rounded-2xl bg-[#0B1120] px-4 py-3 text-white shadow-float-lg sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3.5 pb-safe">
                 <p className="flex min-w-0 items-center gap-2.5 text-sm font-bold">
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${rateError ? 'bg-rose-400' : hasRateChanges ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${rateError || rateProblems.length > 0 ? 'bg-rose-400' : hasRateChanges ? 'bg-amber-400' : 'bg-emerald-400'}`} />
                   <span className="min-w-0 truncate">
-                    {rateError ?? (hasRateChanges ? `Unsaved changes in ${dirtyVehicleIds.length} car${dirtyVehicleIds.length > 1 ? 's' : ''}` : 'All changes saved')}
+                    {rateError ??
+                      (rateProblems.length > 0
+                        ? `Fix ${rateProblems.length} tariff${rateProblems.length > 1 ? 's' : ''} before saving`
+                        : hasRateChanges
+                          ? `Unsaved changes in ${dirtyVehicleIds.length} car${dirtyVehicleIds.length > 1 ? 's' : ''}`
+                          : 'All changes saved')}
                   </span>
                 </p>
                 <div className="grid grid-cols-2 gap-2 sm:flex">
@@ -985,7 +1023,7 @@ export default function AdminDashboardPage() {
                   <button
                     type="button"
                     onClick={saveAllRates}
-                    disabled={!hasRateChanges || savingRates}
+                    disabled={!hasRateChanges || savingRates || rateProblems.length > 0}
                     className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2 text-sm font-extrabold text-white transition-colors hover:bg-brand-500 disabled:bg-brand-900/70 disabled:text-white/50"
                   >
                     <Save className="h-4 w-4" /> {savingRates ? 'Saving...' : 'Save tariffs'}
@@ -993,6 +1031,20 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ───────────── HOMEPAGE IMAGES ───────────── */}
+        {openedTabs.includes('images') && (
+          <div className={activeTab === 'images' ? 'animate-panel-in' : 'hidden'}>
+            <HomepageImagesPanel onToast={showToast} />
+          </div>
+        )}
+
+        {/* ───────────── TERMS & POLICIES ───────────── */}
+        {openedTabs.includes('policies') && (
+          <div className={activeTab === 'policies' ? 'animate-panel-in' : 'hidden'}>
+            <PoliciesPanel onToast={showToast} />
           </div>
         )}
 

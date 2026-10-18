@@ -23,7 +23,8 @@ export interface FleetCardData {
   features: string[];
   fares: { label: string; value: string }[];
   href: string;
-  photo?: FleetPhoto;
+  /** Built-in photo or the one published in Admin → Homepage images */
+  photo?: Pick<FleetPhoto, 'src' | 'alt' | 'width' | 'height' | 'position'> & { srcSet?: string };
   rates?: VehicleRates;
 }
 
@@ -55,6 +56,8 @@ export default function FleetSection({ vehicles }: { vehicles: FleetCardData[] }
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={v.photo.src}
+                    srcSet={v.photo.srcSet}
+                    sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
                     alt={v.photo.alt}
                     width={v.photo.width}
                     height={v.photo.height}

@@ -15,8 +15,8 @@ import { getLocalPackages, getRoutes, getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
 import { LocationData } from '@/lib/googlePlaces';
 import { primaryPhoto } from '@/lib/fleetPhotos';
-import { routePhoto } from '@/lib/routePhotos';
-import { buildWidgetData, confirmedFleet, fareOrRequest, formatINR, routeFromFare, routeRoundTripFare } from '@/lib/storefrontData';
+import { buildWidgetData, confirmedFleet, fareOrRequest, formatINR, routeCardPhoto, routeFromFare, routeRoundTripFare } from '@/lib/storefrontData';
+import { getSiteImages } from '@/lib/siteContentStore';
 import FareResults from '@/components/FareResults';
 
 interface RoutePageProps {
@@ -371,9 +371,9 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
     notFound();
   }
 
-  const [allVehicles, localPackages] = await Promise.all([getVehicles(), getLocalPackages()]);
+  const [allVehicles, localPackages, images] = await Promise.all([getVehicles(), getLocalPackages(), getSiteImages()]);
   const vehicles = confirmedFleet(allVehicles);
-  const widgetData = buildWidgetData(routes, localPackages, vehicles);
+  const widgetData = buildWidgetData(routes, localPackages, vehicles, images);
   const isAirportRoute = params.slug.includes('airport');
   const heroScene = isAirportRoute ? 'airport' : 'outstation';
   const routeFrom = routeFromFare(route, vehicles);
@@ -416,7 +416,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
     ],
   };
 
-  const destPhoto = routePhoto(route.slug);
+  const destPhoto = routeCardPhoto(route.slug, images);
 
   const whatsappRouteUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
     `Hello ${siteConfig.brand.name}, I would like to book the ${customDetails.h1} (${route.distanceKm} km) in Toyota Innova. Please share current quote.`
@@ -427,12 +427,12 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
       {/* Hero: same layout as the homepage — fare form right under the heading */}
       <section className="ds-scope relative isolate z-10 pb-4 pt-0 lg:flex lg:min-h-[100svh] lg:items-center lg:pb-14 lg:pt-28">
         {/* Desktop: full-bleed picture with a dark wash, same look as phones */}
-        <HeroCover desktop scene={heroScene} className="-z-10 hidden lg:block" />
+        <HeroCover desktop scene={heroScene} images={images.hero} className="-z-10 hidden lg:block" />
 
         <div className="section grid w-full items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:items-center lg:gap-12">
           <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4">
             <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
-              <HeroCover scene={heroScene} className="lg:hidden" />
+              <HeroCover scene={heroScene} images={images.hero} className="lg:hidden" />
               <div className="relative max-lg:[text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_2px_16px_rgba(0,0,0,0.45)]">
                 <BreadcrumbJsonLd items={[{ label: 'Outstation Routes', href: '/routes' }, { label: customDetails.h1 }]} />
                 <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs font-semibold text-white/80 [text-shadow:none]">
@@ -516,18 +516,23 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={destPhoto.src}
+                  srcSet={destPhoto.srcSet}
+                  sizes="(min-width: 1024px) 50vw, 100vw"
                   alt={destPhoto.alt}
                   width={800}
                   height={500}
                   loading="lazy"
                   decoding="async"
+                  style={{ objectPosition: destPhoto.position }}
                   className="aspect-[16/9] w-full object-cover"
                 />
                 <figcaption className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 text-[11px] text-slate-500">
                   <span className="font-semibold text-slate-700">{destPhoto.alt}</span>
-                  <a href={destPhoto.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-700">
-                    Photo: {destPhoto.author} / Wikimedia Commons, {destPhoto.license}
-                  </a>
+                  {destPhoto.credit && (
+                    <a href={destPhoto.credit.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-700">
+                      Photo: {destPhoto.credit.author} / Wikimedia Commons, {destPhoto.credit.license}
+                    </a>
+                  )}
                 </figcaption>
               </figure>
             )}
@@ -581,7 +586,10 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
           />
           <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {vehicles.map((v, i) => {
-              const photo = primaryPhoto(v.id);
+              const fleetPhoto = primaryPhoto(v.id);
+              // Uploaded photo from Admin → Homepage images, else the built-in one (credited when third-party)
+              const photo = images.fleet[v.id]?.[0] ?? fleetPhoto;
+              const showCredit = Boolean(fleetPhoto && !images.fleet[v.id]?.[0]?.custom);
               const whatsappVehicleUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
                 `Hello, I would like to book a ${v.name} for the ${customDetails.h1}. Please share tariff and availability.`
               )}`;
@@ -635,7 +643,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
                           <WhatsAppIcon className="h-4 w-4" /> Quick Quote
                         </a>
                       </div>
-                      {photo && <PhotoCredit photo={photo} className="mt-3 block" />}
+                      {showCredit && fleetPhoto && <PhotoCredit photo={fleetPhoto} className="mt-3 block" />}
                     </div>
                   </article>
                 </Reveal>

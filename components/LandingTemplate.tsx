@@ -31,6 +31,8 @@ import {
   confirmedFleet,
   sortPackages,
 } from '@/lib/storefrontData';
+import { getPublishedPolicies, getSiteImages } from '@/lib/siteContentStore';
+import { IncludedExcluded } from '@/components/policies/PolicyViews';
 
 export interface LandingBenefit {
   icon: React.ComponentType<{ className?: string }>;
@@ -95,7 +97,7 @@ const hairline = (
   <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 );
 
-export default function LandingTemplate({
+export default async function LandingTemplate({
   breadcrumb,
   badge,
   title,
@@ -118,9 +120,10 @@ export default function LandingTemplate({
   serviceType,
 }: LandingTemplateProps) {
   const fleet = confirmedFleet(vehicles);
-  const widgetData = buildWidgetData(allRoutes, localPackages, fleet);
-  const routeCards = buildRouteCards(routes, fleet);
-  const fleetCards = buildFleetCards(fleet);
+  const [images, policies] = await Promise.all([getSiteImages(), getPublishedPolicies()]);
+  const widgetData = buildWidgetData(allRoutes, localPackages, fleet, images);
+  const routeCards = buildRouteCards(routes, fleet, images);
+  const fleetCards = buildFleetCards(fleet, images);
 
   return (
     <div className="ds-scope bg-porcelain">
@@ -131,13 +134,13 @@ export default function LandingTemplate({
       {/* ================================================================ */}
       <section className="relative isolate z-10 pb-4 pt-0 lg:flex lg:min-h-[100svh] lg:items-center lg:pb-14 lg:pt-28">
         {/* Desktop: full-bleed picture with a dark wash, same look as the homepage */}
-        <HeroCover desktop scene={serviceType} className="-z-10 hidden lg:block" />
+        <HeroCover desktop scene={serviceType} images={images.hero} className="-z-10 hidden lg:block" />
 
         <div className="section grid w-full items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:items-center lg:gap-12">
           <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4">
             {/* Phones/tablets: picture runs edge to edge from the top with the copy on it */}
             <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
-              <HeroCover scene={serviceType} className="lg:hidden" />
+              <HeroCover scene={serviceType} images={images.hero} className="lg:hidden" />
               <div className="relative max-lg:[text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_2px_16px_rgba(0,0,0,0.45)]">
                 <BreadcrumbJsonLd items={[{ label: breadcrumb }]} />
                 <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs font-semibold text-white/80 [text-shadow:none]">
@@ -220,7 +223,11 @@ export default function LandingTemplate({
               subtitle="Choose between flexible point-to-point rides or hourly full-day rental packages for city travel."
             />
             <div className="mt-10">
-              <PackageSelector packages={sortPackages(localPackages)} vehicles={fleet} />
+              <PackageSelector
+                packages={sortPackages(localPackages)}
+                vehicles={fleet}
+                vehiclePhotos={Object.fromEntries(fleet.map((v) => [v.id, images.fleet[v.id]?.[0]]))}
+              />
             </div>
           </div>
         </section>
@@ -247,6 +254,23 @@ export default function LandingTemplate({
             );
           })}
         </div>
+      </section>
+
+      {/* ================================================================ */}
+      {/* 3b. WHAT'S INCLUDED (Admin → Terms & policies)                   */}
+      {/* ================================================================ */}
+      <section id="included" className="section scroll-mt-24 pb-10 sm:pb-20">
+        <SectionHeading
+          eyebrow="Clear pricing"
+          title="What's included in your fare"
+          subtitle="Know exactly what you pay for before you book."
+        />
+        <IncludedExcluded policy={policies.services[serviceType]} className="mx-auto mt-8 max-w-4xl sm:mt-10" />
+        <p className="mt-5 text-center text-sm">
+          <Link href={`/terms#${serviceType}`} className="font-bold text-brand-700 underline-offset-4 hover:text-brand-800 hover:underline">
+            Read the full terms &amp; conditions
+          </Link>
+        </p>
       </section>
 
       {/* ================================================================ */}

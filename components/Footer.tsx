@@ -72,6 +72,7 @@ const columns: { title: string; links: { label: string; href: string }[] }[] = [
       { label: 'About Us', href: '/about' },
       { label: 'All Outstation Routes', href: '/routes' },
       { label: 'Frequently Asked Questions', href: '/faq' },
+      { label: 'Terms & Conditions', href: '/terms' },
       { label: 'Contact & Booking', href: '/contact' },
     ],
   },

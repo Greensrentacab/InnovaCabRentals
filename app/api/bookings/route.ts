@@ -162,6 +162,7 @@ export async function POST(req: NextRequest) {
     });
 
     const serverFare = fareCalc.fares[data.vehicleId] ?? null;
+    const serverBreakdown = fareCalc.results.find((r) => r.vehicleId === data.vehicleId)?.breakdown ?? [];
 
     // 5. Generate unique ID like ICB-10482 with collision check
     const bookingId = await generateUniqueBookingId();
@@ -195,6 +196,8 @@ export async function POST(req: NextRequest) {
       vehicleId: data.vehicleId,
       vehicleName: data.vehicleName,
       fare: serverFare,
+      fareBreakdown: serverFare !== null ? serverBreakdown : [],
+      distanceKm: fareCalc.distanceKm,
       bookingStatus: 'PENDING',
       driverId: null,
       driverName: null,

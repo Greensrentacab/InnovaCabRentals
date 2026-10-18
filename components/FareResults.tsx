@@ -75,18 +75,22 @@ function ResultCard({
   totalKm,
   days,
   index,
+  inclusions,
+  exclusions,
 }: {
   car: FareResult;
   trip: TripParams;
   totalKm: number | null;
   days: number;
   index: number;
+  inclusions: string[];
+  exclusions: string[];
 }) {
   const { requestBooking } = useBookingFlow();
   const [showTerms, setShowTerms] = useState(false);
   const closeTerms = useCallback(() => setShowTerms(false), []);
-  // Car photo carousel (our own fleet photos where available)
-  const photos = (fleetPhotos[car.vehicleId] ?? []).slice(0, 5);
+  // Car photo carousel: the published set from the fare API, else the built-in photos
+  const photos = car.photos?.length ? car.photos : fleetPhotos[car.vehicleId] ?? [];
   const waUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
     buildAdminWhatsAppMessage(trip, car, { totalKm, days })
   )}`;
@@ -146,7 +150,12 @@ function ResultCard({
             onClose={closeTerms}
             title={car.vehicleName}
             subtitle={car.fare !== null ? `Estimated fare ${inr(car.fare)}` : undefined}
-            terms={car.terms}
+            sections={[
+              { title: 'How this fare is worked out', items: car.breakdown ?? [], tone: 'fare' },
+              { title: "What's included", items: inclusions, tone: 'included' },
+              { title: 'Not included', items: exclusions, tone: 'excluded' },
+              { title: 'Terms', items: car.terms, tone: 'terms' },
+            ]}
           />
 
           <div className="mt-3 grid grid-cols-[auto_1fr] gap-2">
@@ -237,6 +246,11 @@ export default function FareResults() {
             <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
               <Clock className="h-3.5 w-3.5 text-brand-600" /> {formatTime12(trip.time)}
             </span>
+            {trip.serviceType === 'airport' && search.distanceKm !== null && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
+                <RouteIcon className="h-3.5 w-3.5 text-brand-600" /> ~{search.distanceKm} km{trip.tripType === 'round' ? ' each way' : ''}
+              </span>
+            )}
             {trip.serviceType === 'outstation' && search.totalKm !== null && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
                 <RouteIcon className="h-3.5 w-3.5 text-brand-600" /> ~{search.totalKm} km round trip · {search.days} day
@@ -248,7 +262,9 @@ export default function FareResults() {
 
         <p className="flex items-start gap-2 border-t border-amber-100 bg-amber-50/80 px-4 py-2.5 text-[11px] font-semibold leading-snug text-amber-800 sm:px-6">
           <Info className="mt-px h-3.5 w-3.5 shrink-0" />
-          Toll fees, parking and state permits are paid by the customer and are not included in these fares.
+          {search.exclusions.length > 0
+            ? `Not included in these fares: ${search.exclusions.join(', ')}.`
+            : 'Toll fees, parking and state permits are paid by the customer and are not included in these fares.'}
         </p>
       </div>
 
@@ -283,7 +299,15 @@ export default function FareResults() {
             .sort((a, b) => (a.fare ?? Infinity) - (b.fare ?? Infinity))
             .map((car, i) => (
             <div key={car.vehicleId} className="min-w-0 animate-fade-up">
-              <ResultCard car={car} trip={trip} totalKm={search.totalKm} days={search.days} index={i} />
+              <ResultCard
+                car={car}
+                trip={trip}
+                totalKm={search.totalKm}
+                days={search.days}
+                index={i}
+                inclusions={search.inclusions}
+                exclusions={search.exclusions}
+              />
             </div>
           ))}
           {search.results.length === 0 && (

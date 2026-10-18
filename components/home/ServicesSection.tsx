@@ -1,6 +1,7 @@
 /**
  * ServicesSection.tsx — "Our services" grid (design.md §3.3). Each card header is a
- * photo carousel: the matching hero scene plus our own fleet photos.
+ * photo carousel: by default the matching hero scene plus our own fleet photos;
+ * the photos and their order are set in Admin → Homepage images.
  */
 
 import Link from 'next/link';
@@ -9,16 +10,10 @@ import Reveal from '@/components/home/Reveal';
 import { cn } from '@/lib/cn';
 import CardGallery from '@/components/ds/CardGallery';
 import type { CarouselPhoto } from '@/components/home/PhotoCarousel';
-import { fleetPhotos, type FleetPhoto } from '@/lib/fleetPhotos';
+import { DEFAULT_SITE_IMAGES, type HeroScene, type ResolvedImage } from '@/lib/siteImages';
 
-const scene = (name: string, alt: string): CarouselPhoto => ({
-  src: `/images/hero/hero-${name}-960.webp`,
-  alt,
-  width: 960,
-  height: 536,
-  position: '75% 60%',
-});
-const own = (p: FleetPhoto): CarouselPhoto => p;
+const toPhotos = (images: ResolvedImage[]): CarouselPhoto[] =>
+  images.map(({ src, alt, width, height, position }) => ({ src, alt, width, height, position }));
 
 export interface ServiceFares {
   airport: string | null;
@@ -29,7 +24,7 @@ export interface ServiceFares {
 interface ServiceCard {
   title: string;
   icon: LucideIcon;
-  /** Carousel photos: hero scene + our own fleet photos */
+  /** Carousel photos (Admin → Homepage images) */
   photos: CarouselPhoto[];
   badges: { label: string; tone: 'amber' | 'glass' }[];
   description: string;
@@ -40,17 +35,19 @@ interface ServiceCard {
   href: string;
 }
 
-export default function ServicesSection({ fares }: { fares: ServiceFares }) {
+export default function ServicesSection({
+  fares,
+  galleries = DEFAULT_SITE_IMAGES.services,
+}: {
+  fares: ServiceFares;
+  /** Card photos per service (published in Admin → Homepage images) */
+  galleries?: Record<HeroScene, ResolvedImage[]>;
+}) {
   const cards: ServiceCard[] = [
     {
       title: 'Airport Transfers',
       icon: Plane,
-      photos: [
-        scene('airport', 'Innova Hycross waiting at the Bangalore airport terminal'),
-        own(fleetPhotos['innova-hycross'][0]),
-        own(fleetPhotos['innova-crysta'][0]),
-        own(fleetPhotos['innova-hycross'][4]),
-      ],
+      photos: toPhotos(galleries.airport),
       badges: [
         { label: '24/7', tone: 'amber' },
         { label: 'Flight Tracked', tone: 'glass' },
@@ -65,12 +62,7 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
     {
       title: 'Outstation Trips',
       icon: Mountain,
-      photos: [
-        scene('outstation', 'Toyota Innova on a hill highway through tea plantations'),
-        own(fleetPhotos.innova[0]),
-        own(fleetPhotos['innova-hycross'][1]),
-        own(fleetPhotos['innova-crysta'][1]),
-      ],
+      photos: toPhotos(galleries.outstation),
       badges: [{ label: 'Per-km billing', tone: 'glass' }],
       description: 'Weekend escapes to Mysore, Coorg, Ooty, Wayanad & beyond.',
       bullets: ['Transparent per-km fares, tolls paid by customer', 'Experienced hill-station chauffeurs', 'Multi-day round trips, up to 3 stops'],
@@ -82,12 +74,7 @@ export default function ServicesSection({ fares }: { fares: ServiceFares }) {
     {
       title: 'Local & Hourly Rentals',
       icon: Hourglass,
-      photos: [
-        scene('local', 'Innova Crysta parked near Vidhana Soudha, Bangalore'),
-        own(fleetPhotos['innova-hycross'][2]),
-        own(fleetPhotos.innova[1]),
-        own(fleetPhotos['innova-crysta'][2]),
-      ],
+      photos: toPhotos(galleries.local),
       badges: [{ label: '8 hr · 12 hr · custom', tone: 'glass' }],
       description: 'An Innova, Crysta or Ertiga with chauffeur on standby for your day in the city.',
       bullets: ['8 hr full-day & 12 hr extended hire', 'Business meetings, errands & shopping', 'Multiple stops, no re-booking'],

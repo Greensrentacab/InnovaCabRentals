@@ -22,6 +22,7 @@ import { Vehicle, ServiceType, TripType, Booking } from '@/lib/types';
 import { formatTime12 } from '@/lib/time';
 import { siteConfig } from '@/lib/siteConfig';
 import { useAuth } from '@/context/AuthContext';
+import type { FleetPhoto } from '@/lib/fleetPhotos';
 
 export type BookingStep =
   | 'loading'
@@ -43,6 +44,8 @@ export interface FareResult {
   fare: number | null;
   breakdown: string[];
   terms: string[];
+  /** The car's published photo set (Admin → Homepage images → Car photos) */
+  photos?: FleetPhoto[];
 }
 
 export interface TripParams {
@@ -66,6 +69,9 @@ export interface FareSearchState {
   distanceKm: number | null;
   totalKm: number | null;
   days: number;
+  /** What the fares include / exclude (Admin → Terms & policies) */
+  inclusions: string[];
+  exclusions: string[];
   error: string | null;
   /** Increments per search so the results panel can scroll into view */
   searchId: number;
@@ -89,6 +95,10 @@ export interface BookingFlowState {
   // Vehicles & Pricing
   availableVehicles: Vehicle[];
   faresMap: { [vehicleId: string]: number | null };
+  /** How each car's fare was worked out (shown on the review step) */
+  breakdownMap: { [vehicleId: string]: string[] };
+  /** Each car's main photo from the fare search */
+  photoMap: { [vehicleId: string]: FleetPhoto | undefined };
   selectedVehicle: Vehicle | null;
 
   // Passenger Details (ONLY Full Name and 10-digit Mobile) — may differ from the account owner
@@ -131,6 +141,8 @@ const defaultState: BookingFlowState = {
   routeSlug: undefined,
   availableVehicles: [],
   faresMap: {},
+  breakdownMap: {},
+  photoMap: {},
   selectedVehicle: null,
   customerName: '',
   customerPhone: '',
@@ -146,6 +158,8 @@ const defaultSearch: FareSearchState = {
   distanceKm: null,
   totalKm: null,
   days: 1,
+  inclusions: [],
+  exclusions: [],
   error: null,
   searchId: 0,
 };
@@ -200,6 +214,8 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
         distanceKm: data.distanceKm ?? null,
         totalKm: data.totalKm ?? null,
         days: data.days ?? 1,
+        inclusions: Array.isArray(data.inclusions) ? data.inclusions : [],
+        exclusions: Array.isArray(data.exclusions) ? data.exclusions : [],
       }));
     } catch (err) {
       console.error('[BookingFlow] Fare search failed:', err);
@@ -238,6 +254,8 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
         distanceKm: search.distanceKm,
         availableVehicles: vehicles,
         faresMap: Object.fromEntries(search.results.map((r) => [r.vehicleId, r.fare])),
+        breakdownMap: Object.fromEntries(search.results.map((r) => [r.vehicleId, r.breakdown ?? []])),
+        photoMap: Object.fromEntries(search.results.map((r) => [r.vehicleId, r.photos?.[0]])),
         selectedVehicle: selected,
         confirmedBooking: null,
         adminWhatsAppUrl: null,

@@ -23,6 +23,8 @@ export const emptyRates = (): VehicleRates => ({
   outstationMinKmPerDay: 300,
   driverAllowancePerDay: null,
   airportFare: null,
+  airportIncludedKm: null,
+  airportExtraKmRate: null,
   local8h: null,
   local12h: null,
   extraKmRate: null,
@@ -48,6 +50,9 @@ const defaultRates = (
   outstationMinKmPerDay: 300,
   driverAllowancePerDay,
   airportFare,
+  // Flat airport fare until a minimum-km tariff is set in Admin → Pricing
+  airportIncludedKm: null,
+  airportExtraKmRate: null,
   local8h,
   local12h,
   extraKmRate,

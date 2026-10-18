@@ -138,6 +138,7 @@ export default function BookingFlowModal() {
 
   const stepNumber = getStepNumber();
   const selectedFare = state.selectedVehicle ? state.faresMap[state.selectedVehicle.id] ?? null : null;
+  const selectedBreakdown = state.selectedVehicle ? state.breakdownMap[state.selectedVehicle.id] ?? [] : [];
   const tripLabel =
     state.serviceType === 'outstation'
       ? 'Round Trip'
@@ -399,7 +400,9 @@ export default function BookingFlowModal() {
                 ...(state.dropLocation?.name ? [{ label: isRound ? 'Destination' : 'Drop', name: state.dropLocation.name }] : []),
                 ...(isRound && state.pickupLocation?.name ? [{ label: 'Return', name: state.pickupLocation.name }] : []),
               ];
-              const vehiclePhoto = state.selectedVehicle ? primaryPhoto(state.selectedVehicle.id) : undefined;
+              const vehiclePhoto = state.selectedVehicle
+                ? state.photoMap[state.selectedVehicle.id] ?? primaryPhoto(state.selectedVehicle.id)
+                : undefined;
               const when = [
                 formatDateLong(state.pickupDate) || 'Date not set',
                 state.returnDate ? `→ ${formatDateLong(state.returnDate)}` : '',
@@ -474,23 +477,39 @@ export default function BookingFlowModal() {
                     </ReviewSection>
 
                     {/* Fare */}
-                    <div className="flex items-center justify-between gap-3 rounded-b-2xl bg-slate-50 px-4 py-3">
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Estimated fare</p>
-                        <p className="text-xl font-extrabold leading-tight tracking-tight tabular-nums text-ink">
-                          {selectedFare !== null ? `₹${selectedFare.toLocaleString('en-IN')}` : <span className="text-sm">Price on request</span>}
-                        </p>
+                    <div className="rounded-b-2xl bg-slate-50 px-4 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Estimated fare</p>
+                          <p className="text-xl font-extrabold leading-tight tracking-tight tabular-nums text-ink">
+                            {selectedFare !== null ? `₹${selectedFare.toLocaleString('en-IN')}` : <span className="text-sm">Price on request</span>}
+                          </p>
+                        </div>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-live-500/10 px-2.5 py-1 text-[11px] font-bold text-live-600">
+                          <Check className="h-3 w-3" strokeWidth={3} /> ₹0 advance
+                        </span>
                       </div>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-live-500/10 px-2.5 py-1 text-[11px] font-bold text-live-600">
-                        <Check className="h-3 w-3" strokeWidth={3} /> ₹0 advance
-                      </span>
+                      {/* How the fare was worked out (same lines the server priced) */}
+                      {selectedFare !== null && selectedBreakdown.length > 0 && (
+                        <ul className="mt-2 space-y-0.5 border-t border-slate-200/70 pt-2 text-[11px] font-semibold tabular-nums text-slate-500">
+                          {selectedBreakdown.map((line) => (
+                            <li key={line}>{line}</li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </div>
 
                   <p className="flex items-start gap-2 rounded-xl bg-brand-50/70 px-3 py-2.5 text-[11px] leading-relaxed text-brand-900/80">
                     <ShieldCheck className="mt-px h-3.5 w-3.5 shrink-0 text-brand-600" />
-                    Next: sign in to confirm. Our team checks availability and sends driver details on WhatsApp. Tolls, parking &amp;
-                    permits are paid by you.
+                    <span>
+                      Next: sign in to confirm. Our team checks availability and sends driver details on WhatsApp. Tolls, parking &amp;
+                      permits are paid by you. By booking you agree to our{' '}
+                      <Link href="/terms" target="_blank" className="font-bold text-brand-700 underline underline-offset-2">
+                        Terms &amp; Conditions
+                      </Link>
+                      .
+                    </span>
                   </p>
                 </div>
               );

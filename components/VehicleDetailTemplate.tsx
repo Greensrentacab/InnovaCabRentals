@@ -9,7 +9,8 @@ import { ArrowRight, Check, ChevronRight, Clock, Luggage, MapPin, Phone, Users }
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { Vehicle } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
-import { fleetPhotos } from '@/lib/fleetPhotos';
+import { getSiteImages } from '@/lib/siteContentStore';
+import { carPhotos } from '@/lib/siteImages';
 import { BreadcrumbJsonLd } from '@/components/seo/JsonLd';
 import ProductGallery from '@/components/ds/ProductGallery';
 import CtaBand from '@/components/ds/CtaBand';
@@ -35,7 +36,7 @@ const included = [
   '24/7 dedicated dispatch support',
 ];
 
-export default function VehicleDetailTemplate({
+export default async function VehicleDetailTemplate({
   vehicle,
   h1,
   tagline,
@@ -43,10 +44,12 @@ export default function VehicleDetailTemplate({
   idealFor,
   detailedSpecs,
 }: VehicleDetailTemplateProps) {
+  const images = await getSiteImages();
   const whatsappUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
     `Hello ${siteConfig.brand.name}, I am interested in renting the ${vehicle.name} in Bangalore. Please share tariff and availability.`
   )}`;
-  const photos = fleetPhotos[vehicle.id] ?? [];
+  // Published photo set (Admin → Homepage images → Car photos), else the built-in photos
+  const photos = carPhotos(images, vehicle.id);
   const rows = rateRows(vehicle.rates);
 
   return (

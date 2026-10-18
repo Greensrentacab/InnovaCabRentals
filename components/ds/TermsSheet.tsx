@@ -4,11 +4,29 @@
  * TermsSheet.tsx — terms & conditions as a bottom sheet on mobile (centred
  * dialog from sm up). Portalled to <body> so card transforms can't break its
  * fixed positioning. Closes on Escape, backdrop tap or the close button.
+ * Content comes in titled sections (fare details, what's included, not
+ * included, terms) published from Admin → Pricing and Admin → Terms & policies.
  */
 
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, X } from 'lucide-react';
+import Link from 'next/link';
+import { Check, Minus, X } from 'lucide-react';
+import { cn } from '@/lib/cn';
+
+export interface TermsSection {
+  title: string;
+  items: string[];
+  /** included = green tick, excluded = amber cross, fare = plain lines */
+  tone?: 'included' | 'excluded' | 'fare' | 'terms';
+}
+
+const MARK = {
+  included: { icon: Check, cls: 'bg-live-500/10 text-live-600' },
+  excluded: { icon: X, cls: 'bg-amber-500/15 text-amber-700' },
+  terms: { icon: Check, cls: 'bg-live-500/10 text-live-600' },
+  fare: { icon: Minus, cls: 'bg-slate-100 text-slate-500' },
+};
 
 export default function TermsSheet({
   open,
@@ -16,12 +34,15 @@ export default function TermsSheet({
   title,
   subtitle,
   terms,
+  sections,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   subtitle?: string;
-  terms: string[];
+  /** Plain list of terms (used when no sections are given) */
+  terms?: string[];
+  sections?: TermsSection[];
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -66,16 +87,33 @@ export default function TermsSheet({
             <X className="h-4 w-4" />
           </button>
         </div>
-        <ul className="space-y-3 overflow-y-auto border-t border-slate-100 px-5 py-4 text-sm leading-relaxed text-slate-700">
-          {terms.map((term) => (
-            <li key={term} className="flex items-start gap-2.5">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-live-500/10 text-live-600">
-                <Check className="h-3 w-3" strokeWidth={3} />
-              </span>
-              {term}
-            </li>
-          ))}
-        </ul>
+        <div className="space-y-5 overflow-y-auto border-t border-slate-100 px-5 py-4 text-sm leading-relaxed text-slate-700">
+          {(sections ?? [{ title: '', items: terms ?? [], tone: 'terms' as const }])
+            .filter((s) => s.items.length > 0)
+            .map((section) => {
+              const mark = MARK[section.tone ?? 'terms'];
+              return (
+                <div key={section.title || 'terms'}>
+                  {section.title && (
+                    <h4 className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">{section.title}</h4>
+                  )}
+                  <ul className={cn('space-y-2.5', section.tone === 'fare' && 'space-y-1.5 font-semibold tabular-nums text-ink')}>
+                    {section.items.map((item, i) => (
+                      <li key={`${i}-${item}`} className="flex items-start gap-2.5">
+                        <span className={cn('mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full', mark.cls)}>
+                          <mark.icon className="h-3 w-3" strokeWidth={3} />
+                        </span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          <Link href="/terms" className="inline-block text-xs font-bold text-brand-700 underline-offset-4 hover:underline" onClick={onClose}>
+            Full terms &amp; conditions
+          </Link>
+        </div>
         <div className="border-t border-slate-100 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <button type="button" onClick={onClose} className="btn-primary !min-h-0 h-11 w-full !rounded-lg text-sm">
             Got it

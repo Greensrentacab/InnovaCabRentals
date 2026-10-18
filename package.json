@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "npx -y tsx scripts/seed.ts"
+    "seed": "npx -y tsx scripts/seed.ts",
+    "test": "npx -y tsx --conditions=react-server --test \"tests/**/*.test.ts\""
   },
   "dependencies": {
     "firebase": "^12.19.0",

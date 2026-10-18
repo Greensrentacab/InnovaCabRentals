@@ -2,9 +2,11 @@ import Link from 'next/link';
 import { ArrowRight, Check, ChevronRight, Clock, Luggage, Mountain, Phone, Plane, Users } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { confirmedFleet, formatINR } from '@/lib/storefrontData';
+import { airportTariff, tariffMode, tariffSummary } from '@/lib/pricing';
 import { getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
-import { fleetPhotos } from '@/lib/fleetPhotos';
+import { getSiteImages } from '@/lib/siteContentStore';
+import { carPhotos } from '@/lib/siteImages';
 import PageHero from '@/components/ds/PageHero';
 import CtaBand from '@/components/ds/CtaBand';
 import VehiclePhotoCard from '@/components/ds/VehiclePhotoCard';
@@ -31,7 +33,7 @@ export const metadata = {
 };
 
 export default async function VehiclesPage() {
-  const allVehicles = await getVehicles();
+  const [allVehicles, images] = await Promise.all([getVehicles(), getSiteImages()]);
   // Cars switched off in Admin → Fleet (confirmed:false) are hidden
   const confirmedVehicles = confirmedFleet(allVehicles);
 
@@ -95,14 +97,14 @@ export default async function VehiclesPage() {
         <SectionHeading eyebrow="Compare our vehicles" title="Choose the right cab for your trip" />
         <div className="mt-8 space-y-4">
           {confirmedVehicles.map((v) => {
-            const photo = fleetPhotos[v.id]?.[0];
+            const photo = carPhotos(images, v.id)[0];
             const rates = v.rates;
             const quoteUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
               `Hello ${siteConfig.brand.name}, please share a quote for the ${v.name}.`
             )}`;
             const rows = [
               { icon: Mountain, label: 'Outstation', sub: `From ${rates?.outstationMinKmPerDay ?? 300} km/day`, value: rates?.outstationPerKm ? `${formatINR(rates.outstationPerKm)}/km` : null },
-              { icon: Plane, label: 'Airport transfer', value: rates?.airportFare ? formatINR(rates.airportFare) : null },
+              { icon: Plane, label: 'Airport transfer', value: tariffMode(airportTariff(rates)) === 'request' ? null : tariffSummary(airportTariff(rates)) },
               { icon: Clock, label: 'Local 8 hr / 80 km', value: rates?.local8h ? formatINR(rates.local8h) : null },
             ];
             return (
@@ -176,7 +178,7 @@ export default async function VehiclesPage() {
           const whatsappVehicleUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
             `Hello ${siteConfig.brand.name}, I would like to get a quote and check availability for ${vehicle.name}.`
           )}`;
-          const photo = fleetPhotos[vehicle.id]?.[0];
+          const photo = carPhotos(images, vehicle.id)[0];
 
           return (
             <Reveal key={vehicle.id}>

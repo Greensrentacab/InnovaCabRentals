@@ -297,6 +297,15 @@ export async function fetchBookingsByUser(userId: string): Promise<Booking[]> {
   return snapshot.docs.map((doc) => doc.data() as Booking).sort(byNewest);
 }
 
+/** Every customer account profile (Admin → Users). */
+export async function fetchAllUsers(): Promise<UserProfile[]> {
+  if (!hasFirestore()) return Array.from(memoryGlobal.__icbUsers!.values());
+
+  const adminDb = await getAdminDb();
+  const snapshot = await adminDb.collection('users').get();
+  return snapshot.docs.map((doc) => doc.data() as UserProfile);
+}
+
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   if (!hasFirestore()) return memoryGlobal.__icbUsers!.get(uid) ?? null;
 

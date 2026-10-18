@@ -20,11 +20,13 @@ function buildProfile(user: AuthenticatedUser, stored: UserProfile | null): User
     photoURL: user.photoURL ?? stored?.photoURL ?? null,
     createdAt: stored?.createdAt ?? user.createdAt ?? now,
     updatedAt: stored?.updatedAt ?? now,
+    lastLoginAt: user.lastLoginAt ?? stored?.lastLoginAt ?? null,
   };
 }
 
 const sameProfile = (a: UserProfile, b: UserProfile) =>
-  a.email === b.email && a.displayName === b.displayName && a.phone === b.phone && a.photoURL === b.photoURL;
+  a.email === b.email && a.displayName === b.displayName && a.phone === b.phone && a.photoURL === b.photoURL &&
+  (a.lastLoginAt ?? null) === (b.lastLoginAt ?? null);
 
 /**
  * GET /api/me/profile — the signed-in customer's account profile.

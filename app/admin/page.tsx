@@ -39,6 +39,7 @@ import {
   ArrowRight,
   Clock,
   Briefcase,
+  UserRound,
   Save,
   Undo2,
 } from 'lucide-react';
@@ -53,6 +54,7 @@ import {
   updateVehicleRates,
   adminLogout,
   AdminDashboardData,
+  AdminUserRow,
 } from '@/app/actions/admin';
 import { Booking, BookingStatus, Enquiry } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
@@ -64,7 +66,7 @@ import VehicleRatesEditor, {
   ratesSetCount,
 } from '@/components/admin/VehicleRatesEditor';
 
-type AdminTab = 'overview' | 'bookings' | 'pricing' | 'fleet' | 'enquiries';
+type AdminTab = 'overview' | 'bookings' | 'users' | 'pricing' | 'fleet' | 'enquiries';
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: 'Pending',
@@ -114,6 +116,8 @@ export default function AdminDashboardPage() {
   const [bookingSearch, setBookingSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [enquiryFilter, setEnquiryFilter] = useState<string>('ALL');
+  const [userSearch, setUserSearch] = useState('');
+  const [userFilter, setUserFilter] = useState<'ALL' | 'BOOKED' | 'NEVER' | 'NO_PHONE'>('ALL');
 
   // Assign Driver Modal State
   const [assignModalBooking, setAssignModalBooking] = useState<Booking | null>(null);
@@ -277,7 +281,21 @@ export default function AdminDashboardPage() {
   const bookings = data?.bookings || [];
   const vehicles = data?.vehicles || [];
   const enquiries = data?.enquiries || [];
+  const users = data?.users || [];
   const stats = data?.stats;
+
+  const userMatches = (u: AdminUserRow, f: typeof userFilter) =>
+    f === 'ALL' ? true : f === 'BOOKED' ? u.bookingCount > 0 : f === 'NEVER' ? u.bookingCount === 0 : !u.phone;
+  const filteredUsers = users.filter((u) => {
+    const q = userSearch.trim().toLowerCase();
+    const qDigits = q.replace(/\D/g, '');
+    const matchesSearch =
+      !q ||
+      u.name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      (qDigits.length > 0 && u.phone.includes(qDigits));
+    return matchesSearch && userMatches(u, userFilter);
+  });
 
   const filteredBookings = bookings.filter((b) => {
     const q = bookingSearch.toLowerCase();
@@ -333,6 +351,7 @@ export default function AdminDashboardPage() {
   const tabs: { id: AdminTab; label: string; icon: React.ElementType; count?: number }[] = [
     { id: 'overview', label: 'Overview', icon: Compass },
     { id: 'bookings', label: 'Bookings & Dispatch', icon: Calendar, count: stats?.pendingBookings },
+    { id: 'users', label: 'Users', icon: UserRound, count: users.length || undefined },
     { id: 'pricing', label: 'Pricing & Tariffs', icon: Tag },
     { id: 'fleet', label: 'Fleet & Vehicles', icon: Car },
     { id: 'enquiries', label: 'Tour Enquiries', icon: Users, count: stats?.pendingEnquiries },
@@ -1046,6 +1065,138 @@ export default function AdminDashboardPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ───────────── USERS ───────────── */}
+        {activeTab === 'users' && (
+          <div className="animate-panel-in space-y-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <h1 className={pageTitle}>Registered users</h1>
+                <p className="mt-1 max-w-xl text-sm text-slate-600">
+                  Everyone who has created an account, including people who signed in but never booked. Phone numbers come from the
+                  profile, or from their first booking.
+                </p>
+              </div>
+              <div className="relative w-full lg:w-80">
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  placeholder="Search by name, email or phone"
+                  aria-label="Search users"
+                  className="adm-field bg-white pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div role="radiogroup" aria-label="User filter" className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+                {([
+                  ['ALL', 'All'],
+                  ['BOOKED', 'Has booked'],
+                  ['NEVER', 'Never booked'],
+                  ['NO_PHONE', 'No phone'],
+                ] as const).map(([id, label]) => {
+                  const on = userFilter === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      onClick={() => setUserFilter(id)}
+                      className={`flex min-h-[44px] shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-xs font-extrabold uppercase tracking-wide transition-colors sm:min-h-[40px] ${
+                        on ? 'border-ink bg-ink text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      {label}
+                      <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${on ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
+                        {users.filter((u) => userMatches(u, id)).length}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="shrink-0 text-xs text-slate-500">
+                Showing {filteredUsers.length} of {users.length} users
+              </p>
+            </div>
+
+            {filteredUsers.length === 0 ? (
+              <div className="adm-card px-5 py-12 text-center text-sm text-slate-500">
+                {users.length === 0
+                  ? 'No users yet. Accounts appear here the first time someone signs in on the website.'
+                  : 'No users match your search.'}
+              </div>
+            ) : (
+              <div className="adm-card overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[820px] text-left text-sm">
+                    <thead className="border-b border-slate-100 bg-slate-50 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                      <tr>
+                        <th className="px-4 py-3">User</th>
+                        <th className="px-4 py-3">Phone</th>
+                        <th className="px-4 py-3 text-center">Bookings</th>
+                        <th className="px-4 py-3">Signed up</th>
+                        <th className="px-4 py-3">Last sign-in</th>
+                        <th className="px-4 py-3">Last booking</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredUsers.map((u) => {
+                        const digits = u.phone.replace(/\D/g, '');
+                        const wa = digits.length === 10 ? `91${digits}` : digits;
+                        const fmt = (iso: string | null) =>
+                          iso
+                            ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                            : '—';
+                        return (
+                          <tr key={u.uid} className="align-top">
+                            <td className="px-4 py-3.5">
+                              <p className="font-extrabold text-ink">{u.name || 'Unnamed'}</p>
+                              <p className="break-all text-xs text-slate-500">{u.email || '—'}</p>
+                            </td>
+                            <td className="px-4 py-3.5">
+                              {u.phone ? (
+                                <>
+                                  <p className="font-mono text-xs font-semibold text-ink">+91 {u.phone}</p>
+                                  {u.phoneSource === 'booking' && <p className="text-[10px] text-slate-400">from first booking</p>}
+                                  <div className="mt-1.5 flex gap-1.5">
+                                    <a href={`tel:+91${digits}`} aria-label={`Call ${u.name || u.email}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:border-slate-300">
+                                      <Phone className="h-3.5 w-3.5" />
+                                    </a>
+                                    <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${u.name || u.email}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-emerald-600 hover:border-slate-300">
+                                      <WhatsAppIcon className="h-3.5 w-3.5" />
+                                    </a>
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="text-xs text-slate-400">Not provided</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <span
+                                className={`inline-block min-w-[2rem] rounded-full px-2.5 py-1 text-xs font-extrabold tabular-nums ${
+                                  u.bookingCount > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                                }`}
+                              >
+                                {u.bookingCount}
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-600">{fmt(u.signedUpAt)}</td>
+                            <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-600">{fmt(u.lastLoginAt)}</td>
+                            <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-600">{fmt(u.lastBookingAt)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

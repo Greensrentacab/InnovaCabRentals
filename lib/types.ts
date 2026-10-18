@@ -126,6 +126,8 @@ export interface UserProfile {
   photoURL: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Most recent actual sign-in (ISO), from Firebase Auth */
+  lastLoginAt?: string | null;
 }
 
 export interface Driver {

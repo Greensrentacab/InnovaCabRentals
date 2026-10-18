@@ -21,6 +21,8 @@ export interface AuthenticatedUser {
   photoURL: string | null;
   /** Account creation time (ISO) */
   createdAt: string | null;
+  /** Last sign-in time (ISO) */
+  lastLoginAt: string | null;
 }
 
 interface LookupResponse {
@@ -31,6 +33,7 @@ interface LookupResponse {
     displayName?: string;
     photoUrl?: string;
     createdAt?: string;
+    lastLoginAt?: string;
     disabled?: boolean;
   }>;
 }
@@ -63,6 +66,7 @@ export async function verifyIdToken(idToken: string): Promise<AuthenticatedUser 
     if (!user || user.disabled) return null;
 
     const createdMs = user.createdAt ? Number(user.createdAt) : NaN;
+    const loginMs = user.lastLoginAt ? Number(user.lastLoginAt) : NaN;
     return {
       uid: user.localId,
       email: user.email ?? null,
@@ -70,6 +74,7 @@ export async function verifyIdToken(idToken: string): Promise<AuthenticatedUser 
       displayName: user.displayName ?? null,
       photoURL: user.photoUrl ?? null,
       createdAt: Number.isFinite(createdMs) ? new Date(createdMs).toISOString() : null,
+      lastLoginAt: Number.isFinite(loginMs) ? new Date(loginMs).toISOString() : null,
     };
   } catch (err) {
     console.error('[authServer] Token verification error:', err);

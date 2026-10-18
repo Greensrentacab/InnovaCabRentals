@@ -23,11 +23,13 @@ import {
   Vehicle,
   VehicleRates,
   Enquiry,
+  UserProfile,
 } from '@/lib/types';
 import {
   fetchAllBookings,
   updateBookingInStore,
   fetchAllEnquiries,
+  fetchAllUsers,
   updateEnquiryStatusInStore,
   fetchAdminRoutes,
   updateRouteFaresInStore,
@@ -76,8 +78,24 @@ async function requireAdmin(): Promise<void> {
 /** True when bookings/prices are saved to Firestore (not just server memory). */
 const isPersistent = () => Boolean(process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY);
 
+/** A customer account with booking history rolled up (Admin → Users). */
+export interface AdminUserRow {
+  uid: string;
+  name: string;
+  email: string;
+  /** Account phone, else the phone from their earliest booking */
+  phone: string;
+  phoneSource: 'profile' | 'booking' | null;
+  photoURL: string | null;
+  signedUpAt: string;
+  lastLoginAt: string | null;
+  bookingCount: number;
+  lastBookingAt: string | null;
+}
+
 export interface AdminDashboardData {
   bookings: Booking[];
+  users: AdminUserRow[];
   enquiries: Enquiry[];
   routes: Route[];
   vehicles: Vehicle[];
@@ -140,16 +158,58 @@ export async function adminLogout(): Promise<void> {
   cookies().delete(ADMIN_COOKIE_NAME);
 }
 
+const toIso = (d: string | Date | null | undefined): string | null => {
+  if (!d) return null;
+  const t = new Date(d).getTime();
+  return Number.isFinite(t) ? new Date(t).toISOString() : null;
+};
+
+function buildUserRows(users: UserProfile[], bookings: Booking[]): AdminUserRow[] {
+  const byUser = new Map<string, Booking[]>();
+  for (const b of bookings) {
+    if (!b.userId) continue;
+    const list = byUser.get(b.userId);
+    if (list) list.push(b);
+    else byUser.set(b.userId, [b]);
+  }
+
+  return users
+    .map((u): AdminUserRow => {
+      const mine = (byUser.get(u.uid) ?? []).sort(
+        (a, b) => (toIso(a.createdAt) ?? '').localeCompare(toIso(b.createdAt) ?? '')
+      );
+      const firstBookingPhone = mine.find((b) => b.customerPhone)?.customerPhone ?? '';
+      const phone = u.phone || firstBookingPhone;
+      return {
+        uid: u.uid,
+        name: u.displayName || mine[0]?.accountName || '',
+        email: u.email,
+        phone,
+        phoneSource: u.phone ? 'profile' : firstBookingPhone ? 'booking' : null,
+        photoURL: u.photoURL ?? null,
+        signedUpAt: u.createdAt,
+        lastLoginAt: u.lastLoginAt ?? null,
+        bookingCount: mine.length,
+        lastBookingAt: mine.length ? toIso(mine[mine.length - 1].createdAt) : null,
+      };
+    })
+    .sort((a, b) => b.signedUpAt.localeCompare(a.signedUpAt));
+}
+
 /**
  * Fetches all administrative dashboard data
  */
 export async function getAdminDashboardData(): Promise<AdminDashboardData> {
   await requireAdmin();
-  const [bookings, enquiries, routes, vehicles] = await Promise.all([
+  const [bookings, enquiries, routes, vehicles, userProfiles] = await Promise.all([
     fetchAllBookings(),
     fetchAllEnquiries(),
     fetchAdminRoutes(),
     fetchAdminVehicles(),
+    fetchAllUsers().catch((err) => {
+      console.error('[admin] Could not load users:', err);
+      return [] as UserProfile[];
+    }),
   ]);
 
   const stats = {
@@ -164,6 +224,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 
   return {
     bookings,
+    users: buildUserRows(userProfiles, bookings),
     enquiries,
     routes,
     vehicles,

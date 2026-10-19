@@ -260,26 +260,26 @@ export default async function HomePage() {
       {/* 6. TRUST — stats + why us (testimonials stay hidden until real   */}
       {/*    client reviews are supplied in siteConfig.testimonials)       */}
       {/* ================================================================ */}
-      <section className="section py-10 sm:py-20">
+      <section className="section py-6 sm:py-20">
         <Reveal>
-          <div className="relative overflow-hidden rounded-2xl bg-ink p-5 text-white sm:rounded-3xl sm:p-10 lg:p-14">
+          <div className="relative overflow-hidden rounded-2xl bg-ink p-4 text-white sm:rounded-3xl sm:p-10 lg:p-14">
             <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-sky-400/15 blur-3xl" aria-hidden="true" />
             <div className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-brand-600/30 blur-3xl" aria-hidden="true" />
 
             <div className="relative">
               <div className="max-w-2xl">
                 <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-sky-300">Why choose us</span>
-                <h2 className="text-balance mt-3 text-[1.9rem] font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl">
+                <h2 className="text-balance mt-2 text-[1.5rem] font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl">
                   Comfortable cars. Reliable journeys.
                 </h2>
               </div>
 
               {/* Stats */}
-              <dl className="mt-7 grid grid-cols-2 gap-2.5 sm:mt-10 sm:gap-4 lg:grid-cols-4">
+              <dl className="mt-4 grid grid-cols-4 gap-1.5 sm:mt-10 sm:gap-4">
                 {stats.map((stat) => (
-                  <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 backdrop-blur sm:p-6">
-                    <dt className="text-3xl font-extrabold leading-none tracking-tight text-sky-300 sm:text-5xl">{stat.value}</dt>
-                    <dd className="mt-2 text-xs font-medium leading-snug text-slate-300 sm:mt-3 sm:text-sm">{stat.label}</dd>
+                  <div key={stat.label} className="rounded-xl border border-white/10 bg-white/[0.05] px-2 py-2.5 backdrop-blur sm:rounded-2xl sm:p-6">
+                    <dt className="text-lg font-extrabold leading-none tracking-tight text-sky-300 sm:text-5xl">{stat.value}</dt>
+                    <dd className="mt-1 text-[10px] font-medium leading-tight text-slate-300 sm:mt-3 sm:text-sm">{stat.label}</dd>
                   </div>
                 ))}
               </dl>
@@ -297,22 +297,22 @@ export default async function HomePage() {
                   ))}
                 </div>
               ) : (
-                <ul className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4 lg:grid-cols-6">
+                <ul className="mt-4 grid grid-cols-2 gap-2 sm:mt-8 sm:gap-4 lg:grid-cols-6">
                   {whyChooseUs.map(({ title, desc, icon: WhyIcon }, i) => (
                     <li
                       key={title}
                       className={cn(
-                        'group flex gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition-colors duration-200 hover:border-sky-300/40 hover:bg-white/[0.08] sm:p-6 lg:col-span-2',
+                        'group flex flex-row items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] p-2.5 transition-colors duration-200 hover:border-sky-300/40 hover:bg-white/[0.08] sm:items-start sm:gap-4 sm:rounded-2xl sm:p-6 lg:col-span-2',
                         i >= 3 && 'lg:col-span-3',
-                        i === whyChooseUs.length - 1 && 'sm:max-lg:col-span-2'
+                        i === whyChooseUs.length - 1 && 'max-sm:hidden sm:max-lg:col-span-2'
                       )}
                     >
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-400/15 text-sky-300 transition-transform duration-200 group-hover:scale-105 sm:h-12 sm:w-12">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-400/15 text-sky-300 transition-transform duration-200 group-hover:scale-105 sm:h-12 sm:w-12">
                         <WhyIcon className="h-5 w-5" />
                       </span>
                       <div className="min-w-0">
-                        <h3 className="text-[15px] font-bold leading-snug sm:text-base">{title}</h3>
-                        <p className="mt-1.5 text-[13px] leading-relaxed text-slate-300 sm:text-sm">{desc}</p>
+                        <h3 className="text-[12.5px] font-bold leading-tight sm:text-base">{title}</h3>
+                        <p className="mt-1 hidden text-[11.5px] leading-snug text-slate-300 sm:mt-1.5 sm:block sm:text-sm sm:leading-relaxed">{desc}</p>
                       </div>
                     </li>
                   ))}

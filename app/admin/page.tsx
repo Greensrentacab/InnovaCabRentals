@@ -12,9 +12,11 @@
  * - Fleet Activation (Innova, Crysta, Hycross toggle)
  * - Tour & Contact Enquiries Lead Management
  * - Homepage images and Terms & policies (published without a deployment)
+ * - New booking / new user alerts: live toast + chime while open, device push
+ *   notifications (Firebase Cloud Messaging) when the site is closed
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
@@ -45,6 +47,8 @@ import {
   Undo2,
   Image as ImageIcon,
   FileText,
+  Bell,
+  BellRing,
 } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import {
@@ -56,6 +60,8 @@ import {
   updateEnquiryStatus,
   updateVehicleRates,
   adminLogout,
+  getAdminActivity,
+  sendTestAdminAlert,
   AdminDashboardData,
   AdminUserRow,
 } from '@/app/actions/admin';
@@ -71,8 +77,14 @@ import VehicleRatesEditor, {
 } from '@/components/admin/VehicleRatesEditor';
 import HomepageImagesPanel from '@/components/admin/HomepageImagesPanel';
 import PoliciesPanel from '@/components/admin/PoliciesPanel';
+import { PushState, getPushState, enablePush, disablePush, refreshPushToken } from '@/lib/adminPushClient';
 
 type AdminTab = 'overview' | 'bookings' | 'users' | 'pricing' | 'fleet' | 'enquiries' | 'images' | 'policies';
+
+const ADMIN_TABS: AdminTab[] = ['overview', 'bookings', 'users', 'pricing', 'fleet', 'enquiries', 'images', 'policies'];
+
+/** How often the open console checks for new bookings and sign-ups. */
+const ACTIVITY_POLL_MS = 30_000;
 
 /** Tabs that keep their own unpublished work, so they stay mounted once opened. */
 const PERSISTENT_TABS: AdminTab[] = ['images', 'policies'];
@@ -142,6 +154,16 @@ export default function AdminDashboardPage() {
   const [savingRates, setSavingRates] = useState(false);
   const [rateError, setRateError] = useState<string | null>(null);
 
+  // Alerts: this device's push status, plus what the live poll has already seen
+  const [pushState, setPushState] = useState<PushState | null>(null);
+  const [pushBusy, setPushBusy] = useState(false);
+  const pushStateRef = useRef<PushState | null>(null);
+  pushStateRef.current = pushState;
+  const seenRef = useRef<Set<string>>(new Set());
+  const cursorRef = useRef<string | null>(null);
+  const checkingRef = useRef(false);
+  const audioRef = useRef<AudioContext | null>(null);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
@@ -166,6 +188,32 @@ export default function AdminDashboardPage() {
     }
   };
 
+  /** Refresh the data in place (no spinner, unsaved pricing drafts untouched). */
+  const refreshLive = async () => {
+    try {
+      setData(await getAdminDashboardData());
+      setNow(new Date());
+    } catch (err) {
+      console.error('[Admin] Live refresh failed:', err);
+    }
+  };
+
+  /** Opens the tab (and search) named in an alert link like /admin?tab=bookings&q=ICB-10482. */
+  const applyDeepLink = (href: string) => {
+    const params = new URL(href, window.location.origin).searchParams;
+    const tab = params.get('tab') as AdminTab | null;
+    if (!tab || !ADMIN_TABS.includes(tab)) return;
+    const q = params.get('q') ?? '';
+    if (tab === 'bookings') {
+      setBookingSearch(q);
+      setStatusFilter('ALL');
+    } else if (tab === 'users') {
+      setUserSearch(q);
+      setUserFilter('ALL');
+    }
+    goTab(tab);
+  };
+
   useEffect(() => {
     async function init() {
       const isAuth = await verifyAdminSession();
@@ -174,10 +222,171 @@ export default function AdminDashboardPage() {
         return;
       }
       setAuthChecked(true);
+      applyDeepLink(window.location.href);
+      if (window.location.search) window.history.replaceState(null, '', '/admin');
       loadData();
+      getPushState()
+        .then((state) => {
+          setPushState(state);
+          if (state === 'on') refreshPushToken().catch((err) => console.warn('[Admin] Push token refresh failed:', err));
+        })
+        .catch(() => setPushState('unsupported'));
     }
     init();
   }, []);
+
+  // Everything already on screen counts as seen, so only genuinely new items alert
+  useEffect(() => {
+    if (!data) return;
+    data.bookings.forEach((b) => seenRef.current.add(`b:${b.bookingId}`));
+    data.users.forEach((u) => seenRef.current.add(`u:${u.uid}`));
+  }, [data]);
+
+  // Browsers only allow sound after a tap on the page, so the chime is unlocked on the first one
+  useEffect(() => {
+    const unlock = () => {
+      if (audioRef.current) return;
+      try {
+        audioRef.current = new AudioContext();
+      } catch {
+        // No Web Audio: alerts stay silent
+      }
+    };
+    window.addEventListener('pointerdown', unlock, { once: true });
+    return () => window.removeEventListener('pointerdown', unlock);
+  }, []);
+
+  const playChime = () => {
+    const ctx = audioRef.current;
+    if (!ctx) return;
+    ctx.resume().catch(() => undefined);
+    [880, 1320].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const start = ctx.currentTime + i * 0.18;
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.4);
+    });
+  };
+
+  /** Poll for bookings/sign-ups created since the last check and announce new ones. */
+  const checkActivity = useCallback(async () => {
+    if (checkingRef.current) return;
+    checkingRef.current = true;
+    try {
+      // Overlap each window by 2 minutes; already-seen items are skipped below
+      const since = cursorRef.current
+        ? new Date(new Date(cursorRef.current).getTime() - 120_000).toISOString()
+        : new Date(Date.now() - 10 * 60_000).toISOString();
+      const activity = await getAdminActivity(since);
+      cursorRef.current = activity.serverTime;
+
+      const seen = seenRef.current;
+      const newBookings = activity.bookings.filter((b) => !seen.has(`b:${b.bookingId}`));
+      const newUsers = activity.users.filter((u) => !seen.has(`u:${u.uid}`));
+      if (newBookings.length === 0 && newUsers.length === 0) return;
+      newBookings.forEach((b) => seen.add(`b:${b.bookingId}`));
+      newUsers.forEach((u) => seen.add(`u:${u.uid}`));
+
+      const parts: string[] = [];
+      if (newBookings.length === 1) parts.push(`New booking #${newBookings[0].bookingId} from ${newBookings[0].customerName}`);
+      else if (newBookings.length > 1) parts.push(`${newBookings.length} new bookings`);
+      if (newUsers.length === 1) parts.push(`New user: ${newUsers[0].name || newUsers[0].email}`);
+      else if (newUsers.length > 1) parts.push(`${newUsers.length} new users signed up`);
+      const message = parts.join(' · ');
+
+      showToast(message);
+      playChime();
+      // With device push on, the service worker already shows the system notification
+      if (
+        document.visibilityState === 'hidden' &&
+        pushStateRef.current !== 'on' &&
+        'Notification' in window &&
+        Notification.permission === 'granted'
+      ) {
+        try {
+          new Notification(newBookings.length ? 'New booking' : 'New user signed up', { body: message, icon: '/logo-car.png' });
+        } catch {
+          // Android Chrome only allows notifications from a service worker
+        }
+      }
+      refreshLive();
+    } catch (err) {
+      console.warn('[Admin] Activity check failed:', err);
+    } finally {
+      checkingRef.current = false;
+    }
+  }, []);
+
+  const dataReady = data !== null;
+  useEffect(() => {
+    if (!authChecked || !dataReady) return;
+    checkActivity();
+    const timer = window.setInterval(checkActivity, ACTIVITY_POLL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') checkActivity();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    // Messages from public/firebase-messaging-sw.js: a push arrived, or a notification was tapped
+    const sw = 'serviceWorker' in navigator ? navigator.serviceWorker : null;
+    const onSwMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'admin-alert') checkActivity();
+      if (event.data?.type === 'admin-open' && typeof event.data.url === 'string') {
+        applyDeepLink(event.data.url);
+        refreshLive();
+      }
+    };
+    sw?.addEventListener('message', onSwMessage);
+    sw?.startMessages();
+
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+      sw?.removeEventListener('message', onSwMessage);
+    };
+  }, [authChecked, dataReady, checkActivity]);
+
+  const togglePush = async () => {
+    setPushBusy(true);
+    try {
+      if (pushState === 'on') {
+        setPushState(await disablePush());
+        showToast('Alerts turned off on this device');
+      } else {
+        const state = await enablePush();
+        setPushState(state);
+        showToast(
+          state === 'on'
+            ? 'Alerts on: this device will be notified of new bookings and sign-ups'
+            : state === 'blocked'
+              ? 'Notifications are blocked for this site in your browser settings'
+              : 'Alerts were not turned on'
+        );
+      }
+    } catch (err: any) {
+      console.error('[Admin] Push toggle failed:', err);
+      showToast(err?.message || 'Could not change alerts on this device');
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  const handleTestAlert = async () => {
+    setPushBusy(true);
+    const res = await sendTestAdminAlert().catch(() => ({ success: false, error: 'Could not send a test alert' }));
+    setPushBusy(false);
+    showToast(
+      res.success
+        ? 'Test alert sent. Switch away from this tab to see it as a notification.'
+        : res.error || 'Could not send a test alert'
+    );
+  };
 
   // Lock page scroll while the mobile drawer or the modal is open
   useEffect(() => {
@@ -483,6 +692,49 @@ export default function AdminDashboardPage() {
       </nav>
 
       <div className="space-y-3 border-t border-white/10 px-5 pb-6 pt-4">
+        {pushState && (
+          <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+            <p className="flex items-center gap-2 text-xs font-extrabold text-white">
+              {pushState === 'on' ? <BellRing className="h-4 w-4 text-emerald-400" /> : <Bell className="h-4 w-4 text-slate-400" />}
+              Booking alerts {pushState === 'on' ? 'on' : 'off'}
+            </p>
+            <p className="mt-1 text-[11px] leading-snug text-slate-400">
+              {pushState === 'on'
+                ? 'This device is notified of new bookings and sign-ups, even when the site is closed.'
+                : pushState === 'off'
+                  ? 'Get a notification on this phone or computer for every new booking and sign-up, even when the site is closed.'
+                  : pushState === 'blocked'
+                    ? 'Notifications are blocked for this site. Allow them in the browser’s site settings, then reload.'
+                    : pushState === 'unconfigured'
+                      ? 'Add NEXT_PUBLIC_FIREBASE_VAPID_KEY to the server to switch on device alerts.'
+                      : 'This browser can’t receive alerts. Use Chrome on Android or a desktop browser.'}
+            </p>
+            {(pushState === 'on' || pushState === 'off') && (
+              <div className="mt-2.5 flex gap-2">
+                <button
+                  type="button"
+                  onClick={togglePush}
+                  disabled={pushBusy}
+                  className={`flex min-h-[40px] flex-1 items-center justify-center rounded-lg px-3 text-xs font-bold transition-colors disabled:opacity-60 ${
+                    pushState === 'on' ? 'border border-white/15 text-slate-300 hover:bg-white/10' : 'bg-emerald-500 text-emerald-950 hover:bg-emerald-400'
+                  }`}
+                >
+                  {pushState === 'on' ? 'Turn off' : 'Turn on alerts'}
+                </button>
+                {pushState === 'on' && (
+                  <button
+                    type="button"
+                    onClick={handleTestAlert}
+                    disabled={pushBusy}
+                    className="flex min-h-[40px] flex-1 items-center justify-center rounded-lg bg-white/10 px-3 text-xs font-bold text-white transition-colors hover:bg-white/15 disabled:opacity-60"
+                  >
+                    Send test
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         <p className="truncate text-xs text-slate-400">greensrentacab@gmail.com</p>
         <button
           type="button"

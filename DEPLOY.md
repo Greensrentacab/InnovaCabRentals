@@ -29,6 +29,7 @@ Commit and push this folder to GitHub (the repo already has the `origin` remote
 | `NEXT_PUBLIC_FIREBASE_*` (6 vars) | For live booking tracking | Web app config from Firebase console. |
 | `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` | Recommended | Enables real address / pincode search. Restrict it to your domain in Google Cloud. Without it a small built-in Bangalore list is used. |
 | `RESEND_API_KEY`, `ADMIN_EMAIL`, `NOTIFICATION_EMAIL_FROM` | Optional | New-booking email alerts. |
+| `NEXT_PUBLIC_FIREBASE_VAPID_KEY` | For phone/desktop alerts | Firebase console → Project settings → Cloud Messaging → Web Push certificates → Generate key pair; copy the key. Also needs the Firebase admin variables above. |
 | `NEXT_PUBLIC_SITE_URL` | Recommended | Your live domain, e.g. `https://www.example.com` (share previews / SEO). |
 | `RELEASED_ROUTES` | Optional | Leave unset to keep the whole site public. |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | For image uploads | Admin → Homepage images uploads go to Cloudinary (free plan is enough). Without them uploads are switched off and the built-in pictures show. |
@@ -49,6 +50,11 @@ variables, **redeploy** (Deployments → … → Redeploy).
    pages and with every fare).
 6. Optional: deploy `firestore.rules` from the Firebase console/CLI.
 7. Add your custom domain under Project Settings → Domains.
+8. **Booking alerts:** on each phone/computer that should be notified, open
+   `/admin`, tap **Turn on alerts** in the sidebar, allow notifications, then
+   **Send test**. New bookings and new user sign-ups then notify that device
+   even when the website is closed (Android Chrome and desktop browsers; not
+   iPhone Safari).
 
 ## Local development
 

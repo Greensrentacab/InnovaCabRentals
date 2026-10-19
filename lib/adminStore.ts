@@ -324,3 +324,26 @@ export async function saveUserProfile(profile: UserProfile): Promise<UserProfile
   await adminDb.collection('users').doc(profile.uid).set(profile, { merge: true });
   return profile;
 }
+
+/**
+ * Bookings and customer accounts created at or after `sinceIso` (admin live
+ * alerts). Single-field range queries, so only new docs are read on each poll.
+ */
+export async function fetchActivitySince(sinceIso: string): Promise<{ bookings: Booking[]; users: UserProfile[] }> {
+  if (!hasFirestore()) {
+    return {
+      bookings: memoryBookings().filter((b) => new Date(b.createdAt).toISOString() >= sinceIso),
+      users: Array.from(memoryGlobal.__icbUsers!.values()).filter((u) => u.createdAt >= sinceIso),
+    };
+  }
+
+  const adminDb = await getAdminDb();
+  const [bookings, users] = await Promise.all([
+    adminDb.collection('bookings').where('createdAt', '>=', sinceIso).get(),
+    adminDb.collection('users').where('createdAt', '>=', sinceIso).get(),
+  ]);
+  return {
+    bookings: bookings.docs.map((doc) => doc.data() as Booking).sort(byNewest),
+    users: users.docs.map((doc) => doc.data() as UserProfile),
+  };
+}

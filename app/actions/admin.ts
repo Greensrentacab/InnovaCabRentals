@@ -11,6 +11,7 @@
  * - Pricing & Route Tariffs updates (nullable per client policy)
  * - Vehicle fleet confirmation toggles
  * - Tour & Contact Enquiries tracking
+ * - New booking / new user alerts (live polling + device push registration)
  */
 
 import { createHmac, timingSafeEqual } from 'crypto';
@@ -36,7 +37,9 @@ import {
   fetchAdminVehicles,
   toggleVehicleInStore,
   updateVehicleRatesInStore,
+  fetchActivitySince,
 } from '@/lib/adminStore';
+import { removeAdminPushToken, saveAdminPushToken, sendAdminAlert } from '@/lib/adminPush';
 import { siteConfig } from '@/lib/siteConfig';
 import { formatTime12 } from '@/lib/time';
 import { validateVehicleRates } from '@/lib/pricing';
@@ -387,5 +390,79 @@ export async function updateVehicleRates(
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to update car prices' };
+  }
+}
+
+/** A booking or customer account created since the last poll (admin live alerts). */
+export interface AdminActivity {
+  /** Server clock at the time of the query: the next poll's cursor */
+  serverTime: string;
+  bookings: { bookingId: string; customerName: string; vehicleName: string; createdAt: string }[];
+  users: { uid: string; name: string; email: string; createdAt: string }[];
+}
+
+/**
+ * New bookings and sign-ups at or after `sinceIso`. Polled by the open admin
+ * console; the client de-duplicates against what it already shows.
+ */
+export async function getAdminActivity(sinceIso: string): Promise<AdminActivity> {
+  await requireAdmin();
+  const since = toIso(sinceIso) ?? new Date().toISOString();
+  const serverTime = new Date().toISOString();
+  const { bookings, users } = await fetchActivitySince(since);
+  return {
+    serverTime,
+    bookings: bookings.map((b) => ({
+      bookingId: b.bookingId,
+      customerName: b.customerName,
+      vehicleName: b.vehicleName,
+      createdAt: toIso(b.createdAt) ?? '',
+    })),
+    users: users.map((u) => ({ uid: u.uid, name: u.displayName, email: u.email, createdAt: u.createdAt })),
+  };
+}
+
+/** Save this browser/phone's FCM token so it receives booking & sign-up alerts. */
+export async function registerAdminPushDevice(
+  token: string,
+  device: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+    if (typeof token !== 'string' || token.length < 20 || token.length > 4096) {
+      return { success: false, error: 'Invalid notification token' };
+    }
+    await saveAdminPushToken(token, typeof device === 'string' ? device : '');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Could not turn on alerts' };
+  }
+}
+
+export async function unregisterAdminPushDevice(token: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+    if (typeof token === 'string' && token) await removeAdminPushToken(token);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Could not turn off alerts' };
+  }
+}
+
+/** Push a sample alert to every registered device. */
+export async function sendTestAdminAlert(): Promise<{ success: boolean; delivered?: number; error?: string }> {
+  try {
+    await requireAdmin();
+    const delivered = await sendAdminAlert({
+      title: 'Alerts are working',
+      body: 'New bookings and new user sign-ups will show up like this.',
+      url: '/admin',
+      tag: 'test-alert',
+    });
+    return delivered > 0
+      ? { success: true, delivered }
+      : { success: false, error: 'No device received it. Turn alerts off and on again on this device.' };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Could not send a test alert' };
   }
 }

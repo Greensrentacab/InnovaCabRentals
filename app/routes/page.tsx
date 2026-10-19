@@ -6,10 +6,12 @@ import CtaBand from '@/components/ds/CtaBand';
 import { getRoutes, getVehicles } from '@/lib/dataService';
 import { confirmedFleet, formatINR, routeFromFare } from '@/lib/storefrontData';
 import { siteConfig } from '@/lib/siteConfig';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/routes' },
-  title: `Popular Innova Cab Routes from Bangalore | Outstation Taxi | ${siteConfig.brand.name}`,
+  title: 'Innova Cab Routes from Bangalore | Outstation Taxi Fares',
   description:
     'Search 30+ outstation round-trip routes from Bangalore — Coorg, Ooty, Mysore, Tirupati, Munnar, Gokarna, Kochi and more — in Innova, Crysta or Ertiga with seasoned chauffeurs.',
   keywords: [
@@ -21,7 +23,7 @@ export const metadata = {
     'Innova Taxi Bangalore',
     'Outstation Innova Bangalore',
   ],
-};
+});
 
 export default async function RoutesPage() {
   const [routes, vehicles] = await Promise.all([getRoutes(), getVehicles()]);

@@ -7,6 +7,7 @@ import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import FaqAccordion from '@/components/home/FaqAccordion';
 import Reveal from '@/components/home/Reveal';
 import { BreadcrumbJsonLd } from '@/components/seo/JsonLd';
+import { withSeo } from '@/lib/seo';
 import { HeroCover } from '@/components/home/HeroScene';
 import SectionHeading, { Hairline } from '@/components/ds/SectionHeading';
 import CtaBand from '@/components/ds/CtaBand';
@@ -17,7 +18,6 @@ import { LocationData } from '@/lib/googlePlaces';
 import { primaryPhoto } from '@/lib/fleetPhotos';
 import { buildWidgetData, confirmedFleet, fareOrRequest, formatINR, routeCardPhoto, routeFromFare, routeRoundTripFare } from '@/lib/storefrontData';
 import { getSiteImages } from '@/lib/siteContentStore';
-import FareResults from '@/components/FareResults';
 
 interface RoutePageProps {
   params: {
@@ -348,8 +348,8 @@ export async function generateMetadata({ params }: RoutePageProps): Promise<Meta
   const h1 = details?.h1 || `${route.name} Cab`;
   const destination = route.destination;
 
-  return {
-    title: `${h1} | Innova & Crysta Rental Bangalore | ${siteConfig.brand.name}`,
+  return withSeo({
+    title: `${h1} | ${siteConfig.brand.name}`,
     alternates: { canonical: `/routes/${route.slug}` },
     description: `Book ${h1} with experienced driver. Clean Toyota Innova, Innova Crysta, Hycross & Ertiga round-trip rental for travel between ${route.origin} and ${destination} (${route.distanceKm} km, ${route.durationText}). Zero surge, transparent pricing.`,
     keywords: [
@@ -360,7 +360,7 @@ export async function generateMetadata({ params }: RoutePageProps): Promise<Meta
       'Innova Cabs Bangalore',
       'Innova Outstation Rental',
     ],
-  };
+  });
 }
 
 export default async function RouteDetailPage({ params }: RoutePageProps) {
@@ -472,9 +472,6 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
           </div>
         </div>
       </section>
-
-      {/* Available cars, prices & T&Cs (after "See Fares") */}
-      <FareResults />
 
       {/* Route facts */}
       <section className="section py-10 sm:py-14">

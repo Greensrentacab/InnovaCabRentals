@@ -5,12 +5,12 @@
  * internals"): side panel on md+, bottom sheet on mobile, progress segments,
  * trip summary, option cards and a sticky footer action.
  *
- * Booking request flow opened by "Request Booking" on a car in the inline
- * fare results (components/FareResults.tsx).
+ * Booking request flow opened by "See Fares" in the booking widget; the car
+ * step shows the fare results (components/FareResults.tsx).
  * Features (logic unchanged):
  * - Step Tracker (Vehicle -> Details -> Review -> Sign in & Confirm)
  * - Loading Screen
- * - Vehicle Selection (Firestore cards, nullable price = "Price on request" + "WhatsApp for a Quick Quote", selectable)
+ * - Choose a car (fare result cards with photos, T&Cs, WhatsApp and Book)
  * - Your Details (passenger Full Name & 10-digit Mobile, prefilled from the account, editable)
  * - Review with Edit Links for each section
  * - Sign in & Confirm: Sign In / Sign Up gate; "Submit Booking Request" stays
@@ -32,13 +32,11 @@ import {
   FileText,
   LockKeyhole,
   LogOut,
-  Luggage,
   Mail,
   MapPin,
   RotateCcw,
   ShieldCheck,
   User,
-  Users,
   X,
 } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
@@ -51,15 +49,17 @@ import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/cn';
 import { formatDateLong, formatTime12 } from '@/lib/time';
 import { primaryPhoto } from '@/lib/fleetPhotos';
+import FareResults from '@/components/FareResults';
 
 const STEP_LABELS = ['Vehicle', 'Your Details', 'Review', 'Sign in & Confirm'];
 
 export default function BookingFlowModal() {
   const {
     state,
+    search,
+    requestBooking,
     closeBookingFlow,
     setStep,
-    selectVehicle,
     updateCustomerDetails,
     submitBooking,
     retrySubmission,
@@ -193,18 +193,27 @@ export default function BookingFlowModal() {
 
             {/* Trip summary */}
             {state.pickupLocation && state.dropLocation && stepNumber > 0 && state.step !== 'review' && state.step !== 'auth' && (
-              <div className="mt-3 rounded-2xl bg-slate-50 p-3">
-                <p className="flex items-center gap-2 truncate text-sm font-bold text-ink">
-                  <MapPin className="h-3.5 w-3.5 shrink-0 text-brand-600" />
-                  <span className="truncate">
-                    {routeText}
-                  </span>
-                </p>
-                <p className="mt-0.5 pl-[22px] text-xs text-slate-500">
-                  {state.pickupDate} · {formatTime12(state.pickupTime)}
-                  {state.returnDate ? ` → ${state.returnDate}` : ''} · {tripLabel}
-                  {state.distanceKm ? ` · ~${state.distanceKm} km` : ''}
-                </p>
+              <div className="mt-3 flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-2.5">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-brand-600 shadow-sm">
+                  <MapPin className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-ink">{routeText}</p>
+                  <p className="truncate text-xs text-slate-500">
+                    {formatDateLong(state.pickupDate)} · {formatTime12(state.pickupTime)}
+                    {state.returnDate ? ` → ${formatDateLong(state.returnDate)}` : ''}
+                    {state.distanceKm ? ` · ~${Math.round(state.distanceKm)} km` : ''}
+                  </p>
+                </div>
+                {state.step === 'vehicle' && (
+                  <button
+                    type="button"
+                    onClick={closeBookingFlow}
+                    className="inline-flex min-h-[36px] shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-bold text-brand-700 transition hover:bg-brand-50"
+                  >
+                    <Edit2 className="h-3 w-3" /> Edit
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -228,91 +237,17 @@ export default function BookingFlowModal() {
               </div>
             )}
 
-            {/* STEP 1: VEHICLE SELECTION */}
+            {/* STEP 1: CHOOSE A CAR (fare results; tap a row, then Continue) */}
             {state.step === 'vehicle' && (
               <div key="vehicle" className="animate-step-in">
-                <h3 className="text-base font-extrabold">Select Your Toyota Innova</h3>
-                <p className="text-xs text-slate-500">Clean, sanitized chauffeur-driven MPVs with guaranteed dispatch.</p>
-
-                <div role="radiogroup" aria-label="Vehicle" className="mt-4 space-y-3">
-                  {state.availableVehicles.map((v) => {
-                    const fare = state.faresMap[v.id] ?? null;
-                    const isSelected = state.selectedVehicle?.id === v.id;
-                    const quickQuoteUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
-                      `Hello ${siteConfig.brand.name}, I would like a Quick Quote for ${v.name} from "${state.pickupLocation?.name}" to "${state.dropLocation?.name}" on ${state.pickupDate} (${state.tripType === 'round' ? 'Round Trip' : 'One Way'}).`
-                    )}`;
-
-                    return (
-                      <div
-                        key={v.id}
-                        role="radio"
-                        aria-checked={isSelected}
-                        tabIndex={0}
-                        onClick={() => selectVehicle(v)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            selectVehicle(v);
-                          }
-                        }}
-                        className={cn(
-                          'relative w-full cursor-pointer rounded-3xl border p-4 text-left transition-all',
-                          isSelected
-                            ? 'border-brand-500 bg-brand-50/50 ring-4 ring-brand-500/10'
-                            : 'border-slate-200/80 hover:border-brand-300'
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            'absolute right-4 top-4 flex h-5 w-5 items-center justify-center rounded-full border-2',
-                            isSelected ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 bg-white'
-                          )}
-                        >
-                          {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
-                        </span>
-
-                        <p className="pr-8 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{v.type}</p>
-                        <h4 className="text-lg font-extrabold tracking-tight">{v.name}</h4>
-                        <div className="mt-2 flex items-center gap-4 text-xs font-medium text-slate-600">
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3.5 w-3.5 text-brand-600" /> {v.seats} Seats
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Luggage className="h-3.5 w-3.5 text-brand-600" /> {v.luggage} Luggage Bags
-                          </span>
-                        </div>
-                        <ul className="mt-3 flex flex-wrap gap-1.5">
-                          {v.features.map((f) => (
-                            <li key={f} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
-                              {f}
-                            </li>
-                          ))}
-                        </ul>
-
-                        <div className="mt-4 flex flex-wrap items-end justify-between gap-2 border-t border-slate-100 pt-3">
-                          <div>
-                            <span className="block text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                              Estimated Tariff
-                            </span>
-                            <span className="text-xl font-extrabold tabular-nums text-ink">
-                              {fare !== null ? `₹${fare.toLocaleString('en-IN')}` : 'Price on request'}
-                            </span>
-                          </div>
-                          {fare === null && (
-                            <a
-                              href={quickQuoteUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="btn-whatsapp px-3 py-2 text-xs"
-                            >
-                              <WhatsAppIcon className="h-3.5 w-3.5" /> WhatsApp for a Quick Quote
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="text-lg font-extrabold tracking-tight">Choose your car</h3>
+                  {search.status === 'done' && search.results.length > 0 && (
+                    <p className="shrink-0 text-xs font-semibold text-slate-400">{search.results.length} available · {tripLabel}</p>
+                  )}
+                </div>
+                <div className="mt-4">
+                  <FareResults />
                 </div>
               </div>
             )}
@@ -712,16 +647,25 @@ export default function BookingFlowModal() {
             <div className="pb-safe flex shrink-0 items-center gap-2 border-t border-slate-100 bg-white/90 px-5 py-4 backdrop-blur md:px-8 md:pb-4">
               {state.step === 'vehicle' && (
                 <>
-                  <button type="button" onClick={closeBookingFlow} className="inline-flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-ink transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]">
-                    Cancel
-                  </button>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-semibold text-slate-500">
+                      {state.selectedVehicle?.name ?? (search.status === 'loading' ? 'Finding cars…' : 'Select a car')}
+                    </p>
+                    <p className="text-xl font-extrabold leading-tight tracking-tight tabular-nums text-ink">
+                      {!state.selectedVehicle
+                        ? '—'
+                        : state.selectedVehicle.baseFare != null
+                          ? `₹${state.selectedVehicle.baseFare.toLocaleString('en-IN')}`
+                          : 'On request'}
+                    </p>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setStep('details')}
-                    disabled={!state.selectedVehicle}
-                    className="group inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand-600 px-4 text-[15px] font-bold text-white shadow-[0_10px_20px_-10px_rgba(37,99,235,0.8)] transition hover:bg-brand-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                    onClick={() => state.selectedVehicle && requestBooking(state.selectedVehicle.id)}
+                    disabled={!state.selectedVehicle || search.status !== 'done'}
+                    className="group inline-flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-brand-600 px-6 text-[15px] font-bold text-white shadow-[0_10px_20px_-10px_rgba(37,99,235,0.8)] transition hover:bg-brand-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                   >
-                    Continue to Details
+                    Continue
                     <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
                   </button>
                 </>
@@ -732,7 +676,7 @@ export default function BookingFlowModal() {
                     type="button"
                     onClick={() => {
                       updateCustomerDetails(name, phone);
-                      closeBookingFlow();
+                      setStep('vehicle');
                     }}
                     className="inline-flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-ink transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
                   >

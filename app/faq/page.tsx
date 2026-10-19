@@ -5,10 +5,13 @@ import { siteConfig } from '@/lib/siteConfig';
 import PageHero from '@/components/ds/PageHero';
 import CtaBand from '@/components/ds/CtaBand';
 import FaqAccordion from '@/components/home/FaqAccordion';
+import { JsonLd } from '@/components/seo/JsonLd';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/faq' },
-  title: `Frequently Asked Questions | Innova Cab Rentals Bangalore | ${siteConfig.brand.name}`,
+  title: `Innova Cab Booking FAQs | ${siteConfig.brand.name} Bangalore`,
   description:
     'Comprehensive answers to questions about booking procedures, toll and driver allowance billing, luggage capacity in 7 & 8 seater Innova, and 24/7 airport and outstation services.',
   keywords: [
@@ -17,7 +20,7 @@ export const metadata = {
     'How to book Innova Cab Bangalore',
     'Innova luggage capacity Bangalore',
   ],
-};
+});
 
 const categorizedFaqs = [
   {
@@ -101,6 +104,20 @@ const categorizedFaqs = [
 export default function FaqPage() {
   return (
     <div className="bg-porcelain">
+      {/* FAQPage structured data (same questions shown on the page) */}
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: categorizedFaqs.flatMap((cat) =>
+            cat.items.map((item) => ({
+              '@type': 'Question',
+              name: item.q,
+              acceptedAnswer: { '@type': 'Answer', text: item.a },
+            }))
+          ),
+        }}
+      />
       <PageHero
         breadcrumbs={[{ label: 'FAQ' }]}
         eyebrow="Customer Knowledge Base"

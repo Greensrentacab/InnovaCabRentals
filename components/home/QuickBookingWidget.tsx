@@ -6,7 +6,7 @@
  * Locations are chosen through the Google Places LocationAutocompleteModal
  * (search by area, landmark or pincode; full address incl. pincode is kept).
  * "See Fares & Available Innovas" calls BookingFlowContext.searchFares → the
- * cars, prices and T&Cs render inline under the widget (FareResults).
+ * booking popup opens on its car step with the cars, prices and T&Cs (FareResults).
  *
  * Service mapping:
  *  - Airport:    Pickup = airport → address · Drop = address → airport ·

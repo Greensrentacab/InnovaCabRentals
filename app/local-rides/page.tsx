@@ -2,13 +2,15 @@ import { Car, Clock, ShieldCheck, MapPin, CheckCircle2 } from 'lucide-react';
 import LandingTemplate from '@/components/LandingTemplate';
 import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/local-rides' },
-  title: `Local Innova Car Rental Bangalore | Hourly & Full Day Packages | ${siteConfig.brand.name}`,
+  title: 'Local Innova Rental Bangalore | Hourly & Full Day Packages',
   description:
     'Rent Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga in Bangalore for local city travel. 8hr/80km full-day and 12hr/120km extended rental packages, custom durations on request, and point-to-point city transfers.',
-};
+});
 
 export default async function LocalRidesPage() {
   const vehicles = await getVehicles();

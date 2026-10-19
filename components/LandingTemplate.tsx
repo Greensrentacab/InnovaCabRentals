@@ -17,7 +17,6 @@ import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import FleetSection from '@/components/home/FleetSection';
 import FaqAccordion from '@/components/home/FaqAccordion';
 import RouteCard from '@/components/home/RouteCard';
-import FareResults from '@/components/FareResults';
 import BookButton from '@/components/home/BookButton';
 import Reveal from '@/components/home/Reveal';
 import type { HomeService } from '@/components/home/scrollToBook';
@@ -87,7 +86,7 @@ function SectionHeading({
   return (
     <div className={cn('max-w-2xl', centered && 'mx-auto text-center')}>
       <span className="eyebrow">{eyebrow}</span>
-      <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h2>
+      <h2 className="section-title mt-3 sm:mt-4">{title}</h2>
       {subtitle && <p className="mt-3 text-slate-600">{subtitle}</p>}
     </div>
   );
@@ -206,9 +205,6 @@ export default async function LandingTemplate({
           </div>
         </div>
       </section>
-
-      {/* Available cars, prices & T&Cs (after "See Fares") */}
-      <FareResults />
 
       {/* ================================================================ */}
       {/* 2. LOCAL RENTAL PACKAGES                                         */}
@@ -339,7 +335,7 @@ export default async function LandingTemplate({
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="max-w-2xl">
             <span className="eyebrow">Got questions?</span>
-            <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Frequently Asked Questions</h2>
+            <h2 className="section-title mt-3 sm:mt-4">Frequently Asked Questions</h2>
             <div className="mt-6 flex flex-wrap gap-2">
               <Link href="/faq" className="btn-ghost group">
                 Read full FAQ
@@ -363,7 +359,7 @@ export default async function LandingTemplate({
           <div className="pointer-events-none absolute -bottom-24 left-10 h-60 w-60 rounded-full bg-amber-400/20 blur-3xl" />
           <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-balance text-2xl font-extrabold tracking-tight sm:text-3xl">{customCtaTitle}</h2>
+              <h2 className="section-title">{customCtaTitle}</h2>
               <p className="mt-2 text-slate-300">&ldquo;{siteConfig.brand.closingLine}&rdquo;</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">

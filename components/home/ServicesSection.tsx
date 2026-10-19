@@ -89,19 +89,19 @@ export default function ServicesSection({
     <section id="services" className="section scroll-mt-24 pb-10 pt-8 sm:pb-20 sm:pt-10">
       <div className="mx-auto max-w-2xl text-center">
         <span className="eyebrow">Our services</span>
-        <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">One fleet. Every kind of trip.</h2>
+        <h2 className="section-title mt-3 sm:mt-4">One fleet. Every kind of trip.</h2>
         <p className="mt-3 text-slate-600">
           Chauffeur-driven Innova, Crysta, Hycross &amp; Ertiga for every journey — whether you&apos;re catching a 5 AM flight or heading to the hills.
         </p>
       </div>
 
-      <div className="mt-10 grid grid-cols-2 gap-3 sm:mt-12 md:grid-cols-3 md:gap-5">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-12 md:grid-cols-3 md:gap-5">
         {cards.map((card, i) => {
           const Icon = card.icon;
           return (
             <Reveal key={card.title} delay={i * 0.1} className={cn('h-full', i === cards.length - 1 && cards.length % 2 === 1 && 'col-span-2 md:col-span-1')}>
               <article className="card-float card-float-hover group flex h-full flex-col overflow-hidden">
-                <CardGallery photos={card.photos} label={`${card.title} photos`} href={card.href} delay={i * 1300} className={cn('md:h-48', i === cards.length - 1 && cards.length % 2 === 1 ? 'aspect-[16/10] sm:aspect-[2/1]' : 'aspect-[4/5] sm:aspect-square', 'md:aspect-auto')}>
+                <CardGallery photos={card.photos} label={`${card.title} photos`} href={card.href} delay={i * 1300} className={cn('md:h-48', i === cards.length - 1 && cards.length % 2 === 1 ? 'aspect-[5/2] sm:aspect-[2/1]' : 'aspect-[4/3] sm:aspect-square', 'md:aspect-auto')}>
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-900/5 to-transparent" />
                   <div className="pointer-events-none absolute left-4 top-4 z-[6] flex flex-wrap gap-1.5 max-md:hidden">
                     {card.badges.map((badge) =>
@@ -125,7 +125,7 @@ export default function ServicesSection({
                 </CardGallery>
 
                 <div className="flex flex-1 flex-col p-3 md:p-5">
-                  <p className="text-[13px] leading-snug text-slate-600 max-md:line-clamp-3 md:text-sm">{card.description}</p>
+                  <p className="text-[13px] leading-snug text-slate-600 max-md:line-clamp-2 md:text-sm">{card.description}</p>
                   <ul className="mt-4 hidden space-y-2.5 md:block">
                     {card.bullets.map((bullet) => (
                       <li key={bullet} className="flex items-start gap-2.5 text-sm font-medium text-slate-700">
@@ -136,7 +136,7 @@ export default function ServicesSection({
                       </li>
                     ))}
                   </ul>
-                  <div className="mt-auto flex flex-col gap-2.5 pt-3 md:flex-row md:items-center md:justify-between md:gap-3 md:pt-6">
+                  <div className={cn('mt-auto flex gap-2.5 pt-2 md:flex-row md:items-center md:justify-between md:gap-3 md:pt-6', i === cards.length - 1 && cards.length % 2 === 1 ? 'flex-row items-center justify-between' : 'flex-col')}>
                     <span className="text-sm font-semibold text-slate-500">
                       {card.fare ? (
                         <>

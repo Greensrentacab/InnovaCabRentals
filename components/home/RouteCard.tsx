@@ -48,38 +48,40 @@ export default function RouteCard({ route }: { route: SliderRoute }) {
           />
         )}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/15 to-transparent" />
-        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-[11px] font-bold text-ink shadow-sm">
+        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-white px-1.5 py-0.5 text-[10px] md:left-3 md:top-3 md:px-2 md:py-1 md:text-[11px] font-bold text-ink shadow-sm">
           <Icon className="h-3 w-3 shrink-0 text-brand-600" />
           {route.isAirport ? 'Airport transfer' : 'Round trip'}
         </span>
-        <div className="absolute inset-x-3 bottom-3 text-white">
-          <p className="truncate text-xs font-medium text-white/80">From {route.from}</p>
-          <h3 className="truncate text-xl font-extrabold leading-tight tracking-tight">{route.title}</h3>
+        <div className="absolute inset-x-2.5 bottom-2 text-white md:inset-x-3 md:bottom-3">
+          <p className="truncate text-[10px] font-medium text-white/80 md:text-xs">From {route.from}</p>
+          <h3 className="truncate text-base font-extrabold leading-tight md:text-xl tracking-tight">{route.title}</h3>
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col p-4">
+      <div className="flex flex-1 flex-col p-2.5 md:p-4">
         {/* Trip facts */}
-        <div className="flex items-center gap-4 text-xs font-semibold text-slate-600">
-          <span className="inline-flex items-center gap-1.5">
-            <Route className="h-3.5 w-3.5 text-slate-400" /> ~{route.distanceKm} km
+        <div className="flex items-center gap-2 text-[11px] font-semibold md:gap-4 [&>span]:min-w-0 md:text-xs text-slate-600">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap md:gap-1.5">
+            <Route className="h-3 w-3 shrink-0 text-slate-400 md:h-3.5 md:w-3.5" /> ~{route.distanceKm} km
           </span>
           <span className="h-3 w-px bg-slate-200" aria-hidden="true" />
-          <span className="inline-flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5 text-slate-400" /> ~{route.durationText}
+          <span className="inline-flex items-center gap-1 whitespace-nowrap md:gap-1.5">
+            <Clock className="h-3 w-3 shrink-0 text-slate-400 md:h-3.5 md:w-3.5" /> ~
+            <span className="md:hidden">{route.durationText.replace(/\s*hrs?\b/i, 'h').replace(/\s*mins?\b/i, 'm')}</span>
+            <span className="max-md:hidden">{route.durationText}</span>
           </span>
         </div>
 
         {/* Price + action */}
-        <div className="mt-auto pt-3.5">
-        <div className="flex items-end justify-between gap-3 border-t border-slate-100 pt-3.5">
+        <div className="mt-auto pt-2 md:pt-3.5">
+        <div className="flex items-end justify-between gap-2 border-t border-slate-100 pt-2 md:gap-3 md:pt-3.5">
           <div className="min-w-0">
-            <p className="text-[11px] font-medium text-slate-500">{route.fareLabel}</p>
-            <p className="text-xl font-extrabold leading-tight tabular-nums text-ink">{route.fromFare}</p>
-            <p className="truncate text-[11px] text-slate-400">{route.footnote}</p>
+            <p className="truncate text-[10px] font-medium text-slate-500 md:text-[11px]">{route.fareLabel}</p>
+            <p className="text-base font-extrabold leading-tight tabular-nums md:text-xl text-ink">{route.fromFare}</p>
+            <p className="hidden truncate text-[11px] text-slate-400 md:block">{route.footnote}</p>
           </div>
           <span
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white transition-colors group-hover:bg-brand-700"
+            className="flex h-8 w-8 shrink-0 items-center md:h-10 md:w-10 justify-center rounded-full bg-brand-600 text-white transition-colors group-hover:bg-brand-700"
             aria-hidden="true"
           >
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

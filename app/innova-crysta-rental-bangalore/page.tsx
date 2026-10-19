@@ -2,10 +2,12 @@ import { notFound } from 'next/navigation';
 import VehicleDetailTemplate from '@/components/VehicleDetailTemplate';
 import { getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/innova-crysta-rental-bangalore' },
-  title: `Innova Crysta Rental Bangalore | Luxury 7 Seater Innova Crysta Cab Hire | ${siteConfig.brand.name}`,
+  title: 'Innova Crysta Rental Bangalore | Crysta Cab with Driver',
   description:
     'Rent Toyota Innova Crysta in Bangalore with chauffeur. Premium executive captain seats, automatic climate control, and unmatched luxury for corporate delegations, airport VIP transfers, and family outstation trips.',
   keywords: [
@@ -17,7 +19,7 @@ export const metadata = {
     'Book Innova Cab Bangalore',
     'Innova Cab Bangalore Price',
   ],
-};
+});
 
 export default async function InnovaCrystaRentalBangalorePage() {
   const allVehicles = await getVehicles();

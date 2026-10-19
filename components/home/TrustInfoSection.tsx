@@ -1,21 +1,18 @@
 /**
- * TrustInfoSection.tsx — "Trust and reliability" + "Booking and payment
- * information" as an icon-led visual layout. Every statement comes from
+ * TrustInfoSection.tsx — trust, booking and payment information merged into
+ * one compact card (payment strip + icon tiles). Every statement comes from
  * siteConfig (claims, payments, policies) so the wording stays consistent
  * across the site.
  */
 
 import {
   Banknote,
-  BadgeIndianRupee,
   CalendarClock,
   CreditCard,
-  Fuel,
   Landmark,
   MapPin,
   PhoneCall,
   Radar,
-  ShieldCheck,
   Smartphone,
   Tag,
   UserCheck,
@@ -26,7 +23,9 @@ import { siteConfig } from '@/lib/siteConfig';
 
 const cancelHours = siteConfig.policies.cancellation.match(/(\d+)\s*hours?/i)?.[1];
 
-const trustTiles: { icon: LucideIcon; tone: string; title: string; text: string }[] = [
+type Item = { icon: LucideIcon; tone: string; title: string; text: string };
+
+const items: Item[] = [
   {
     icon: UserCheck,
     tone: 'bg-live-500/10 text-live-600',
@@ -36,7 +35,7 @@ const trustTiles: { icon: LucideIcon; tone: string; title: string; text: string 
   {
     icon: Tag,
     tone: 'bg-brand-50 text-brand-700',
-    title: 'No surge, no hidden charges',
+    title: 'No surge, no hidden fees',
     text: 'Transparent pricing, shared before you book',
   },
   {
@@ -46,37 +45,22 @@ const trustTiles: { icon: LucideIcon; tone: string; title: string; text: string 
     text: 'Airport pickups wait for you. Delays never cost extra',
   },
   {
-    icon: MapPin,
+    icon: CalendarClock,
     tone: 'bg-live-500/10 text-live-600',
-    title: 'Registered business',
-    text: siteConfig.contact.address.full,
+    title: `Free cancellation${cancelHours ? ` up to ${cancelHours} hrs` : ''}`,
+    text: 'Cancel or reschedule before pickup',
   },
-];
-
-const bookingTiles: { icon: LucideIcon; tone: string; title: string; text: string }[] = [
   {
     icon: PhoneCall,
-    tone: 'bg-live-500/10 text-live-600',
-    title: 'Confirmed by our team',
-    text: siteConfig.policies.confirmation,
-  },
-  {
-    icon: CalendarClock,
-    tone: 'bg-brand-50 text-brand-700',
-    title: `Free cancellation${cancelHours ? ` up to ${cancelHours} hrs` : ''}`,
-    text: siteConfig.policies.cancellation,
-  },
-  {
-    icon: Fuel,
-    tone: 'bg-live-500/10 text-live-600',
-    title: 'Fuel & chauffeur included',
-    text: 'Extra km / hours are billed at the rates shown before you confirm',
-  },
-  {
-    icon: BadgeIndianRupee,
     tone: 'bg-amber-50 text-amber-600',
-    title: 'Clear policy',
-    text: `${siteConfig.policies.tolls} Outstation driver allowance is shown in your estimate.`,
+    title: 'Confirmed by our team',
+    text: 'On call or WhatsApp before the car is dispatched',
+  },
+  {
+    icon: MapPin,
+    tone: 'bg-brand-50 text-brand-700',
+    title: 'Registered business',
+    text: siteConfig.contact.address.full,
   },
 ];
 
@@ -87,79 +71,51 @@ const paymentMethods: { icon: LucideIcon; label: string }[] = [
   { icon: Landmark, label: 'NEFT / IMPS' },
 ];
 
-type Item = { icon: LucideIcon; tone: string; title: string; text: string };
-
-/** 2 × 2 grid of icon rows separated by hairlines (one item per cell). */
-function ItemGrid({ items }: { items: Item[] }) {
-  return (
-    <ul className="grid flex-1 grid-cols-1 sm:grid-cols-2 [&>li]:border-slate-100 sm:[&>li:nth-child(odd)]:border-r [&>li:nth-child(n+3)]:border-t max-sm:[&>li:not(:first-child)]:border-t">
-      {items.map((t) => (
-        <li key={t.title} className="flex items-start gap-3.5 p-4 sm:gap-4 sm:p-7">
-          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 sm:rounded-2xl ${t.tone}`}>
-            <t.icon className="h-5 w-5 sm:h-6 sm:w-6" />
-          </span>
-          <div className="min-w-0">
-            <h4 className="text-base font-extrabold leading-tight tracking-tight text-ink">{t.title}</h4>
-            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t.text}</p>
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 export default function TrustInfoSection() {
   return (
     <section id="trust" className="section scroll-mt-24 py-10 sm:py-20">
       <div className="max-w-2xl">
         <span className="eyebrow">Why book with us</span>
-        <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Clear terms. Reliable rides.</h2>
+        <h2 className="section-title mt-3 sm:mt-4">Clear terms. Reliable rides.</h2>
       </div>
 
-      {/* 1. Trust and reliability */}
-      <Reveal className="mt-8 sm:mt-12">
-        <div className="card-float flex flex-col overflow-hidden lg:flex-row">
-          <div className="relative flex flex-col justify-between gap-5 overflow-hidden bg-live-500/10 p-5 sm:gap-8 sm:p-9 lg:w-[34%] lg:shrink-0">
-            <div className="pointer-events-none absolute -bottom-12 -right-12 h-44 w-44 rounded-full bg-live-500/10" aria-hidden="true" />
-            <span className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-live-600 shadow-sm sm:h-14 sm:w-14">
-              <ShieldCheck className="h-6 w-6 sm:h-7 sm:w-7" />
-            </span>
-            <div className="relative">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-live-600">01</p>
-              <h3 className="mt-1 text-xl font-extrabold tracking-tight text-ink sm:text-[1.7rem]">Trust and reliability</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">Who you ride with and what you can count on.</p>
-            </div>
-          </div>
-          <ItemGrid items={trustTiles} />
-        </div>
-      </Reveal>
-
-      {/* 2. Booking and payment information */}
-      <Reveal className="mt-12 sm:mt-24">
-        <div className="card-float flex flex-col overflow-hidden lg:flex-row-reverse">
-          <div className="relative flex flex-col justify-between gap-5 overflow-hidden bg-brand-600 p-5 text-white sm:gap-8 sm:p-9 lg:w-[34%] lg:shrink-0">
-            <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10" aria-hidden="true" />
-            <div className="relative flex items-center justify-between gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-white sm:h-14 sm:w-14">
-                <CreditCard className="h-6 w-6 sm:h-7 sm:w-7" />
+      <Reveal className="mt-5 sm:mt-10">
+        <div className="card-float overflow-hidden">
+          {/* Payment strip */}
+          <div className="relative flex flex-col gap-3 overflow-hidden bg-brand-600 p-4 text-white sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-7">
+            <div className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-white/10" aria-hidden="true" />
+            <div className="relative flex items-center gap-3.5 sm:gap-5">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 sm:h-16 sm:w-16">
+                <span className="text-2xl font-extrabold leading-none tracking-tight sm:text-3xl">₹0</span>
               </span>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sky-100">02</p>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sky-100 sm:text-[11px]">Advance payment</p>
+                <p className="text-sm font-bold leading-snug sm:text-lg">Pay after the trip. Nothing to pay to book.</p>
+              </div>
             </div>
-            <div className="relative">
-              <h3 className="text-xl font-extrabold tracking-tight sm:text-[1.7rem]">Booking and payment information</h3>
-              <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-sky-100 sm:mt-4">Advance payment</p>
-              <p className="text-4xl font-extrabold tracking-tight sm:text-5xl">₹0</p>
-              <p className="mt-1 text-sm font-medium text-sky-50">Pay after the trip. Nothing to pay to book.</p>
-              <ul className="mt-4 flex flex-wrap gap-2 sm:mt-5">
-                {paymentMethods.map((m) => (
-                  <li key={m.label} className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold backdrop-blur">
-                    <m.icon className="h-3.5 w-3.5" /> {m.label}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <ul className="relative flex flex-wrap gap-1.5 sm:justify-end sm:gap-2">
+              {paymentMethods.map((m) => (
+                <li key={m.label} className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold backdrop-blur sm:px-3 sm:py-1.5 sm:text-xs">
+                  <m.icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> {m.label}
+                </li>
+              ))}
+            </ul>
           </div>
-          <ItemGrid items={bookingTiles} />
+
+          {/* Trust + policy tiles */}
+          <ul className="grid grid-cols-2 gap-px bg-slate-100 lg:grid-cols-3">
+            {items.map((t) => (
+              <li key={t.title} className="flex flex-col items-start gap-2 bg-white p-3.5 sm:flex-row sm:gap-4 sm:p-6">
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11 sm:rounded-2xl ${t.tone}`}>
+                  <t.icon className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
+                </span>
+                <div className="min-w-0">
+                  <h4 className="text-[13px] font-extrabold leading-snug tracking-tight text-ink sm:text-base">{t.title}</h4>
+                  <p className="mt-1 text-[11.5px] leading-snug text-slate-600 sm:text-sm sm:leading-relaxed">{t.text}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </Reveal>
     </section>

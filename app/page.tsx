@@ -11,6 +11,7 @@ import {
   Star,
   Users,
 } from 'lucide-react';
+import { cn } from '@/lib/cn';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import ServicesSection from '@/components/home/ServicesSection';
@@ -20,9 +21,9 @@ import FleetSection from '@/components/home/FleetSection';
 import FaqAccordion from '@/components/home/FaqAccordion';
 import BookButton from '@/components/home/BookButton';
 import Reveal from '@/components/home/Reveal';
-import FareResults from '@/components/FareResults';
 import TrustInfoSection from '@/components/home/TrustInfoSection';
 import { siteConfig } from '@/lib/siteConfig';
+import { withSeo } from '@/lib/seo';
 import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
 import { getSiteImages } from '@/lib/siteContentStore';
 import {
@@ -92,9 +93,11 @@ const homeFaqs = [
 ];
 
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSeo({
+  title: siteConfig.seo.title,
+  description: siteConfig.seo.metaDescription,
   alternates: { canonical: '/' },
-};
+});
 
 
 export default async function HomePage() {
@@ -152,7 +155,7 @@ export default async function HomePage() {
             {/* Phones/tablets: picture runs edge to edge from the top with the copy on it; desktop uses the band above */}
             <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
               <HeroCover images={images.hero} className="lg:hidden" />
-              <div className="relative max-lg:[text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_2px_16px_rgba(0,0,0,0.45)]">
+              <div className="relative [text-shadow:0_1px_3px_rgba(0,0,0,0.65),0_2px_18px_rgba(0,0,0,0.5)]">
                 <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border max-sm:hidden border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white shadow-sm backdrop-blur-md [text-shadow:none]">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-live-500" />
@@ -172,7 +175,7 @@ export default async function HomePage() {
                 </p>
 
                 {/* Phones/tablets: trust points in the hero, two per row */}
-                <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 whitespace-nowrap text-[12px] font-semibold text-white sm:max-w-md sm:text-sm lg:hidden [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_2px_12px_rgba(0,0,0,0.5)]">
+                <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 sm:gap-y-3 whitespace-nowrap text-[12px] font-semibold text-white sm:max-w-md sm:text-sm lg:hidden [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_2px_12px_rgba(0,0,0,0.5)]">
                   {trustList.map(({ icon: Icon, tone, label }) => (
                     <li key={label} className="flex items-center gap-2">
                       <Icon className={`h-[18px] w-[18px] shrink-0 ${tone}`} /> {label}
@@ -184,7 +187,7 @@ export default async function HomePage() {
                 </ul>
 
                 {/* Phones/tablets: room for the car in the picture */}
-                <div className="h-12 sm:h-48 lg:hidden" aria-hidden="true" />
+                <div className="h-36 min-[420px]:h-44 sm:h-60 lg:hidden" aria-hidden="true" />
 
                 {/* Desktop: room for the car in the full-width picture, then the trust points along the bottom */}
                 <div className="hidden lg:block lg:h-[clamp(140px,26vh,300px)]" aria-hidden="true" />
@@ -208,9 +211,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Available cars, prices & T&Cs (after "See Fares") */}
-      <FareResults />
 
       {/* ================================================================ */}
       {/* 2. OUR SERVICES (design.md §3.3)                                 */}
@@ -236,7 +236,7 @@ export default async function HomePage() {
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
           <div className="max-w-2xl">
             <span className="eyebrow">Featured routes</span>
-            <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Popular trips from Bangalore</h2>
+            <h2 className="section-title mt-3 sm:mt-4">Popular trips from Bangalore</h2>
             <p className="mt-3 text-slate-600">
               Fares shown for both models where available — otherwise get a quick quote on WhatsApp.
             </p>
@@ -262,54 +262,62 @@ export default async function HomePage() {
       {/* ================================================================ */}
       <section className="section py-10 sm:py-20">
         <Reveal>
-          <div className="card-float overflow-hidden p-6 sm:p-10">
-            <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-              <div>
-                <span className="eyebrow">Why travellers choose us</span>
-                <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
+          <div className="relative overflow-hidden rounded-2xl bg-ink p-5 text-white sm:rounded-3xl sm:p-10 lg:p-14">
+            <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-sky-400/15 blur-3xl" aria-hidden="true" />
+            <div className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-brand-600/30 blur-3xl" aria-hidden="true" />
+
+            <div className="relative">
+              <div className="max-w-2xl">
+                <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-sky-300">Why choose us</span>
+                <h2 className="text-balance mt-3 text-[1.9rem] font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl">
                   Comfortable cars. Reliable journeys.
                 </h2>
-                <p className="mt-3 text-slate-600">
-                  {siteConfig.brand.closingLine} Fares are shared upfront and never change at the end of the trip.
-                </p>
-                <div className="mt-8 grid grid-cols-2 gap-3">
-                  {stats.map((stat) => (
-                    <div key={stat.label} className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5">
-                      <p className="text-3xl font-extrabold tracking-tight text-brand-700">{stat.value}</p>
-                      <p className="mt-1 text-sm font-medium text-slate-600">{stat.label}</p>
-                    </div>
-                  ))}
-                </div>
               </div>
 
-              <div className="space-y-3">
-                {testimonials.length > 0
-                  ? testimonials.slice(0, 3).map((t) => (
-                      <figure key={t.id} className="rounded-2xl border border-slate-200/80 bg-white p-5">
-                        <div className="flex gap-0.5 text-amber-400" aria-label={`${t.rating} out of 5 stars`}>
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star key={i} className="h-4 w-4 fill-current" />
-                          ))}
-                        </div>
-                        <blockquote className="mt-3 text-sm leading-relaxed text-slate-700">“{t.comment}”</blockquote>
-                        <figcaption className="mt-3 text-xs font-semibold text-slate-500">
-                          <span className="text-ink">{t.name}</span>
-                          {t.source === 'google' && ' · Google review'}
-                        </figcaption>
-                      </figure>
-                    ))
-                  : whyChooseUs.map(({ icon: Icon, title, desc }) => (
-                      <div key={title} className="flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-white p-5">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
-                          <Icon className="h-5 w-5" />
-                        </span>
-                        <div>
-                          <h3 className="text-[15px] font-extrabold">{title}</h3>
-                          <p className="mt-1 text-sm leading-relaxed text-slate-600">{desc}</p>
-                        </div>
+              {/* Stats */}
+              <dl className="mt-7 grid grid-cols-2 gap-2.5 sm:mt-10 sm:gap-4 lg:grid-cols-4">
+                {stats.map((stat) => (
+                  <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 backdrop-blur sm:p-6">
+                    <dt className="text-3xl font-extrabold leading-none tracking-tight text-sky-300 sm:text-5xl">{stat.value}</dt>
+                    <dd className="mt-2 text-xs font-medium leading-snug text-slate-300 sm:mt-3 sm:text-sm">{stat.label}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              {testimonials.length > 0 ? (
+                <div className="mt-8 grid gap-4 sm:mt-10 md:grid-cols-2">
+                  {testimonials.slice(0, 2).map((t) => (
+                    <figure key={t.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                      <blockquote className="text-sm leading-relaxed text-slate-200 sm:text-base">&ldquo;{t.comment}&rdquo;</blockquote>
+                      <figcaption className="mt-3 text-xs font-semibold text-slate-400">
+                        <span className="text-white">{t.name}</span>
+                        {t.source === 'google' && ' · Google review'}
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
+              ) : (
+                <ul className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4 lg:grid-cols-6">
+                  {whyChooseUs.map(({ title, desc, icon: WhyIcon }, i) => (
+                    <li
+                      key={title}
+                      className={cn(
+                        'group flex gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition-colors duration-200 hover:border-sky-300/40 hover:bg-white/[0.08] sm:p-6 lg:col-span-2',
+                        i >= 3 && 'lg:col-span-3',
+                        i === whyChooseUs.length - 1 && 'sm:max-lg:col-span-2'
+                      )}
+                    >
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-400/15 text-sky-300 transition-transform duration-200 group-hover:scale-105 sm:h-12 sm:w-12">
+                        <WhyIcon className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="text-[15px] font-bold leading-snug sm:text-base">{title}</h3>
+                        <p className="mt-1.5 text-[13px] leading-relaxed text-slate-300 sm:text-sm">{desc}</p>
                       </div>
-                    ))}
-              </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         </Reveal>
@@ -324,7 +332,7 @@ export default async function HomePage() {
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="max-w-2xl">
             <span className="eyebrow">Good to know</span>
-            <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Frequently asked questions</h2>
+            <h2 className="section-title mt-3 sm:mt-4">Frequently asked questions</h2>
             <p className="mt-3 text-slate-600">Clear answers on tariffs, booking steps and travel terms.</p>
             <div className="mt-6 flex flex-wrap gap-2">
               <Link href="/faq" className="btn-ghost group">
@@ -349,7 +357,7 @@ export default async function HomePage() {
           <div className="pointer-events-none absolute -bottom-24 left-10 h-60 w-60 rounded-full bg-amber-400/20 blur-3xl" />
           <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-balance text-2xl font-extrabold tracking-tight sm:text-3xl">Ready when you are — day or night.</h2>
+              <h2 className="section-title mt-3 sm:mt-4">Ready when you are — day or night.</h2>
               <p className="mt-2 text-slate-300">
                 {siteConfig.cta.advanceBooking} — ₹0 advance and a verified chauffeur at your door.
               </p>

@@ -2,13 +2,15 @@ import { MapPin, ShieldCheck, Compass, Users, HeartHandshake } from 'lucide-reac
 import LandingTemplate from '@/components/LandingTemplate';
 import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/outstation-cabs' },
-  title: `Outstation Innova Cabs Bangalore | Mysore, Coorg, Ooty, Wayanad | ${siteConfig.brand.name}`,
+  title: 'Outstation Innova Cabs Bangalore | Mysore, Coorg, Ooty',
   description:
     'Book outstation round-trip Innova, Crysta and Ertiga cabs from Bangalore with up to 3 stops on the way. Seasoned highway drivers and transparent per-km billing; tolls paid by customer.',
-};
+});
 
 export default async function OutstationCabsPage() {
   const vehicles = await getVehicles();

@@ -42,8 +42,8 @@ const config: Config = {
         whatsapp: "#25D366",
       },
       fontFamily: {
-        sans: ["var(--font-jakarta)", "Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
-        jakarta: ["var(--font-jakarta)", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-dm-sans)", "DM Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+        dmsans: ["var(--font-dm-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       minHeight: {
         touch: "44px",

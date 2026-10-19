@@ -2,12 +2,14 @@ import { notFound } from 'next/navigation';
 import VehicleDetailTemplate from '@/components/VehicleDetailTemplate';
 import { getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
 export const revalidate = 60;
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/ertiga-rental-bangalore' },
-  title: `Ertiga Rental Bangalore | Maruti Suzuki Ertiga Cab with Driver | ${siteConfig.brand.name}`,
+  title: 'Ertiga Rental Bangalore | Ertiga Cab with Driver',
   description:
     'Rent a Maruti Suzuki Ertiga with driver in Bangalore. Economical, comfortable 7 seater for airport transfers, local city hire and outstation round trips. No advance payment; tolls paid by customer.',
   keywords: [
@@ -17,7 +19,7 @@ export const metadata = {
     'Ertiga with Driver Bangalore',
     'Book Ertiga Cab Bangalore',
   ],
-};
+});
 
 export default async function ErtigaRentalBangalorePage() {
   const allVehicles = await getVehicles();

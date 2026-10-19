@@ -6,10 +6,12 @@
 
 import Link from 'next/link';
 import Logo from '@/components/Logo';
-import { Car, ChevronDown, Clock, Mail, MapPin, Phone } from 'lucide-react';
+import { Banknote, Car, ChevronDown, Clock, CreditCard, Landmark, Mail, MapPin, Phone, Smartphone } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import { catalogRoutes } from '@/lib/routeCatalog';
+
+const PAYMENT_ICONS = [Smartphone, Banknote, CreditCard, Landmark];
 
 // Outstation routes in three groups (every catalogue route exactly once)
 const ROUTE_GROUPS: { title: string; slugs: string[] }[] = [
@@ -191,7 +193,16 @@ export default function Footer() {
           <p>
             © {currentYear} {siteConfig.brand.name}. All rights reserved.
           </p>
-          <p>Payments: {siteConfig.payments.methods.join(' · ')}</p>
+          <ul className="flex flex-wrap items-center gap-1.5" aria-label="Accepted payments">
+            {siteConfig.payments.methods.map((method, i) => {
+              const Icon = PAYMENT_ICONS[i] ?? CreditCard;
+              return (
+                <li key={method} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-medium text-slate-300">
+                  <Icon className="h-3.5 w-3.5 text-sky-300" aria-hidden="true" /> {method}
+                </li>
+              );
+            })}
+          </ul>
         </div>
         <p className="mt-4 border-t border-white/5 pt-4 text-slate-400">
           Website developed by <span className="font-bold text-white">Texnoid Solutions LLP</span>

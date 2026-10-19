@@ -5,6 +5,7 @@ import { FareTermsList, IncludedExcluded, TermsBlocks } from '@/components/polic
 import { getPublishedPolicies } from '@/lib/siteContentStore';
 import { POLICY_SERVICE_LABEL, POLICY_SERVICES } from '@/lib/policies';
 import { siteConfig } from '@/lib/siteConfig';
+import { withSeo } from '@/lib/seo';
 
 /**
  * /terms — Terms & Conditions plus what each service includes and excludes.
@@ -14,11 +15,11 @@ import { siteConfig } from '@/lib/siteConfig';
 
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/terms' },
   title: `Terms & Conditions | ${siteConfig.brand.name}`,
   description: `Booking, fare, payment and cancellation terms for ${siteConfig.brand.name}, plus what is included in airport, outstation and local cab fares.`,
-};
+});
 
 export default async function TermsPage() {
   const policies = await getPublishedPolicies();

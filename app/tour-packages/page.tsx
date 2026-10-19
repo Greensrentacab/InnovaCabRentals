@@ -7,13 +7,15 @@ import SectionHeading, { Hairline } from '@/components/ds/SectionHeading';
 import CtaBand from '@/components/ds/CtaBand';
 import Reveal from '@/components/home/Reveal';
 import { siteConfig } from '@/lib/siteConfig';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/tour-packages' },
-  title: `Custom Tour Packages from Bangalore | Innova Cab Hire | ${siteConfig.brand.name}`,
+  title: 'Tour Packages from Bangalore | Innova Cab Hire',
   description:
     'Customised enquiry-based tour packages from Bangalore to Coorg, Ooty, Mysore, Wayanad, Chikmagalur, and Kodaikanal with Toyota Innova Crysta. Experienced chauffeurs and flexible itineraries.',
-};
+});
 
 const advantages = [
   { title: '100% Tailored Schedule:', text: 'Stop whenever you wish for photographs, meals, and viewpoint exploration.' },

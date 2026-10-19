@@ -14,12 +14,14 @@ import RateList, { rateRows } from '@/components/ds/RateList';
 import SectionHeading from '@/components/ds/SectionHeading';
 import Reveal from '@/components/home/Reveal';
 import { cn } from '@/lib/cn';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
 export const revalidate = 60;
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/vehicles' },
-  title: `Car Rental Fleet Bangalore | Innova, Crysta, Hycross & Ertiga Cabs | ${siteConfig.brand.name}`,
+  title: 'Our Fleet | Innova, Crysta, Hycross & Ertiga Cabs Bangalore',
   description:
     'Compare our Toyota Innova, Innova Crysta, Innova Hycross and Maruti Suzuki Ertiga cabs in Bangalore. Clean, sanitised 7-seater AC MPVs with experienced drivers for outstation, local and airport rides.',
   keywords: [
@@ -30,7 +32,7 @@ export const metadata = {
     'Innova with Driver Bangalore',
     'Book Innova Cab Bangalore',
   ],
-};
+});
 
 export default async function VehiclesPage() {
   const [allVehicles, images] = await Promise.all([getVehicles(), getSiteImages()]);

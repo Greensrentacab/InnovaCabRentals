@@ -6,10 +6,12 @@ import PageHero from '@/components/ds/PageHero';
 import SectionHeading, { Hairline } from '@/components/ds/SectionHeading';
 import CtaBand from '@/components/ds/CtaBand';
 import Reveal from '@/components/home/Reveal';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/about' },
-  title: `About Us | 15 Years of Premium Innova Car Rental | ${siteConfig.brand.name}`,
+  title: `About ${siteConfig.brand.name} | Innova Cabs in Bangalore`,
   description: `Learn about ${siteConfig.brand.name} - ${siteConfig.trustClaims.yearsExperience.label} providing reliable, premium Toyota Innova and Crysta car rentals with professional chauffeurs in Bangalore.`,
   keywords: [
     'About Innova Cabs Bangalore',
@@ -17,7 +19,7 @@ export const metadata = {
     'Reliable Innova Taxi Bangalore',
     'Chauffeur Driven Innova Bangalore',
   ],
-};
+});
 
 export default function AboutPage() {
   const pillars = [

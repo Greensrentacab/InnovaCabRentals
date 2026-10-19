@@ -198,9 +198,10 @@ export function HeroCover({
         <div className="absolute inset-0">
           <SceneImages service={service} only={scene} pos="100% 70%" images={images} mirror />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/25" />
-        <div className="absolute inset-x-0 top-0 h-2/3 bg-gradient-to-b from-black/70 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent" />
+        {/* Soft navy shade on the copy side only, so white text is readable and the car stays bright */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/70 via-slate-950/35 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-slate-950/40 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950/45 to-transparent" />
       </div>
     );
   }
@@ -231,9 +232,9 @@ export function HeroCover({
           />
         );
       })}
-      {/* Light dark wash from the top so the copy stays readable without hiding the photo */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/45 via-60% to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/50 to-transparent" />
+      {/* Soft navy shade at the top and bottom so white copy stays readable */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/75 via-slate-950/50 via-55% to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/45 to-transparent" />
     </div>
   );
 }

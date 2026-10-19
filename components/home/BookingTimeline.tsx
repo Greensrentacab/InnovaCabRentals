@@ -98,7 +98,7 @@ export default function BookingTimeline() {
       <div className="section">
         <div className="mx-auto max-w-2xl text-center">
           <span className="eyebrow">How booking works</span>
-          <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">From quote to doorstep in four steps</h2>
+          <h2 className="section-title mt-3 sm:mt-4">From quote to doorstep in four steps</h2>
           <p className="mt-3 text-slate-600">No app, no login, no advance payment — booking takes about a minute.</p>
         </div>
 

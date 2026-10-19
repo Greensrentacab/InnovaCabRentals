@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, Car, MessageCircle, Phone } from 'lucide-react';
+import { ArrowRight, Car, Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
@@ -38,7 +39,7 @@ export default function NotFound() {
             <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}
           </a>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> WhatsApp
+            <WhatsAppIcon className="h-4 w-4" /> WhatsApp
           </a>
         </div>
       </div>

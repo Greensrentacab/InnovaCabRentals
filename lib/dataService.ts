@@ -1,4 +1,5 @@
 import { Vehicle, Route, LocalPackage } from '@/lib/types';
+import { byFleetOrder } from '@/lib/fleetOrder';
 import { fetchAdminRoutes, fetchAdminVehicles } from '@/lib/adminStore';
 
 /**
@@ -41,7 +42,8 @@ const localRateKey = { 8: 'local8h', 12: 'local12h' } as const;
  * always merged with the seed catalogue so new cars appear automatically.
  */
 export async function getVehicles(): Promise<Vehicle[]> {
-  return fetchAdminVehicles();
+  // Always in the premium order everywhere on the site (lib/fleetOrder.ts)
+  return (await fetchAdminVehicles()).sort(byFleetOrder);
 }
 
 /**

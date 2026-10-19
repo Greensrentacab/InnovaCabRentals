@@ -5,15 +5,17 @@
  */
 
 import Link from 'next/link';
-import { ArrowRight, Check, Clock, Luggage, MapPin, MessageCircle, Phone, Users } from 'lucide-react';
+import { ArrowRight, Check, ChevronRight, Clock, Luggage, MapPin, Phone, Users } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { Vehicle } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
-import { fleetPhotos } from '@/lib/fleetPhotos';
-import PageHero from '@/components/ds/PageHero';
+import { getSiteImages } from '@/lib/siteContentStore';
+import { carPhotos } from '@/lib/siteImages';
+import { BreadcrumbJsonLd } from '@/components/seo/JsonLd';
+import ProductGallery from '@/components/ds/ProductGallery';
 import CtaBand from '@/components/ds/CtaBand';
-import CarGallery from '@/components/CarGallery';
 import Reveal from '@/components/home/Reveal';
-import RateList from '@/components/ds/RateList';
+import { rateRows } from '@/components/ds/RateList';
 
 export interface VehicleDetailTemplateProps {
   vehicle: Vehicle;
@@ -34,7 +36,7 @@ const included = [
   '24/7 dedicated dispatch support',
 ];
 
-export default function VehicleDetailTemplate({
+export default async function VehicleDetailTemplate({
   vehicle,
   h1,
   tagline,
@@ -42,42 +44,48 @@ export default function VehicleDetailTemplate({
   idealFor,
   detailedSpecs,
 }: VehicleDetailTemplateProps) {
+  const images = await getSiteImages();
   const whatsappUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
     `Hello ${siteConfig.brand.name}, I am interested in renting the ${vehicle.name} in Bangalore. Please share tariff and availability.`
   )}`;
-  const photos = fleetPhotos[vehicle.id] ?? [];
+  // Published photo set (Admin → Homepage images → Car photos), else the built-in photos
+  const photos = carPhotos(images, vehicle.id);
+  const rows = rateRows(vehicle.rates);
 
   return (
     <div className="bg-porcelain">
-      <PageHero
-        breadcrumbs={[{ label: 'Vehicles', href: '/vehicles' }, { label: vehicle.name }]}
-        eyebrow={vehicle.type}
-        title={h1}
-        lead={
-          <>
-            <p className="font-bold text-brand-700">{tagline}</p>
-            <p className="mt-3">{overview}</p>
-          </>
-        }
-        aside={
-          photos.length > 0 ? (
-            <CarGallery photos={photos} title={vehicle.name} badge={`${vehicle.seats} + driver`} />
-          ) : undefined
-        }
-      >
-        <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <a href={siteConfig.contact.phone.tel} className="btn-primary">
-            <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
-          </a>
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
-          </a>
-        </div>
-      </PageHero>
+      <header className="section pt-28 sm:pt-32 lg:pt-28">
+        <BreadcrumbJsonLd items={[{ label: 'Vehicles', href: '/vehicles' }, { label: vehicle.name }]} />
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1 text-xs font-semibold text-slate-500">
+          <Link href="/" className="hover:text-brand-700">Home</Link>
+          <ChevronRight className="h-3 w-3" />
+          <Link href="/vehicles" className="hover:text-brand-700">Vehicles</Link>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-slate-700" aria-current="page">{vehicle.name}</span>
+        </nav>
+      </header>
 
-      <section className="section py-16 sm:py-20">
-        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-          <div className="space-y-8">
+      <section className="section pb-12 pt-4 sm:pb-16 sm:pt-5">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
+          {/* Title: above the gallery on phones, beside it (over the price card) on desktop */}
+          <div className="min-w-0 lg:col-start-2 lg:row-start-1">
+            <span className="eyebrow mb-3">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-600" />
+              {vehicle.type} · Bangalore
+            </span>
+            <h1 className="text-balance text-xl font-extrabold leading-snug tracking-tight text-ink sm:text-3xl lg:text-[1.75rem] lg:leading-tight">
+              {h1}
+            </h1>
+          </div>
+
+          <div className="min-w-0 space-y-8 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+            <ProductGallery photos={photos} />
+
+            <div>
+              <p className="font-bold text-brand-700">{tagline}</p>
+              <h2 className="mt-2 text-xl font-extrabold tracking-tight">About the {vehicle.name}</h2>
+              <p className="mt-2 leading-relaxed text-slate-600">{overview}</p>
+            </div>
 
             <Reveal>
               <div className="card-float p-6 sm:p-8">
@@ -94,15 +102,15 @@ export default function VehicleDetailTemplate({
                 </ul>
 
                 {detailedSpecs && detailedSpecs.length > 0 && (
-                  <div className="mt-6 border-t border-slate-100 pt-6">
+                  <div className="mt-5 border-t border-slate-100 pt-4">
                     <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
                       Technical &amp; cabin specifications
                     </h3>
-                    <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <dl className="mt-2 divide-y divide-slate-100 text-sm">
                       {detailedSpecs.map((spec) => (
-                        <div key={spec.label} className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3">
-                          <dt className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{spec.label}</dt>
-                          <dd className="mt-0.5 text-sm font-bold text-ink">{spec.value}</dd>
+                        <div key={spec.label} className="flex items-baseline justify-between gap-4 py-2">
+                          <dt className="shrink-0 text-xs font-semibold text-slate-500">{spec.label}</dt>
+                          <dd className="text-right font-bold text-ink">{spec.value}</dd>
                         </div>
                       ))}
                     </dl>
@@ -130,22 +138,44 @@ export default function VehicleDetailTemplate({
           </div>
 
           {/* Sticky reservation card */}
-          <aside className="space-y-5 lg:sticky lg:top-28">
+          <aside className="min-w-0 space-y-5 lg:sticky lg:top-28 lg:col-start-2 lg:row-start-2">
             <div className="card-float p-6 shadow-float-lg">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Rental tariff</p>
-              <p className="mt-1 text-xs text-slate-500">Per-km and package billing with zero surge pricing</p>
-              <RateList rates={vehicle.rates} className="mt-3" />
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Outstation from</p>
+                  <p className="mt-1 text-3xl font-extrabold leading-none tracking-tight text-ink">
+                    {rows[0].value.replace('/km', '')}
+                    {rows[0].value.endsWith('/km') && <span className="text-base font-bold text-slate-500"> /km</span>}
+                  </p>
+                </div>
+                <span className="rounded-full bg-live-500/10 px-2.5 py-1 text-[11px] font-bold text-live-600">No surge pricing</span>
+              </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                <span className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 font-medium text-slate-700">
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {[rows[3], rows[4], rows[5], rows[2]].map((row) => (
+                  <div key={row.label} className="rounded-xl bg-slate-50 px-3 py-2.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{row.label}</p>
+                    <p className="mt-0.5 text-base font-extrabold tabular-nums text-ink">{row.value}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-slate-500">
+                Outstation billed for a minimum of {rows[1].value} per day. Custom local durations on request.
+              </p>
+              <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-700">
+                Tolls, parking &amp; state permits paid by customer.
+              </p>
+
+              <div className="mt-4 flex items-center gap-4 border-t border-slate-100 pt-4 text-sm font-medium text-slate-700">
+                <span className="flex items-center gap-2">
                   <Users className="h-4 w-4 shrink-0 text-brand-600" /> {vehicle.seats} passengers
                 </span>
-                <span className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 font-medium text-slate-700">
+                <span className="flex items-center gap-2">
                   <Luggage className="h-4 w-4 shrink-0 text-brand-600" /> {vehicle.luggage} suitcases
                 </span>
               </div>
 
-              <ul className="mt-5 space-y-2.5">
+              <ul className="mt-4 space-y-2">
                 {included.map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm font-medium text-slate-700">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-live-500/10 text-live-600">
@@ -162,7 +192,7 @@ export default function VehicleDetailTemplate({
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp w-full">
-                  <MessageCircle className="h-4 w-4" /> WhatsApp Us for Quick Quote
+                  <WhatsAppIcon className="h-4 w-4" /> WhatsApp Us for Quick Quote
                 </a>
                 <a href={siteConfig.contact.phone.tel} className="btn-ghost w-full">
                   <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}

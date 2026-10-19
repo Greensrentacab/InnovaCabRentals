@@ -1,8 +1,9 @@
 /**
- * fleetPhotos.ts — vehicle photography (design.md §3.3 photo cards).
- * Innova & Innova Crysta: actual photos of our own fleet (/images/fleet/own).
- * Ertiga & Hycross: Wikimedia Commons (CC BY-SA, CC0 or public domain) —
- * every use of those shows a credit line (author, licence, source).
+ * fleetPhotos.ts — built-in vehicle photography (design.md §3.3 photo cards).
+ * Innova, Innova Crysta & Innova Hycross: actual photos of our own fleet
+ * (/images/fleet/own). Ertiga: Wikimedia Commons (CC0 / public domain).
+ * Each car's photo set can be replaced in Admin → Homepage images → Car
+ * photos; pages render the published set from getSiteImages().fleet.
  * Files live in /public/images/fleet (1280px, resized from the originals).
  *
  * The Innova Hycross photos show the Toyota Zenix, the Indonesian-market name
@@ -16,7 +17,7 @@ export interface FleetPhoto {
   label: string;
   /** Third-party photos only (Wikimedia Commons) */
   author?: string;
-  license?: 'CC BY-SA 4.0' | 'CC BY-SA 3.0' | 'CC0' | 'Public domain';
+  license?: string;
   /** Wikimedia Commons file page */
   sourceUrl?: string;
   /** true = actual photo of our own fleet (no credit line needed) */

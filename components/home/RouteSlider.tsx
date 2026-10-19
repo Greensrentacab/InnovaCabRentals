@@ -56,15 +56,36 @@ export default function RouteSlider({ routes }: { routes: SliderRoute[] }) {
         </button>
       </div>
 
+      {/* Mobile: two compact rows, two cards visible with the next one peeking in */}
+      <div className="space-y-2 md:hidden">
+        {[routes.slice(0, Math.ceil(routes.length / 2)), routes.slice(Math.ceil(routes.length / 2))]
+          .filter((row) => row.length > 0)
+          .map((row, i) => (
+            <div
+              key={i}
+              role="region"
+              tabIndex={0}
+              aria-label={`Featured routes, row ${i + 1} — scroll horizontally`}
+              className="no-scrollbar -mr-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto overflow-y-hidden overscroll-x-contain [touch-action:pan-x_pan-y] py-1 pr-4"
+            >
+              {row.map((route) => (
+                <div key={route.slug} className="w-[42%] shrink-0 snap-start">
+                  <RouteCard route={route} />
+                </div>
+              ))}
+            </div>
+          ))}
+      </div>
+
       <div
         ref={trackRef}
         role="region"
         tabIndex={0}
         aria-label="Featured routes — scroll horizontally"
-        className="no-scrollbar -mr-4 flex snap-x snap-mandatory scroll-pl-0 gap-4 overflow-x-auto overscroll-x-contain py-3 pr-4 focus-visible:rounded-2xl sm:-mr-6 sm:pr-6 lg:-mr-8 lg:pr-8"
+        className="no-scrollbar -mr-4 hidden snap-x snap-mandatory scroll-pl-0 gap-4 overflow-x-auto overscroll-x-contain py-3 pr-4 focus-visible:rounded-2xl sm:-mr-6 sm:pr-6 md:flex lg:-mr-8 lg:pr-8"
       >
         {routes.map((route) => (
-          <div key={route.slug} className="w-[78%] shrink-0 snap-start sm:w-[44%] lg:w-[29%] xl:w-[23%]">
+          <div key={route.slug} className="w-[44%] shrink-0 snap-start lg:w-[29%] xl:w-[23%]">
             <RouteCard route={route} />
           </div>
         ))}

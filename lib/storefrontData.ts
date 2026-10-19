@@ -10,8 +10,10 @@ import type { LocalPackage, Route, Vehicle } from '@/lib/types';
 import type { WidgetDestination, WidgetLocalPackage } from '@/components/home/QuickBookingWidget';
 import type { FleetCardData } from '@/components/home/FleetSection';
 import type { SliderRoute } from '@/components/home/RouteCard';
-import { routePhoto } from '@/lib/routePhotos';
+import { routePhoto, routePhotoKey } from '@/lib/routePhotos';
 import { primaryPhoto } from '@/lib/fleetPhotos';
+import { airportTariff, quoteDistanceFare, tariffMode } from '@/lib/pricing';
+import type { ResolvedImage, SiteImagesView } from '@/lib/siteImages';
 
 export const formatINR = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
 
@@ -37,9 +39,20 @@ const VEHICLE_COPY: Record<string, { shortName: string; tagline: string }> = {
 export const vehicleShortName = (v: Pick<Vehicle, 'id' | 'name'>) =>
   VEHICLE_COPY[v.id]?.shortName ?? v.name.replace(/^(Toyota|Maruti Suzuki) /, '');
 
-/** Confirmed models only (Innova, Innova Crysta, Innova Hycross & Ertiga). */
+/** Display order everywhere (cards, compare table, pages): lowest to highest tariff. */
+const FLEET_ORDER = ['ertiga', 'innova', 'innova-crysta', 'innova-hycross'];
+
+export const sortFleet = <T extends { id: string }>(vehicles: T[]): T[] => {
+  const rank = (id: string) => {
+    const i = FLEET_ORDER.indexOf(id);
+    return i === -1 ? FLEET_ORDER.length : i;
+  };
+  return [...vehicles].sort((a, b) => rank(a.id) - rank(b.id));
+};
+
+/** Confirmed models only (Ertiga, Innova, Innova Crysta & Innova Hycross), in display order. */
 export const confirmedFleet = (vehicles: Vehicle[]) =>
-  vehicles.filter((v) => v.confirmed !== false);
+  sortFleet(vehicles.filter((v) => v.confirmed !== false));
 
 export const findAirportRoute = (routes: Route[]) => routes.find((r) => r.slug.includes('airport'));
 
@@ -48,15 +61,26 @@ export const sortPackages = (packages: LocalPackage[]) =>
   [...packages].sort((a, b) => (a.durationHours || 999) - (b.durationHours || 999));
 
 /**
- * Same-day round-trip estimate for a route (matches lib/fareCalculator.ts):
- * max(2 × distance, min km/day) × per-km + 1 day driver allowance.
+ * Lowest airport fare a car can charge: the base fare (it covers the first
+ * km of a distance-based tariff, or the whole trip when flat).
+ */
+export const airportFromFare = (vehicle: Vehicle): number | null => {
+  const t = airportTariff(vehicle.rates);
+  return tariffMode(t) === 'request' ? null : t.baseFare;
+};
+
+/**
+ * Same-day estimate for a route (matches lib/fareCalculator.ts):
+ *  - airport route: one leg over the route distance with the airport tariff;
+ *  - outstation: max(2 × distance, min km/day) × per-km + 1 day driver allowance.
  */
 export function routeRoundTripFare(route: Route, vehicle: Vehicle): number | null {
   const r = vehicle.rates;
-  if (!r || typeof r.outstationPerKm !== 'number' || r.outstationPerKm <= 0) return null;
+  if (!r) return null;
   if (route.slug.includes('airport')) {
-    return typeof r.airportFare === 'number' && r.airportFare > 0 ? r.airportFare : null;
+    return quoteDistanceFare(airportTariff(r), route.distanceKm).fare;
   }
+  if (typeof r.outstationPerKm !== 'number' || r.outstationPerKm <= 0) return null;
   const km = Math.max(route.distanceKm * 2, r.outstationMinKmPerDay);
   return Math.round(km * r.outstationPerKm + (r.driverAllowancePerDay ?? 0));
 }
@@ -64,14 +88,22 @@ export function routeRoundTripFare(route: Route, vehicle: Vehicle): number | nul
 /** Lowest "from" fare for a route across the confirmed fleet. */
 export const routeFromFare = (route: Route, fleet: Vehicle[]) => minFare(fleet.map((v) => routeRoundTripFare(route, v)));
 
+/** Card-sized photo for a route: the published override, else the built-in photo. */
+export function routeCardPhoto(slug: string, images?: SiteImagesView): ResolvedImage | undefined {
+  const custom = images?.routes[routePhotoKey(slug)];
+  if (custom) return custom;
+  const p = routePhoto(slug);
+  return p ? { src: p.src, large: p.src, width: 800, height: 500, alt: p.alt, mirror: false, custom: false, own: false, credit: p } : undefined;
+}
+
 /** Props for QuickBookingWidget. */
-export function buildWidgetData(routes: Route[], packages: LocalPackage[], fleet: Vehicle[]) {
+export function buildWidgetData(routes: Route[], packages: LocalPackage[], fleet: Vehicle[], images?: SiteImagesView) {
   const fleetIds = fleet.map((v) => v.id);
   const airportRoute = findAirportRoute(routes);
 
   const destinations: WidgetDestination[] = routes
     .filter((r) => r !== airportRoute)
-    .map((r) => ({ slug: r.slug, destination: r.destination, distanceKm: r.distanceKm, photo: routePhoto(r.slug)?.src }));
+    .map((r) => ({ slug: r.slug, destination: r.destination, distanceKm: r.distanceKm, photo: routeCardPhoto(r.slug, images)?.src }));
 
   const localPackages: WidgetLocalPackage[] = sortPackages(packages).map((p) => {
     const from = minFare(fleetIds.map((id) => p.fares?.[id]));
@@ -89,7 +121,7 @@ export function buildWidgetData(routes: Route[], packages: LocalPackage[], fleet
 }
 
 /** Route card view-model (slider + route grids). */
-export function buildRouteCards(routes: Route[], fleet: Vehicle[]): SliderRoute[] {
+export function buildRouteCards(routes: Route[], fleet: Vehicle[], images?: SiteImagesView): SliderRoute[] {
   return routes.map((r) => {
     const isAirport = r.slug.includes('airport');
     const from = routeFromFare(r, fleet);
@@ -105,16 +137,18 @@ export function buildRouteCards(routes: Route[], fleet: Vehicle[]): SliderRoute[
       fareLabel: isAirport ? 'Airport transfer from' : 'Round trip from',
       footnote: from
         ? isAirport
-          ? 'Fixed fare, each way · tolls extra'
+          ? fleet.some((v) => tariffMode(airportTariff(v.rates)) === 'distance')
+            ? `Estimate for ${r.distanceKm} km, each way · tolls extra`
+            : 'Fixed fare, each way · tolls extra'
           : 'Same-day estimate · tolls paid by customer'
         : 'Price on request · quick quote on WhatsApp',
-      photo: routePhoto(r.slug),
+      photo: routeCardPhoto(r.slug, images),
     };
   });
 }
 
-/** Fleet card view-model with Airport / Per km / 8 hr fare trio. */
-export function buildFleetCards(fleet: Vehicle[]): FleetCardData[] {
+/** Fleet card view-model with Airport / Per km / 8 hr package fare trio. */
+export function buildFleetCards(fleet: Vehicle[], images?: SiteImagesView): FleetCardData[] {
   return fleet.map((v) => ({
     id: v.id,
     name: v.name,
@@ -125,12 +159,19 @@ export function buildFleetCards(fleet: Vehicle[]): FleetCardData[] {
     luggage: v.luggage,
     features: v.features,
     href: `/${v.id}-rental-bangalore`,
-    photo: primaryPhoto(v.id),
+    // Main photo = first photo of the car's published set (Admin → Homepage images → Car photos)
+    photo: images?.fleet[v.id]?.[0] ?? primaryPhoto(v.id),
     rates: v.rates,
     fares: [
-      { label: 'Airport', value: fareOrRequest(v.rates?.airportFare) },
+      {
+        label: 'Airport',
+        value:
+          tariffMode(airportTariff(v.rates)) === 'distance'
+            ? `from ${fareOrRequest(airportFromFare(v))}`
+            : fareOrRequest(airportFromFare(v)),
+      },
       { label: 'Per km', value: fareOrRequest(v.rates?.outstationPerKm) },
-      { label: '8 hr', value: fareOrRequest(v.rates?.local8h) },
+      { label: '8 hr package', value: fareOrRequest(v.rates?.local8h) },
     ],
   }));
 }

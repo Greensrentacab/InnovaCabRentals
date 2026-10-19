@@ -2,10 +2,12 @@ import { notFound } from 'next/navigation';
 import VehicleDetailTemplate from '@/components/VehicleDetailTemplate';
 import { getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/innova-hycross-rental-bangalore' },
-  title: `Innova Hycross Rental Bangalore | Toyota Innova Hycross Hybrid Cab Hire | ${siteConfig.brand.name}`,
+  title: 'Innova Hycross Rental Bangalore | Hycross Cab with Driver',
   description:
     'Book a chauffeur-driven Toyota Innova Hycross in Bangalore. Quiet hybrid drive and a spacious 7-seater cabin for airport transfers, local rentals and outstation trips.',
   keywords: [
@@ -16,7 +18,7 @@ export const metadata = {
     'Innova with Driver Bangalore',
     'Book Innova Cab Bangalore',
   ],
-};
+});
 
 export default async function InnovaHycrossRentalBangalorePage() {
   const allVehicles = await getVehicles();

@@ -2,10 +2,12 @@ import { notFound } from 'next/navigation';
 import VehicleDetailTemplate from '@/components/VehicleDetailTemplate';
 import { getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/innova-rental-bangalore' },
-  title: `Innova Rental Bangalore | 7 & 8 Seater Toyota Innova Cab Hire | ${siteConfig.brand.name}`,
+  title: 'Innova Rental Bangalore | 7 & 8 Seater Innova with Driver',
   description:
     'Book Toyota Innova cab rental in Bangalore with experienced driver for outstation road trips, Kempegowda Airport transfers, and local city use. Clean, comfortable 7 and 8 seater Innova taxi.',
   keywords: [
@@ -16,7 +18,7 @@ export const metadata = {
     'Book Innova Cab Bangalore',
     'Innova Cab Bangalore Price',
   ],
-};
+});
 
 export default async function InnovaRentalBangalorePage() {
   const allVehicles = await getVehicles();

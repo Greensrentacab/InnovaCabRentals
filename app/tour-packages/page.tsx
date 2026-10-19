@@ -1,18 +1,21 @@
 import Link from 'next/link';
-import { ArrowRight, Check, MapPin, MessageCircle, Phone } from 'lucide-react';
+import { ArrowRight, Check, MapPin, Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import TourEnquiryForm from '@/components/TourEnquiryForm';
 import PageHero from '@/components/ds/PageHero';
 import SectionHeading, { Hairline } from '@/components/ds/SectionHeading';
 import CtaBand from '@/components/ds/CtaBand';
 import Reveal from '@/components/home/Reveal';
 import { siteConfig } from '@/lib/siteConfig';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/tour-packages' },
-  title: `Custom Tour Packages from Bangalore | Innova Cab Hire | ${siteConfig.brand.name}`,
+  title: 'Tour Packages from Bangalore | Innova Cab Hire',
   description:
     'Customised enquiry-based tour packages from Bangalore to Coorg, Ooty, Mysore, Wayanad, Chikmagalur, and Kodaikanal with Toyota Innova Crysta. Experienced chauffeurs and flexible itineraries.',
-};
+});
 
 const advantages = [
   { title: '100% Tailored Schedule:', text: 'Stop whenever you wish for photographs, meals, and viewpoint exploration.' },
@@ -96,7 +99,7 @@ export default function TourPackagesPage() {
             <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
           </a>
           <a href={tourWhatsApp} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
+            <WhatsAppIcon className="h-4 w-4" /> {siteConfig.cta.quickQuote}
           </a>
         </div>
 
@@ -125,7 +128,7 @@ export default function TourPackagesPage() {
                 <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}
               </a>
               <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp px-3">
-                <MessageCircle className="h-4 w-4" /> WhatsApp Travel Desk
+                <WhatsAppIcon className="h-4 w-4" /> WhatsApp Travel Desk
               </a>
             </div>
           </div>
@@ -133,7 +136,7 @@ export default function TourPackagesPage() {
       </PageHero>
 
       {/* Curated itineraries */}
-      <section className="relative bg-white py-16 sm:py-20">
+      <section className="relative bg-white py-10 sm:py-20">
         <Hairline />
         <div className="section">
           <SectionHeading
@@ -172,7 +175,7 @@ export default function TourPackagesPage() {
         </div>
       </section>
 
-      <div className="pt-16 sm:pt-20">
+      <div className="pt-10 sm:pt-20">
         <CtaBand title="Plan your South India getaway" whatsappUrl={tourWhatsApp} service="outstation" />
       </div>
     </div>

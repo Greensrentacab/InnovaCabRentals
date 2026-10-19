@@ -2,7 +2,8 @@
  * CtaBand.tsx — design.md §3.6 dark CTA band.
  */
 
-import { ArrowRight, MessageCircle, Phone } from 'lucide-react';
+import { ArrowRight, Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import BookButton from '@/components/home/BookButton';
 import type { HomeService } from '@/components/home/scrollToBook';
 import { siteConfig } from '@/lib/siteConfig';
@@ -19,7 +20,7 @@ export default function CtaBand({
   whatsappUrl?: string;
 }) {
   return (
-    <section className="section pb-20">
+    <section className="section pb-12 sm:pb-20">
       <div className="relative overflow-hidden rounded-4xl bg-ink p-8 text-white shadow-float-lg sm:p-12">
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-600/40 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 left-10 h-60 w-60 rounded-full bg-amber-400/20 blur-3xl" />
@@ -37,7 +38,7 @@ export default function CtaBand({
               <Phone className="h-4 w-4" /> Call 24/7
             </a>
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-              <MessageCircle className="h-4 w-4" /> WhatsApp
+              <WhatsAppIcon className="h-4 w-4" /> WhatsApp
             </a>
           </div>
         </div>

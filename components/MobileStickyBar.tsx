@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Phone, MessageCircle, CalendarCheck } from 'lucide-react';
+import { Phone, CalendarCheck } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 
 export default function MobileStickyBar() {
@@ -26,7 +27,7 @@ export default function MobileStickyBar() {
           className="min-h-[44px] flex flex-col items-center justify-center bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white rounded-lg p-1.5 transition-all shadow-md"
           aria-label="WhatsApp Us"
         >
-          <MessageCircle className="w-5 h-5" />
+          <WhatsAppIcon className="w-5 h-5" />
           <span className="text-[11px] font-bold mt-0.5 tracking-tight">WhatsApp</span>
         </a>
 

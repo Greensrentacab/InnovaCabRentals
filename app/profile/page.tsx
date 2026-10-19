@@ -27,12 +27,12 @@ import {
   LockKeyhole,
   LogOut,
   MapPin,
-  MessageCircle,
   Phone,
   RotateCcw,
   User,
   UserRound,
 } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { useAuth } from '@/context/AuthContext';
 import AuthPanel from '@/components/auth/AuthPanel';
 import UserAvatar from '@/components/auth/UserAvatar';
@@ -333,7 +333,7 @@ function ProfileTab() {
           <p className="mt-1 text-xs text-slate-500">Our operations desk is available {siteConfig.contact.hours.toLowerCase()}.</p>
           <div className="mt-4 grid gap-2">
             <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-              <MessageCircle className="h-4 w-4" /> WhatsApp Us
+              <WhatsAppIcon className="h-4 w-4" /> WhatsApp Us
             </a>
             <a href={siteConfig.contact.phone.tel} className="btn-ghost">
               <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}
@@ -502,7 +502,7 @@ function BookingCard({ booking, muted = false }: { booking: Booking; muted?: boo
             <FileText className="h-3.5 w-3.5" /> View Booking Receipt
           </Link>
           <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp px-4 py-2 text-xs">
-            <MessageCircle className="h-3.5 w-3.5" /> Chat about this trip
+            <WhatsAppIcon className="h-3.5 w-3.5" /> Chat about this trip
           </a>
         </div>
       </div>

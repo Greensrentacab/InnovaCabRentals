@@ -5,13 +5,15 @@
 
 import type { VehicleRates } from '@/lib/types';
 import { fareOrRequest } from '@/lib/storefrontData';
+import { airportTariff, tariffSummary } from '@/lib/pricing';
 import { cn } from '@/lib/cn';
 
 export const rateRows = (rates?: VehicleRates) => [
   { label: 'Outstation (round trip)', value: rates?.outstationPerKm ? `${fareOrRequest(rates.outstationPerKm)}/km` : 'On request' },
   { label: 'Min. km per day', value: `${rates?.outstationMinKmPerDay ?? 300} km` },
   { label: 'Driver allowance', value: rates?.driverAllowancePerDay ? `${fareOrRequest(rates.driverAllowancePerDay)}/day` : 'On request' },
-  { label: 'Airport transfer', value: fareOrRequest(rates?.airportFare) },
+  // Flat fare, or base fare for the first km + rate per extra km (lib/pricing.ts)
+  { label: 'Airport transfer', value: tariffSummary(airportTariff(rates)) },
   { label: 'Local 8 hr / 80 km', value: fareOrRequest(rates?.local8h) },
   { label: 'Local 12 hr / 120 km', value: fareOrRequest(rates?.local12h) },
   { label: 'Local custom duration', value: 'On request' },

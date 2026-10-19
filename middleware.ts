@@ -36,8 +36,8 @@ function parseReleased(raw: string): { exact: Set<string>; prefixes: string[] } 
   return { exact, prefixes };
 }
 
-// Never gated: admin console, APIs, static assets, and the coming-soon page itself.
-const ALWAYS_ALLOWED_PREFIXES = ['/admin', '/api', '/coming-soon', '/_next', '/favicon.ico'];
+// Never gated: admin console (and its alerts service worker), APIs, static assets, and the coming-soon page itself.
+const ALWAYS_ALLOWED_PREFIXES = ['/admin', '/api', '/coming-soon', '/_next', '/favicon.ico', '/firebase-messaging-sw.js'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

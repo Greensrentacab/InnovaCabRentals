@@ -18,16 +18,16 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   MapPin,
   Search,
-  Navigation,
   Clock,
   X,
   AlertCircle,
   RotateCcw,
-  Loader2,
+  Pencil,
 } from 'lucide-react';
 import {
   LocationData,
   getRecentLocations,
+  isBengaluruAddress,
   saveRecentLocation,
   searchPlaces,
   getPlaceCoordinates,
@@ -42,6 +42,8 @@ interface LocationAutocompleteModalProps {
   placeholder?: string;
   initialValue?: string;
   variant?: 'modal' | 'dropdown';
+  /** Only offer places in Bengaluru (airport transfers, local rentals) */
+  bengaluruOnly?: boolean;
 }
 
 export default function LocationAutocompleteModal({
@@ -52,6 +54,7 @@ export default function LocationAutocompleteModal({
   placeholder = 'Search location in Bengaluru or Outstation...',
   initialValue = '',
   variant = 'modal',
+  bengaluruOnly = false,
 }: LocationAutocompleteModalProps) {
   const isDropdown = variant === 'dropdown';
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -59,7 +62,6 @@ export default function LocationAutocompleteModal({
   const [predictions, setPredictions] = useState<LocationData[]>([]);
   const [recentLocations, setRecentLocations] = useState<LocationData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLocating, setIsLocating] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchError, setSearchError] = useState(false);
 
@@ -73,7 +75,7 @@ export default function LocationAutocompleteModal({
       setQuery(initialValue);
       setHasSearched(false);
       setSearchError(false);
-      setRecentLocations(getRecentLocations());
+      setRecentLocations(bengaluruOnly ? getRecentLocations().filter((l) => isBengaluruAddress(`${l.name} ${l.address}`)) : getRecentLocations());
 
       // Preload Google script
       loadGoogleMapsScript().then(() => {
@@ -104,7 +106,7 @@ export default function LocationAutocompleteModal({
     setSearchError(false);
 
     try {
-      const results = await searchPlaces(text, sessionTokenRef.current);
+      const results = await searchPlaces(text, sessionTokenRef.current, { bengaluruOnly });
       setPredictions(results);
       setHasSearched(true);
       if (results.length === 0) {
@@ -118,7 +120,7 @@ export default function LocationAutocompleteModal({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [bengaluruOnly]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -164,62 +166,6 @@ export default function LocationAutocompleteModal({
 
     onSelect(finalLocation);
     onClose();
-  };
-
-  // "Use my current location" handler with GPS & Geocoding
-  const handleUseCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
-      return;
-    }
-
-    setIsLocating(true);
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-
-        if (typeof window !== 'undefined' && window.google?.maps?.Geocoder) {
-          const geocoder = new window.google.maps.Geocoder();
-          geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
-            setIsLocating(false);
-            if (status === 'OK' && results && results[0]) {
-              const fullAddress = results[0].formatted_address;
-              const placeName = results[0].address_components?.[0]?.long_name || 'Current Location';
-              const loc: LocationData = {
-                name: placeName,
-                address: fullAddress,
-                lat,
-                lng,
-              };
-              handleSelectLocation(loc);
-            } else {
-              handleSelectLocation({
-                name: 'Current Location',
-                address: `Bengaluru (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
-                lat,
-                lng,
-              });
-            }
-          });
-        } else {
-          setIsLocating(false);
-          handleSelectLocation({
-            name: 'Current Location',
-            address: `Bengaluru Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
-            lat,
-            lng,
-          });
-        }
-      },
-      (error) => {
-        setIsLocating(false);
-        console.warn('Geolocation error:', error);
-        alert('Could not access current location. Please check browser location permissions or type manually.');
-      },
-      { timeout: 10000, enableHighAccuracy: true }
-    );
   };
 
   // Esc closes. Modal: body scroll locked. Dropdown: closes on an outside tap.
@@ -294,22 +240,21 @@ export default function LocationAutocompleteModal({
 
   const results = (
     <>
-      <button
-        type="button"
-        onClick={handleUseCurrentLocation}
-        disabled={isLocating}
-        className="group flex w-full items-center gap-3 rounded-2xl border border-brand-100 bg-brand-50/70 px-3 py-2.5 text-left transition hover:border-brand-300 disabled:opacity-70"
-      >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
-          {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-ink group-hover:text-brand-700">
-            {isLocating ? 'Detecting current location...' : 'Use my current location'}
+      {query.trim().length >= 2 && (
+        <button
+          type="button"
+          onClick={() => handleSelectLocation({ name: query.trim(), address: query.trim(), lat: null, lng: null })}
+          className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-2.5 text-left transition hover:border-brand-300"
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 group-hover:bg-brand-50 group-hover:text-brand-700">
+            <Pencil className="h-4 w-4" />
           </span>
-          <span className="block text-xs text-slate-500">GPS location via device</span>
-        </span>
-      </button>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-ink group-hover:text-brand-700">Use &ldquo;{query.trim()}&rdquo;</span>
+            <span className="block text-xs text-slate-500">Enter this address manually</span>
+          </span>
+        </button>
+      )}
 
       {isLoading && (
         <div className="space-y-2" aria-live="polite">
@@ -330,7 +275,7 @@ export default function LocationAutocompleteModal({
           </span>
           <p className="mt-3 text-sm font-bold text-ink">We couldn&apos;t find that location</p>
           <p className="mx-auto mt-1 max-w-xs text-xs text-slate-500">
-            Try checking for spelling errors or search for a nearby major road, landmark, or area.
+            Check the spelling, try a nearby road, landmark or area, or use what you typed as the address.
           </p>
           <button type="button" onClick={handleRetry} className="btn-ghost mt-4 px-4 py-2.5">
             <RotateCcw className="h-3.5 w-3.5" /> Retry Search

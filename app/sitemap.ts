@@ -13,6 +13,7 @@ const STATIC_PAGES: { path: string; priority: number }[] = [
   { path: '/about', priority: 0.5 },
   { path: '/faq', priority: 0.5 },
   { path: '/contact', priority: 0.6 },
+  { path: '/terms', priority: 0.3 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

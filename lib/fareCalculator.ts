@@ -6,16 +6,24 @@
  *    min km/day × trip days) × per-km rate + driver allowance × days.
  *    Actual km = pickup → stops → destination → pickup (route distance or
  *    straight-line × 1.3 road factor).
- *  - Airport: fixed fare each way (Round = 2 legs).
+ *  - Airport: per leg, base fare covering the first N km + rate per extra
+ *    km (part-km = full km), or a flat fare — lib/pricing.ts. Round = 2 legs.
  *  - Local: 8 / 12 hour package price; custom durations on request.
+ * Inclusions, exclusions and the fixed wording of the fare terms come from
+ * Admin → Terms & policies (published copy); rate-based lines are built here.
  * Any missing rate → fare null ("Price on request"). Never invent prices.
  * Tolls, parking and state permits are always paid by the customer.
  * Always recalculated on the server — never trust a browser-sent fare.
  */
 
-import { siteConfig } from '@/lib/siteConfig';
+import { byFleetOrder } from '@/lib/fleetOrder';
 import { ServiceType, TripType, Vehicle, Route, VehicleRates } from '@/lib/types';
 import { getRoutes, getVehicles } from '@/lib/dataService';
+import { airportTariff, quoteDistanceFare, roundKm, tariffMode } from '@/lib/pricing';
+import { policyServiceFor } from '@/lib/policies';
+import { getPublishedPolicies, getSiteImages } from '@/lib/siteContentStore';
+import { carPhotos } from '@/lib/siteImages';
+import type { FleetPhoto } from '@/lib/fleetPhotos';
 
 export interface FarePoint {
   lat?: number | null;
@@ -51,6 +59,8 @@ export interface VehicleFareResult {
   breakdown: string[];
   /** Car- and service-specific terms & conditions */
   terms: string[];
+  /** The car's published photo set (carousel on the result card) */
+  photos: FleetPhoto[];
 }
 
 export interface FareCalculationResponse {
@@ -62,6 +72,9 @@ export interface FareCalculationResponse {
   tripType: TripType;
   serviceType: ServiceType;
   route?: { name: string; slug: string } | null;
+  /** What the fares include / exclude (Admin → Terms & policies) */
+  inclusions: string[];
+  exclusions: string[];
   fares: { [vehicleId: string]: number | null };
   results: VehicleFareResult[];
   notice: string;
@@ -97,14 +110,7 @@ export function tripDays(pickupDate?: string | null, returnDate?: string | null)
   return Number.isFinite(diff) && diff >= 0 ? diff + 1 : 1;
 }
 
-const COMMON_TERMS = [
-  siteConfig.policies.tolls,
-  'Fare is an estimate; final fare is confirmed by our dispatch team before the trip.',
-  'No advance payment. Pay after the trip.',
-  siteConfig.policies.cancellation,
-];
-
-function outstationQuote(rates: VehicleRates, totalKm: number | null, days: number) {
+function outstationQuote(rates: VehicleRates, totalKm: number | null, days: number, policyTerms: string[]) {
   const minKm = rates.outstationMinKmPerDay * days;
   const terms = [
     `Round trip only. Minimum ${rates.outstationMinKmPerDay} km billed per day (${minKm} km for ${days} day${days > 1 ? 's' : ''}).`,
@@ -114,8 +120,7 @@ function outstationQuote(rates: VehicleRates, totalKm: number | null, days: numb
     isNum(rates.driverAllowancePerDay)
       ? `Driver allowance ${inr(rates.driverAllowancePerDay)}/day included.`
       : 'Driver allowance per day extra, shared on confirmation.',
-    'Night driving allowance applies between 10:00 PM and 6:00 AM.',
-    ...COMMON_TERMS,
+    ...policyTerms,
   ];
 
   if (!isNum(rates.outstationPerKm)) return { fare: null, breakdown: [], terms };
@@ -130,21 +135,33 @@ function outstationQuote(rates: VehicleRates, totalKm: number | null, days: numb
   return { fare: Math.round(kmFare + allowance), breakdown, terms };
 }
 
-function airportQuote(rates: VehicleRates, legs: number) {
-  const terms = [
-    legs > 1 ? 'Fixed fare per leg; round trip = 2 legs.' : 'Fixed airport fare, one way.',
-    'Airport parking and toll charges are paid by the customer.',
-    ...COMMON_TERMS.slice(1),
-  ];
-  if (!isNum(rates.airportFare)) return { fare: null, breakdown: [], terms };
-  return {
-    fare: Math.round(rates.airportFare * legs),
-    breakdown: [`${legs} leg${legs > 1 ? 's' : ''} × ${inr(rates.airportFare)}`],
-    terms,
-  };
+/**
+ * Airport transfer: each leg is priced on its one-way distance with the
+ * car's tariff (minimum-km rule or flat fare, lib/pricing.ts).
+ */
+function airportQuote(rates: VehicleRates, legs: number, oneWayKm: number | null, policyTerms: string[]) {
+  const tariff = airportTariff(rates);
+  const mode = tariffMode(tariff);
+  const rule =
+    mode === 'distance'
+      ? `Base fare ${inr(tariff.baseFare!)} covers the first ${tariff.includedKm} km; each extra km is ${inr(tariff.extraKmRate!)} (a part-km is charged as a full km).`
+      : mode === 'flat'
+        ? 'Fixed airport fare, one way.'
+        : 'Airport fare shared on request.';
+  const terms = [rule, ...(legs > 1 ? ['Round trip = 2 legs, each priced the same way.'] : []), ...policyTerms];
+
+  const leg = quoteDistanceFare(tariff, oneWayKm);
+  if (leg.fare === null) return { fare: null, breakdown: [], terms };
+
+  const distanceLine = mode === 'distance' && oneWayKm !== null ? [`Trip distance ~${roundKm(oneWayKm)} km`] : [];
+  const breakdown =
+    legs > 1
+      ? [...distanceLine, ...leg.lines.map((l) => `Each leg: ${l}`), `${legs} legs × ${inr(leg.fare)} = ${inr(leg.fare * legs)}`]
+      : [...distanceLine, ...leg.lines];
+  return { fare: Math.round(leg.fare * legs), breakdown, terms };
 }
 
-function localQuote(rates: VehicleRates, hours: number) {
+function localQuote(rates: VehicleRates, hours: number, policyTerms: string[]) {
   // Only 8 hr / 80 km and 12 hr / 120 km packages have list prices;
   // any other duration (custom) is quoted on request.
   const pkg = hours === 8 ? rates.local8h : hours === 12 ? rates.local12h : null;
@@ -156,7 +173,7 @@ function localQuote(rates: VehicleRates, hours: number) {
       : `Package includes ${hours} hours / ${km} km from pickup.`,
     isNum(rates.extraKmRate) ? `Extra km at ${inr(rates.extraKmRate)}/km.` : 'Extra km charged at actuals, shared on request.',
     isNum(rates.extraHourRate) ? `Extra hour at ${inr(rates.extraHourRate)}/hr.` : 'Extra hours charged at actuals, shared on request.',
-    ...COMMON_TERMS,
+    ...policyTerms,
   ];
   if (!isNum(pkg)) return { fare: null, breakdown: [], terms };
   return { fare: Math.round(pkg), breakdown: [`${hours} hr / ${km} km package = ${inr(pkg)}`], terms };
@@ -167,10 +184,12 @@ function localQuote(rates: VehicleRates, hours: number) {
  * Used by both /api/fare and server-side booking creation.
  */
 export async function calculateServerFare(input: FareCalculationInput): Promise<FareCalculationResponse> {
-  const [allRoutes, allVehicles] = await Promise.all([getRoutes(), getVehicles()]);
+  const [allRoutes, allVehicles, policies, images] = await Promise.all([getRoutes(), getVehicles(), getPublishedPolicies(), getSiteImages()]);
+  const policy = policies.services[policyServiceFor(input.serviceType)];
 
   // Active cars only (switched off in Admin → Fleet = hidden)
-  const confirmedVehicles = allVehicles.filter((v) => v.confirmed !== false);
+  // …always listed (and priced) in the premium order: Ertiga → Innova → Crysta → Hycross
+  const confirmedVehicles = allVehicles.filter((v) => v.confirmed !== false).sort(byFleetOrder);
   const vehiclesToCalculate: Vehicle[] = input.vehicleId
     ? confirmedVehicles.filter((v) => v.id === input.vehicleId)
     : confirmedVehicles;
@@ -200,10 +219,10 @@ export async function calculateServerFare(input: FareCalculationInput): Promise<
     const rates = vehicle.rates!;
     const quote =
       input.serviceType === 'airport'
-        ? airportQuote(rates, input.tripType === 'round' ? 2 : 1)
+        ? airportQuote(rates, input.tripType === 'round' ? 2 : 1, oneWayKm, policy.terms)
         : input.serviceType === 'local'
-          ? localQuote(rates, input.packageHours ?? 8)
-          : outstationQuote(rates, totalKm, days);
+          ? localQuote(rates, input.packageHours ?? 8, policy.terms)
+          : outstationQuote(rates, totalKm, days, policy.terms);
 
     return {
       vehicleId: vehicle.id,
@@ -216,17 +235,21 @@ export async function calculateServerFare(input: FareCalculationInput): Promise<
       isFixed: input.serviceType !== 'outstation',
       breakdown: quote.breakdown,
       terms: quote.terms,
+      photos: carPhotos(images, vehicle.id),
     };
   });
 
   return {
     success: true,
-    distanceKm: oneWayKm !== null ? Math.round(oneWayKm) : null,
+    // Airport fares are priced per 0.1 km, so show the same precision
+    distanceKm: oneWayKm !== null ? (input.serviceType === 'airport' ? roundKm(oneWayKm) : Math.round(oneWayKm)) : null,
     totalKm: input.serviceType === 'outstation' && totalKm !== null ? Math.round(totalKm) : null,
     days,
     tripType: input.tripType,
     serviceType: input.serviceType,
     route: matchedRoute ? { name: matchedRoute.name, slug: matchedRoute.slug } : null,
+    inclusions: policy.inclusions,
+    exclusions: policy.exclusions,
     fares: Object.fromEntries(results.map((r) => [r.vehicleId, r.fare])),
     results,
     notice: 'Fares recalculated on server. Null fares indicate Price on request per client policy.',

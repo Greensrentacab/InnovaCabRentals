@@ -9,7 +9,6 @@
  *  - Biased to Bengaluru
  *  - Uses session tokens
  *  - Debounced by 300ms
- *  - Offers "Use my current location" (GPS)
  *  - Displays up to 3 recent locations from localStorage
  *  - Stores name, address, lat, lng
  *  - Error state with "We couldn't find that location" and retry

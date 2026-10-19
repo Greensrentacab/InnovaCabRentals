@@ -2,13 +2,15 @@ import { Car, Clock, ShieldCheck, MapPin, CheckCircle2 } from 'lucide-react';
 import LandingTemplate from '@/components/LandingTemplate';
 import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/local-rides' },
-  title: `Local Innova Car Rental Bangalore | 8 Hr & 12 Hr Packages | ${siteConfig.brand.name}`,
+  title: 'Local Innova Rental Bangalore | 8 Hr & 12 Hr Packages',
   description:
     'Rent Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga in Bangalore for local city travel. 8 hr / 80 km and 12 hr / 120 km rental packages, custom durations on request, and point-to-point city transfers.',
-};
+});
 
 export default async function LocalRidesPage() {
   const vehicles = await getVehicles();
@@ -62,7 +64,7 @@ export default async function LocalRidesPage() {
       breadcrumb="Local Rides"
       badge="Local City Hire & Hourly Packages"
       title="Local Innova Car Rental in Bangalore"
-      subtitle="Chauffeur-driven Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga rentals for point-to-point city transfers, business meetings, and extended family outings."
+      subtitle="Chauffeur-driven Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga rentals for point-to-point city transfers, business meetings, and family outings."
       heroNotice="8 Hr & 12 Hr Packages • Custom Durations On Request • Zero Surge"
       benefitsTitle="Why Book a Local Innova Rental"
       benefitsSubtitle="Enjoy the convenience of a dedicated chauffeur and spacious MPV at your disposal."

@@ -7,15 +7,19 @@
  */
 
 import { useState } from 'react';
-import { Check, Clock, MessageCircle, Navigation, Phone } from 'lucide-react';
+import { Check, Clock, Navigation, Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { LocalPackage, Vehicle } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/cn';
-import SegmentedControl from '@/components/home/SegmentedControl';
+import { primaryPhoto, type FleetPhoto } from '@/lib/fleetPhotos';
+import { vehicleShortName } from '@/lib/storefrontData';
 
 interface PackageSelectorProps {
   packages: LocalPackage[];
   vehicles: Vehicle[];
+  /** Each car's main photo (published set); built-in photo when absent */
+  vehiclePhotos?: Record<string, Pick<FleetPhoto, 'src' | 'alt' | 'width' | 'height' | 'position'> | undefined>;
 }
 
 const pointToPointPoints = [
@@ -24,49 +28,97 @@ const pointToPointPoints = [
   'Transparent distance-based fare confirmed before dispatch',
 ];
 
-export default function PackageSelector({ packages, vehicles }: PackageSelectorProps) {
+export default function PackageSelector({ packages, vehicles, vehiclePhotos }: PackageSelectorProps) {
   const [activeTab, setActiveTab] = useState<'packages' | 'point-to-point'>('packages');
   const [selectedVehicle, setSelectedVehicle] = useState<string>(vehicles[0]?.id || 'innova');
   const currentVehicle = vehicles.find((v) => v.id === selectedVehicle);
 
   return (
     <div>
-      <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-        <SegmentedControl
-          ariaLabel="Rental type"
-          className="w-full max-w-sm"
-          value={activeTab}
-          onChange={setActiveTab}
-          options={[
-            { value: 'packages', label: '8 Hr & 12 Hr', icon: Clock },
-            { value: 'point-to-point', label: 'Point-to-Point', icon: Navigation },
-          ]}
-        />
-      </div>
-
-      {/* Car choice: wrapping chips so four names never overlap */}
-      {activeTab === 'packages' && vehicles.length > 1 && (
-        <div role="radiogroup" aria-label="Vehicle" className="mx-auto mt-4 grid max-w-2xl grid-cols-2 gap-2 sm:grid-cols-4">
-          {vehicles.map((v) => {
-            const on = v.id === selectedVehicle;
-            return (
-              <button
-                key={v.id}
-                type="button"
-                role="radio"
-                aria-checked={on}
-                onClick={() => setSelectedVehicle(v.id)}
+      {/* 1. What kind of rental */}
+      <div role="tablist" aria-label="Rental type" className="mx-auto grid max-w-2xl grid-cols-2 gap-2.5 sm:gap-3">
+        {[
+          { value: 'packages' as const, icon: Clock, title: '8 Hr & 12 Hr', hint: 'Hourly city packages' },
+          { value: 'point-to-point' as const, icon: Navigation, title: 'Point-to-Point', hint: 'One-way city rides' },
+        ].map(({ value, icon: Icon, title, hint }) => {
+          const on = activeTab === value;
+          return (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setActiveTab(value)}
+              className={cn(
+                'flex flex-col items-start gap-2 rounded-2xl border-2 p-3.5 text-left transition-all sm:flex-row sm:items-center sm:gap-3 sm:p-4',
+                on ? 'border-brand-600 bg-brand-50 shadow-sm' : 'border-slate-200 bg-white hover:border-brand-300'
+              )}
+            >
+              <span
                 className={cn(
-                  'rounded-full border px-3 py-2 text-[13px] font-semibold leading-tight transition',
-                  on
-                    ? 'border-brand-600 bg-brand-600 text-white shadow-[0_8px_18px_-6px_rgba(56,189,248,0.8)]'
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:text-brand-700'
+                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors sm:h-10 sm:w-10',
+                  on ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'
                 )}
               >
-                {v.name.replace(/^(Toyota|Maruti Suzuki) /, '')}
-              </button>
-            );
-          })}
+                <Icon className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-extrabold leading-tight text-ink sm:text-[15px]">{title}</span>
+                <span className="mt-0.5 block text-xs leading-snug text-slate-500">{hint}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 2. Which car (packages only) */}
+      {activeTab === 'packages' && vehicles.length > 1 && (
+        <div className="mx-auto mt-6 max-w-2xl">
+          <p className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Choose your car</p>
+          <div role="radiogroup" aria-label="Vehicle" className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+            {vehicles.map((v) => {
+              const on = v.id === selectedVehicle;
+              const photo = vehiclePhotos?.[v.id] ?? primaryPhoto(v.id);
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => setSelectedVehicle(v.id)}
+                  className={cn(
+                    'relative flex flex-col overflow-hidden rounded-xl border-2 bg-white text-left transition-all',
+                    on ? 'border-brand-600 shadow-sm' : 'border-slate-200 hover:border-brand-300'
+                  )}
+                >
+                  <span className="relative block aspect-[16/10] w-full bg-slate-100">
+                    {photo && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={photo.src}
+                        alt=""
+                        width={photo.width}
+                        height={photo.height}
+                        loading="lazy"
+                        decoding="async"
+                        style={{ objectPosition: photo.position }}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    )}
+                    {on && (
+                      <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-white ring-2 ring-white">
+                        <Check className="h-3 w-3" strokeWidth={3.5} />
+                      </span>
+                    )}
+                  </span>
+                  <span className="block px-2.5 py-2">
+                    <span className="block truncate text-[13px] font-extrabold leading-tight text-ink">{vehicleShortName(v)}</span>
+                    <span className="mt-0.5 block text-[11px] font-medium text-slate-500">{v.seats} + driver</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -101,7 +153,7 @@ export default function PackageSelector({ packages, vehicles }: PackageSelectorP
                     rel="noopener noreferrer"
                     className="btn-whatsapp mt-4 w-full"
                   >
-                    <MessageCircle className="h-4 w-4" /> WhatsApp Quick Quote
+                    <WhatsAppIcon className="h-4 w-4" /> WhatsApp Quick Quote
                   </a>
                 </div>
               </article>
@@ -140,7 +192,7 @@ export default function PackageSelector({ packages, vehicles }: PackageSelectorP
               rel="noopener noreferrer"
               className="btn-whatsapp"
             >
-              <MessageCircle className="h-4 w-4" /> WhatsApp Instant Booking
+              <WhatsAppIcon className="h-4 w-4" /> WhatsApp Instant Booking
             </a>
           </div>
         </div>

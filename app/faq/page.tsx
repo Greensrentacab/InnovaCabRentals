@@ -1,13 +1,17 @@
 import Link from 'next/link';
-import { ArrowRight, MessageCircle, Phone } from 'lucide-react';
+import { ArrowRight, Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import PageHero from '@/components/ds/PageHero';
 import CtaBand from '@/components/ds/CtaBand';
 import FaqAccordion from '@/components/home/FaqAccordion';
+import { JsonLd } from '@/components/seo/JsonLd';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/faq' },
-  title: `Frequently Asked Questions | Innova Cab Rentals Bangalore | ${siteConfig.brand.name}`,
+  title: `Innova Cab Booking FAQs | ${siteConfig.brand.name} Bangalore`,
   description:
     'Comprehensive answers to questions about booking procedures, toll and driver allowance billing, luggage capacity in 7 & 8 seater Innova, and 24/7 airport and outstation services.',
   keywords: [
@@ -16,7 +20,7 @@ export const metadata = {
     'How to book Innova Cab Bangalore',
     'Innova luggage capacity Bangalore',
   ],
-};
+});
 
 const categorizedFaqs = [
   {
@@ -100,6 +104,20 @@ const categorizedFaqs = [
 export default function FaqPage() {
   return (
     <div className="bg-porcelain">
+      {/* FAQPage structured data (same questions shown on the page) */}
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: categorizedFaqs.flatMap((cat) =>
+            cat.items.map((item) => ({
+              '@type': 'Question',
+              name: item.q,
+              acceptedAnswer: { '@type': 'Answer', text: item.a },
+            }))
+          ),
+        }}
+      />
       <PageHero
         breadcrumbs={[{ label: 'FAQ' }]}
         eyebrow="Customer Knowledge Base"
@@ -119,7 +137,7 @@ export default function FaqPage() {
             <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}
           </a>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+            <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
           </a>
         </div>
       </PageHero>
@@ -160,7 +178,7 @@ export default function FaqPage() {
                   <Phone className="h-4 w-4" /> Call Us Now
                 </a>
                 <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-                  <MessageCircle className="h-4 w-4" /> Message on WhatsApp
+                  <WhatsAppIcon className="h-4 w-4" /> Message on WhatsApp
                 </a>
                 <Link href="/contact" className="btn border border-white/20 bg-white/10 text-white hover:bg-white/15">
                   Submit Request <ArrowRight className="h-4 w-4" />

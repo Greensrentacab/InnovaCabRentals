@@ -19,14 +19,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { doc, onSnapshot, Firestore } from 'firebase/firestore';
 import {
-
   Clock,
   MapPin,
   Calendar,
   Car,
   User,
   Phone,
-  MessageCircle,
   Copy,
   Check,
   ShieldCheck,
@@ -38,6 +36,7 @@ import {
   Navigation,
   BadgeCheck,
 } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import { BookingStatus } from '@/lib/types';
 import { formatTime12 } from '@/lib/time';
@@ -60,6 +59,8 @@ interface TrackingBooking {
   pickupTime: string;
   vehicleName: string;
   fare: number | null;
+  /** How the server priced the trip */
+  fareBreakdown?: string[];
   bookingStatus: BookingStatus;
   driverName?: string | null;
   driverPhone?: string | null;
@@ -217,6 +218,7 @@ export default function BookingTrackingPage({
                 pickupTime: data.pickupTime || '',
                 vehicleName: data.vehicleName || '',
                 fare: data.fare ?? null,
+                fareBreakdown: Array.isArray(data.fareBreakdown) ? data.fareBreakdown : [],
                 bookingStatus: data.bookingStatus || 'PENDING',
                 ...(hasDriverInfo && {
                   driverName: data.driverName,
@@ -330,7 +332,7 @@ export default function BookingTrackingPage({
             rel="noopener noreferrer"
             className="btn-whatsapp"
           >
-            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+            <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
           </a>
           <a href={siteConfig.contact.phone.tel} className="btn-primary">
             <Phone className="h-4 w-4" /> Call Dispatch: +91 {siteConfig.contact.phone.raw}
@@ -498,7 +500,7 @@ export default function BookingTrackingPage({
               rel="noopener noreferrer"
               className="btn-whatsapp"
             >
-              <MessageCircle className="h-4 w-4" /> WhatsApp Driver
+              <WhatsAppIcon className="h-4 w-4" /> WhatsApp Driver
             </a>
           </div>
         </div>
@@ -547,6 +549,13 @@ export default function BookingTrackingPage({
           <div className="rounded-2xl border border-live-500/20 bg-live-500/10 p-4">
             <p className="text-[10px] font-bold uppercase tracking-wide text-live-600">Estimated tariff</p>
             <p className="mt-1 text-lg font-extrabold text-ink">{fareText}</p>
+            {booking.fare != null && (booking.fareBreakdown?.length ?? 0) > 0 && (
+              <ul className="mt-1 space-y-0.5 text-[11px] font-semibold tabular-nums text-slate-600">
+                {booking.fareBreakdown!.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            )}
             <p className="text-[11px] font-semibold text-live-600">No advance payment • Pay chauffeur directly</p>
           </div>
         </div>
@@ -560,7 +569,7 @@ export default function BookingTrackingPage({
         </p>
         <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
           <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+            <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
           </a>
           <a href={siteConfig.contact.phone.tel} className="btn-primary">
             <Phone className="h-4 w-4" /> Call Dispatch: +91 {siteConfig.contact.phone.raw}

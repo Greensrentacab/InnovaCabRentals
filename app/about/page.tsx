@@ -1,14 +1,17 @@
 import Link from 'next/link';
-import { ArrowUpRight, Clock, HeartHandshake, MapPin, MessageCircle, Mountain, Phone, ShieldCheck, Users } from 'lucide-react';
+import { ArrowUpRight, Clock, HeartHandshake, MapPin, Mountain, Phone, ShieldCheck, Users } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import PageHero from '@/components/ds/PageHero';
 import SectionHeading, { Hairline } from '@/components/ds/SectionHeading';
 import CtaBand from '@/components/ds/CtaBand';
 import Reveal from '@/components/home/Reveal';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/about' },
-  title: `About Us | 15 Years of Premium Innova Car Rental | ${siteConfig.brand.name}`,
+  title: `About ${siteConfig.brand.name} | Innova Cabs in Bangalore`,
   description: `Learn about ${siteConfig.brand.name} - ${siteConfig.trustClaims.yearsExperience.label} providing reliable, premium Toyota Innova and Crysta car rentals with professional chauffeurs in Bangalore.`,
   keywords: [
     'About Innova Cabs Bangalore',
@@ -16,7 +19,7 @@ export const metadata = {
     'Reliable Innova Taxi Bangalore',
     'Chauffeur Driven Innova Bangalore',
   ],
-};
+});
 
 export default function AboutPage() {
   const pillars = [
@@ -77,7 +80,7 @@ export default function AboutPage() {
       />
 
       {/* Our story */}
-      <section className="section py-16 sm:py-20">
+      <section className="section py-10 sm:py-20">
         <Reveal>
           <div className="card-float grid gap-8 p-6 sm:p-10 lg:grid-cols-[0.8fr_1.2fr]">
             <SectionHeading eyebrow="Our journey" title="15 Years of Punctuality, Safety & Comfort" centered={false} />
@@ -105,7 +108,7 @@ export default function AboutPage() {
       </section>
 
       {/* Pillars */}
-      <section className="relative bg-white py-16 sm:py-20">
+      <section className="relative bg-white py-10 sm:py-20">
         <Hairline />
         <div className="section">
           <SectionHeading eyebrow="Core principles" title="What Sets Our Chauffeur Service Apart" />
@@ -131,7 +134,7 @@ export default function AboutPage() {
       </section>
 
       {/* Coverage */}
-      <section className="section py-16 sm:py-20">
+      <section className="section py-10 sm:py-20">
         <div className="grid gap-5 lg:grid-cols-2">
           <Reveal className="h-full">
             <div className="card-float h-full p-6 sm:p-8">
@@ -182,7 +185,7 @@ export default function AboutPage() {
             <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
           </a>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
+            <WhatsAppIcon className="h-4 w-4" /> {siteConfig.cta.quickQuote}
           </a>
         </div>
       </section>

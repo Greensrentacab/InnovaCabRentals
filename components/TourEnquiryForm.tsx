@@ -6,7 +6,8 @@
  */
 
 import { useState } from 'react';
-import { ArrowRight, Check, Loader2, MessageCircle, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Check, Loader2, ShieldCheck } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { submitTourEnquiry } from '@/app/actions/enquiry';
 import { siteConfig } from '@/lib/siteConfig';
 
@@ -91,7 +92,7 @@ export default function TourEnquiryForm() {
           </p>
           <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
             <a href={getWhatsAppEnquiryUrl()} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-              <MessageCircle className="h-4 w-4" /> Connect on WhatsApp for Instant Quote
+              <WhatsAppIcon className="h-4 w-4" /> Connect on WhatsApp for Instant Quote
             </a>
             <button type="button" onClick={() => setSubmitted(false)} className="btn-ghost">
               Submit Another Enquiry
@@ -252,7 +253,7 @@ export default function TourEnquiryForm() {
               )}
             </button>
             <a href={getWhatsAppEnquiryUrl()} target="_blank" rel="noopener noreferrer" className="btn-whatsapp py-3.5">
-              <MessageCircle className="h-4 w-4" /> WhatsApp Us for Quick Quote
+              <WhatsAppIcon className="h-4 w-4" /> WhatsApp Us for Quick Quote
             </a>
           </div>
 

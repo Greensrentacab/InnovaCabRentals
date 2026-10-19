@@ -11,6 +11,7 @@
  * - Pricing & Route Tariffs updates (nullable per client policy)
  * - Vehicle fleet confirmation toggles
  * - Tour & Contact Enquiries tracking
+ * - New booking / new user alerts (live polling + device push registration)
  */
 
 import { createHmac, timingSafeEqual } from 'crypto';
@@ -23,20 +24,35 @@ import {
   Vehicle,
   VehicleRates,
   Enquiry,
+  UserProfile,
 } from '@/lib/types';
 import {
   fetchAllBookings,
   updateBookingInStore,
   fetchAllEnquiries,
+  fetchAllUsers,
   updateEnquiryStatusInStore,
   fetchAdminRoutes,
   updateRouteFaresInStore,
   fetchAdminVehicles,
   toggleVehicleInStore,
   updateVehicleRatesInStore,
+  fetchActivitySince,
 } from '@/lib/adminStore';
+import {
+  AdminPushDevice,
+  hasAdminPushToken,
+  listAdminPushDevices,
+  removeAdminPushDeviceById,
+  removeAdminPushToken,
+  saveAdminPushToken,
+  sendAdminAlert,
+} from '@/lib/adminPush';
 import { siteConfig } from '@/lib/siteConfig';
 import { formatTime12 } from '@/lib/time';
+import { validateVehicleRates } from '@/lib/pricing';
+import { checkTierOrder } from '@/lib/fleetOrder';
+import { getVehicles as getStorefrontVehicles } from '@/lib/dataService';
 
 const ADMIN_COOKIE_NAME = 'innova_admin_session';
 const SESSION_MAX_AGE_S = 60 * 60 * 24 * 7; // 7 days
@@ -76,8 +92,24 @@ async function requireAdmin(): Promise<void> {
 /** True when bookings/prices are saved to Firestore (not just server memory). */
 const isPersistent = () => Boolean(process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY);
 
+/** A customer account with booking history rolled up (Admin → Users). */
+export interface AdminUserRow {
+  uid: string;
+  name: string;
+  email: string;
+  /** Account phone, else the phone from their earliest booking */
+  phone: string;
+  phoneSource: 'profile' | 'booking' | null;
+  photoURL: string | null;
+  signedUpAt: string;
+  lastLoginAt: string | null;
+  bookingCount: number;
+  lastBookingAt: string | null;
+}
+
 export interface AdminDashboardData {
   bookings: Booking[];
+  users: AdminUserRow[];
   enquiries: Enquiry[];
   routes: Route[];
   vehicles: Vehicle[];
@@ -140,16 +172,58 @@ export async function adminLogout(): Promise<void> {
   cookies().delete(ADMIN_COOKIE_NAME);
 }
 
+const toIso = (d: string | Date | null | undefined): string | null => {
+  if (!d) return null;
+  const t = new Date(d).getTime();
+  return Number.isFinite(t) ? new Date(t).toISOString() : null;
+};
+
+function buildUserRows(users: UserProfile[], bookings: Booking[]): AdminUserRow[] {
+  const byUser = new Map<string, Booking[]>();
+  for (const b of bookings) {
+    if (!b.userId) continue;
+    const list = byUser.get(b.userId);
+    if (list) list.push(b);
+    else byUser.set(b.userId, [b]);
+  }
+
+  return users
+    .map((u): AdminUserRow => {
+      const mine = (byUser.get(u.uid) ?? []).sort(
+        (a, b) => (toIso(a.createdAt) ?? '').localeCompare(toIso(b.createdAt) ?? '')
+      );
+      const firstBookingPhone = mine.find((b) => b.customerPhone)?.customerPhone ?? '';
+      const phone = u.phone || firstBookingPhone;
+      return {
+        uid: u.uid,
+        name: u.displayName || mine[0]?.accountName || '',
+        email: u.email,
+        phone,
+        phoneSource: u.phone ? 'profile' : firstBookingPhone ? 'booking' : null,
+        photoURL: u.photoURL ?? null,
+        signedUpAt: u.createdAt,
+        lastLoginAt: u.lastLoginAt ?? null,
+        bookingCount: mine.length,
+        lastBookingAt: mine.length ? toIso(mine[mine.length - 1].createdAt) : null,
+      };
+    })
+    .sort((a, b) => b.signedUpAt.localeCompare(a.signedUpAt));
+}
+
 /**
  * Fetches all administrative dashboard data
  */
 export async function getAdminDashboardData(): Promise<AdminDashboardData> {
   await requireAdmin();
-  const [bookings, enquiries, routes, vehicles] = await Promise.all([
+  const [bookings, enquiries, routes, vehicles, userProfiles] = await Promise.all([
     fetchAllBookings(),
     fetchAllEnquiries(),
     fetchAdminRoutes(),
     fetchAdminVehicles(),
+    fetchAllUsers().catch((err) => {
+      console.error('[admin] Could not load users:', err);
+      return [] as UserProfile[];
+    }),
   ]);
 
   const stats = {
@@ -164,6 +238,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardData> {
 
   return {
     bookings,
+    users: buildUserRows(userProfiles, bookings),
     enquiries,
     routes,
     vehicles,
@@ -286,6 +361,8 @@ const RATE_KEYS: (keyof VehicleRates)[] = [
   'outstationMinKmPerDay',
   'driverAllowancePerDay',
   'airportFare',
+  'airportIncludedKm',
+  'airportExtraKmRate',
   'local8h',
   'local12h',
   'extraKmRate',
@@ -314,10 +391,116 @@ export async function updateVehicleRates(
     }
     clean.outstationMinKmPerDay = clean.outstationMinKmPerDay && clean.outstationMinKmPerDay > 0 ? clean.outstationMinKmPerDay : 300;
 
+    // Incomplete minimum-km tariffs are rejected (same check as the admin form)
+    const problem = validateVehicleRates(clean);
+    if (problem) return { success: false, error: problem.message };
+
+    // Prices must stay in the premium order (Ertiga → Innova → Crysta → Hycross)
+    const orderProblem = checkTierOrder(vehicleId, clean, await getStorefrontVehicles());
+    if (orderProblem) return { success: false, error: orderProblem };
+
     await updateVehicleRatesInStore(vehicleId, clean);
     revalidatePath('/', 'layout');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to update car prices' };
   }
+}
+
+/** A booking or customer account created since the last poll (admin live alerts). */
+export interface AdminActivity {
+  /** Server clock at the time of the query: the next poll's cursor */
+  serverTime: string;
+  bookings: { bookingId: string; customerName: string; vehicleName: string; createdAt: string }[];
+  users: { uid: string; name: string; email: string; createdAt: string }[];
+}
+
+/**
+ * New bookings and sign-ups at or after `sinceIso`. Polled by the open admin
+ * console; the client de-duplicates against what it already shows.
+ */
+export async function getAdminActivity(sinceIso: string): Promise<AdminActivity> {
+  await requireAdmin();
+  const since = toIso(sinceIso) ?? new Date().toISOString();
+  const serverTime = new Date().toISOString();
+  const { bookings, users } = await fetchActivitySince(since);
+  return {
+    serverTime,
+    bookings: bookings.map((b) => ({
+      bookingId: b.bookingId,
+      customerName: b.customerName,
+      vehicleName: b.vehicleName,
+      createdAt: toIso(b.createdAt) ?? '',
+    })),
+    users: users.map((u) => ({ uid: u.uid, name: u.displayName, email: u.email, createdAt: u.createdAt })),
+  };
+}
+
+/** Save this browser/phone's FCM token so it receives booking & sign-up alerts. */
+export async function registerAdminPushDevice(
+  token: string,
+  device: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+    if (typeof token !== 'string' || token.length < 20 || token.length > 4096) {
+      return { success: false, error: 'Invalid notification token' };
+    }
+    await saveAdminPushToken(token, typeof device === 'string' ? device : '');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Could not turn on alerts' };
+  }
+}
+
+export async function unregisterAdminPushDevice(token: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+    if (typeof token === 'string' && token) await removeAdminPushToken(token);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Could not turn off alerts' };
+  }
+}
+
+/** Push a sample alert to every registered device. */
+export async function sendTestAdminAlert(): Promise<{ success: boolean; delivered?: number; error?: string }> {
+  try {
+    await requireAdmin();
+    const delivered = await sendAdminAlert({
+      title: 'Alerts are working',
+      body: 'New bookings and new user sign-ups will show up like this.',
+      url: '/admin',
+      tag: 'test-alert',
+    });
+    return delivered > 0
+      ? { success: true, delivered }
+      : { success: false, error: 'No device received it. Turn alerts off and on again on this device.' };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Could not send a test alert' };
+  }
+}
+
+/** Devices currently receiving alerts (Admin → Notifications). */
+export async function getAdminPushDevices(): Promise<AdminPushDevice[]> {
+  await requireAdmin();
+  return listAdminPushDevices();
+}
+
+/** Stop alerts on another device (e.g. a lost phone) by its id from getAdminPushDevices. */
+export async function removeAdminPushDevice(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+    if (typeof id !== 'string' || !/^[0-9a-f]{64}$/.test(id)) return { success: false, error: 'Unknown device' };
+    await removeAdminPushDeviceById(id);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Could not remove the device' };
+  }
+}
+
+/** False once this device was removed (from another device's Notifications tab). */
+export async function isAdminPushDeviceRegistered(token: string): Promise<boolean> {
+  await requireAdmin();
+  return typeof token === 'string' && token.length > 0 && hasAdminPushToken(token);
 }

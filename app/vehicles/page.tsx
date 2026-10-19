@@ -1,9 +1,12 @@
 import Link from 'next/link';
-import { ArrowRight, Check, ChevronRight, Clock, Luggage, MessageCircle, Mountain, Phone, Plane, Users } from 'lucide-react';
-import { formatINR } from '@/lib/storefrontData';
+import { ArrowRight, Check, ChevronRight, Clock, Luggage, Mountain, Phone, Plane, Users } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
+import { confirmedFleet, formatINR } from '@/lib/storefrontData';
+import { airportTariff, tariffMode, tariffSummary } from '@/lib/pricing';
 import { getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
-import { fleetPhotos } from '@/lib/fleetPhotos';
+import { getSiteImages } from '@/lib/siteContentStore';
+import { carPhotos } from '@/lib/siteImages';
 import PageHero from '@/components/ds/PageHero';
 import CtaBand from '@/components/ds/CtaBand';
 import VehiclePhotoCard from '@/components/ds/VehiclePhotoCard';
@@ -11,12 +14,14 @@ import RateList, { rateRows } from '@/components/ds/RateList';
 import SectionHeading from '@/components/ds/SectionHeading';
 import Reveal from '@/components/home/Reveal';
 import { cn } from '@/lib/cn';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
 export const revalidate = 60;
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/vehicles' },
-  title: `Car Rental Fleet Bangalore | Innova, Crysta, Hycross & Ertiga Cabs | ${siteConfig.brand.name}`,
+  title: 'Our Fleet | Innova, Crysta, Hycross & Ertiga Cabs Bangalore',
   description:
     'Compare our Toyota Innova, Innova Crysta, Innova Hycross and Maruti Suzuki Ertiga cabs in Bangalore. Clean, sanitised 7-seater AC MPVs with experienced drivers for outstation, local and airport rides.',
   keywords: [
@@ -27,12 +32,12 @@ export const metadata = {
     'Innova with Driver Bangalore',
     'Book Innova Cab Bangalore',
   ],
-};
+});
 
 export default async function VehiclesPage() {
-  const allVehicles = await getVehicles();
+  const [allVehicles, images] = await Promise.all([getVehicles(), getSiteImages()]);
   // Cars switched off in Admin → Fleet (confirmed:false) are hidden
-  const confirmedVehicles = allVehicles.filter((v) => v.confirmed !== false);
+  const confirmedVehicles = confirmedFleet(allVehicles);
 
   const vehicleIdealForMap: Record<string, string[]> = {
     innova: [
@@ -84,7 +89,7 @@ export default async function VehiclesPage() {
             <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
           </a>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
+            <WhatsAppIcon className="h-4 w-4" /> {siteConfig.cta.quickQuote}
           </a>
         </div>
       </PageHero>
@@ -94,14 +99,14 @@ export default async function VehiclesPage() {
         <SectionHeading eyebrow="Compare our vehicles" title="Choose the right cab for your trip" />
         <div className="mt-8 space-y-4">
           {confirmedVehicles.map((v) => {
-            const photo = fleetPhotos[v.id]?.[0];
+            const photo = carPhotos(images, v.id)[0];
             const rates = v.rates;
             const quoteUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
               `Hello ${siteConfig.brand.name}, please share a quote for the ${v.name}.`
             )}`;
             const rows = [
               { icon: Mountain, label: 'Outstation', sub: `From ${rates?.outstationMinKmPerDay ?? 300} km/day`, value: rates?.outstationPerKm ? `${formatINR(rates.outstationPerKm)}/km` : null },
-              { icon: Plane, label: 'Airport transfer', value: rates?.airportFare ? formatINR(rates.airportFare) : null },
+              { icon: Plane, label: 'Airport transfer', value: tariffMode(airportTariff(rates)) === 'request' ? null : tariffSummary(airportTariff(rates)) },
               { icon: Clock, label: 'Local 8 hr / 80 km', value: rates?.local8h ? formatINR(rates.local8h) : null },
             ];
             return (
@@ -175,7 +180,7 @@ export default async function VehiclesPage() {
           const whatsappVehicleUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
             `Hello ${siteConfig.brand.name}, I would like to get a quote and check availability for ${vehicle.name}.`
           )}`;
-          const photo = fleetPhotos[vehicle.id]?.[0];
+          const photo = carPhotos(images, vehicle.id)[0];
 
           return (
             <Reveal key={vehicle.id}>
@@ -232,7 +237,7 @@ export default async function VehiclesPage() {
                     rel="noopener noreferrer"
                     className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-live-600 hover:text-live-500"
                   >
-                    <MessageCircle className="h-4 w-4" /> WhatsApp Quick Quote
+                    <WhatsAppIcon className="h-4 w-4" /> WhatsApp Quick Quote
                   </a>
 
                   <div className="mt-5 grid grid-cols-2 gap-2">
@@ -252,7 +257,7 @@ export default async function VehiclesPage() {
       </section>
 
       {/* Side-by-side comparison of the confirmed fleet */}
-      <section id="compare" className="section scroll-mt-24 pb-16 sm:pb-20">
+      <section id="compare" className="section scroll-mt-24 pb-10 sm:pb-20">
         <SectionHeading
           eyebrow="Compare fleet"
           title="Innova vs Crysta vs Ertiga"

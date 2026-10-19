@@ -22,6 +22,7 @@ import { Vehicle, ServiceType, TripType, Booking } from '@/lib/types';
 import { formatTime12 } from '@/lib/time';
 import { siteConfig } from '@/lib/siteConfig';
 import { useAuth } from '@/context/AuthContext';
+import type { FleetPhoto } from '@/lib/fleetPhotos';
 
 export type BookingStep =
   | 'loading'
@@ -43,6 +44,8 @@ export interface FareResult {
   fare: number | null;
   breakdown: string[];
   terms: string[];
+  /** The car's published photo set (Admin → Homepage images → Car photos) */
+  photos?: FleetPhoto[];
 }
 
 export interface TripParams {
@@ -66,6 +69,9 @@ export interface FareSearchState {
   distanceKm: number | null;
   totalKm: number | null;
   days: number;
+  /** What the fares include / exclude (Admin → Terms & policies) */
+  inclusions: string[];
+  exclusions: string[];
   error: string | null;
   /** Increments per search so the results panel can scroll into view */
   searchId: number;
@@ -89,6 +95,10 @@ export interface BookingFlowState {
   // Vehicles & Pricing
   availableVehicles: Vehicle[];
   faresMap: { [vehicleId: string]: number | null };
+  /** How each car's fare was worked out (shown on the review step) */
+  breakdownMap: { [vehicleId: string]: string[] };
+  /** Each car's main photo from the fare search */
+  photoMap: { [vehicleId: string]: FleetPhoto | undefined };
   selectedVehicle: Vehicle | null;
 
   // Passenger Details (ONLY Full Name and 10-digit Mobile) — may differ from the account owner
@@ -131,6 +141,8 @@ const defaultState: BookingFlowState = {
   routeSlug: undefined,
   availableVehicles: [],
   faresMap: {},
+  breakdownMap: {},
+  photoMap: {},
   selectedVehicle: null,
   customerName: '',
   customerPhone: '',
@@ -146,11 +158,13 @@ const defaultSearch: FareSearchState = {
   distanceKm: null,
   totalKm: null,
   days: 1,
+  inclusions: [],
+  exclusions: [],
   error: null,
   searchId: 0,
 };
 
-const toVehicle = (r: FareResult): Vehicle => ({
+export const toVehicle = (r: FareResult): Vehicle => ({
   id: r.vehicleId,
   name: r.vehicleName,
   type: r.vehicleType || 'Chauffeur-driven MPV',
@@ -168,9 +182,31 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
   const [search, setSearch] = useState<FareSearchState>(defaultSearch);
   const { getIdToken } = useAuth();
 
-  // Triggered by "See Fares & Available Innovas" in the booking widget
+  // Triggered by "See Fares & Available Innovas" in the booking widget:
+  // opens the booking popup at the car step while the fares load
   const searchFares = useCallback(async (params: TripParams) => {
     setSearch((prev) => ({ ...defaultSearch, status: 'loading', trip: params, searchId: prev.searchId + 1 }));
+    setState((prev) => ({
+      ...prev,
+      isOpen: true,
+      step: 'vehicle',
+      serviceType: params.serviceType,
+      tripType: params.tripType,
+      pickupLocation: params.pickup,
+      dropLocation: params.drop,
+      stops: params.stops ?? [],
+      pickupDate: params.date,
+      pickupTime: params.time,
+      returnDate: params.returnDate ?? null,
+      packageHours: params.packageHours ?? null,
+      routeSlug: params.routeSlug,
+      distanceKm: null,
+      availableVehicles: [],
+      selectedVehicle: null,
+      confirmedBooking: null,
+      adminWhatsAppUrl: null,
+      errorMessage: null,
+    }));
 
     try {
       const response = await fetch('/api/fare', {
@@ -193,6 +229,16 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || 'Could not fetch fares');
 
+      // Pre-select the lowest priced car
+      const results: FareResult[] = data.results || [];
+      const cheapest = results
+        .filter((r) => r.fare !== null)
+        .sort((a, b) => (a.fare as number) - (b.fare as number))[0];
+      setState((prev) => ({
+        ...prev,
+        distanceKm: data.distanceKm ?? null,
+        selectedVehicle: cheapest ? toVehicle(cheapest) : null,
+      }));
       setSearch((prev) => ({
         ...prev,
         status: 'done',
@@ -200,6 +246,8 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
         distanceKm: data.distanceKm ?? null,
         totalKm: data.totalKm ?? null,
         days: data.days ?? 1,
+        inclusions: Array.isArray(data.inclusions) ? data.inclusions : [],
+        exclusions: Array.isArray(data.exclusions) ? data.exclusions : [],
       }));
     } catch (err) {
       console.error('[BookingFlow] Fare search failed:', err);
@@ -213,7 +261,7 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
 
   const clearSearch = useCallback(() => setSearch((prev) => ({ ...defaultSearch, searchId: prev.searchId })), []);
 
-  // "Request Booking" on a result card → modal at the details step
+  // "Book" on a car card in the popup → details step
   const requestBooking = useCallback(
     (vehicleId: string) => {
       const trip = search.trip;
@@ -238,6 +286,8 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
         distanceKm: search.distanceKm,
         availableVehicles: vehicles,
         faresMap: Object.fromEntries(search.results.map((r) => [r.vehicleId, r.fare])),
+        breakdownMap: Object.fromEntries(search.results.map((r) => [r.vehicleId, r.breakdown ?? []])),
+        photoMap: Object.fromEntries(search.results.map((r) => [r.vehicleId, r.photos?.[0]])),
         selectedVehicle: selected,
         confirmedBooking: null,
         adminWhatsAppUrl: null,

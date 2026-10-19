@@ -28,6 +28,7 @@ export function BusinessJsonLd() {
         description: seo.metaDescription,
         url: absoluteUrl('/'),
         image: absoluteUrl('/images/fleet/own/innova-side.jpg'),
+        logo: absoluteUrl('/icon.png'),
         telephone: `+91${contact.phone.raw}`,
         email: contact.email,
         address: {

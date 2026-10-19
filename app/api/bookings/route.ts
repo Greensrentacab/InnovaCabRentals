@@ -4,6 +4,7 @@ import { calculateServerFare } from '@/lib/fareCalculator';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { addBooking, generateUniqueBookingId, getBookingById, getUserProfile } from '@/lib/adminStore';
 import { sendCustomerBookingEmail, sendNewBookingEmail } from '@/lib/emailService';
+import { newBookingAlert, sendAdminAlert } from '@/lib/adminPush';
 import { getRequestUser } from '@/lib/authServer';
 import { Booking, ServiceType, TripType } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
@@ -85,7 +86,8 @@ const createBookingSchema = z.object({
  * 4. Recalculate fare server-side (never trust client fare)
  * 5. Generate unique ID like ICB-10482 with collision check
  * 6. Save with status PENDING in Firestore & admin store
- * 7. Email "New Booking Request" to the admin desk and a receipt to the customer via Resend
+ * 7. Email "New Booking Request" to the admin desk and a receipt to the customer via Resend,
+ *    and push a "New booking" alert to the admin's devices (lib/adminPush.ts)
  * 8. Return the unique bookingId & booking object
  */
 export async function POST(req: NextRequest) {
@@ -162,6 +164,7 @@ export async function POST(req: NextRequest) {
     });
 
     const serverFare = fareCalc.fares[data.vehicleId] ?? null;
+    const serverBreakdown = fareCalc.results.find((r) => r.vehicleId === data.vehicleId)?.breakdown ?? [];
 
     // 5. Generate unique ID like ICB-10482 with collision check
     const bookingId = await generateUniqueBookingId();
@@ -195,6 +198,8 @@ export async function POST(req: NextRequest) {
       vehicleId: data.vehicleId,
       vehicleName: data.vehicleName,
       fare: serverFare,
+      fareBreakdown: serverFare !== null ? serverBreakdown : [],
+      distanceKm: fareCalc.distanceKm,
       bookingStatus: 'PENDING',
       driverId: null,
       driverName: null,
@@ -207,10 +212,12 @@ export async function POST(req: NextRequest) {
     // Save to Firestore and memory store
     await addBooking(booking);
 
-    // 7. Email the admin desk and the customer's receipt via Resend (never blocks the booking)
+    // 7. Email the admin desk and the customer's receipt via Resend, and push an
+    // alert to the admin's devices (none of these ever block the booking)
     const [adminEmail, customerEmail] = await Promise.allSettled([
       sendNewBookingEmail(booking),
       booking.customerEmail ? sendCustomerBookingEmail(booking) : Promise.resolve(null),
+      sendAdminAlert(newBookingAlert(booking)),
     ]);
     if (adminEmail.status === 'rejected') {
       console.warn('[POST /api/bookings] Admin email failed to dispatch:', adminEmail.reason);

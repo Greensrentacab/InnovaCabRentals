@@ -1,11 +1,14 @@
-import { Clock, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
+import { Clock, Mail, MapPin, Phone } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import ContactEnquiryForm from '@/components/ContactEnquiryForm';
 import PageHero from '@/components/ds/PageHero';
 import { siteConfig } from '@/lib/siteConfig';
+import type { Metadata } from 'next';
+import { withSeo } from '@/lib/seo';
 
-export const metadata = {
+export const metadata: Metadata = withSeo({
   alternates: { canonical: '/contact' },
-  title: `Contact Us & Booking Request | 24/7 Innova Cab Service | ${siteConfig.brand.name}`,
+  title: 'Contact Us | 24/7 Innova Cab Booking in Bangalore',
   description: `Contact ${siteConfig.brand.name} in Bangalore. 24/7 phone ${siteConfig.contact.phone.display}, WhatsApp quick quotes, and instant booking requests for Toyota Innova and Innova Crysta rentals.`,
   keywords: [
     'Innova Cabs Bangalore Contact',
@@ -13,7 +16,7 @@ export const metadata = {
     'Innova Taxi Bangalore Phone Number',
     'Innova Cab Bangalore Customer Care',
   ],
-};
+});
 
 const iconTile = 'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl';
 
@@ -31,7 +34,7 @@ export default function ContactPage() {
       hint: 'Direct line to dispatch manager',
     },
     {
-      icon: MessageCircle,
+      icon: WhatsAppIcon,
       tile: 'bg-whatsapp/15 text-[#128C4A]',
       label: 'WhatsApp',
       value: (
@@ -88,7 +91,7 @@ export default function ContactPage() {
             <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}
           </a>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+            <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
           </a>
         </div>
 

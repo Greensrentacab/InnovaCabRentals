@@ -1,92 +1,55 @@
 /**
  * Logo.tsx
  *
- * Vector (inline SVG) wordmark for Innova Cab Rentals.
- * Stacked lockup: INNOVA (white) / CABS (orange) / BANGALORE (gray, letter-spaced).
+ * Innova Cabs Bangalore logo, transparent PNG in two colourways:
+ * - tone="light" (default): original navy lettering — for white / light surfaces
+ *   (homepage glass bar, admin login).
+ * - tone="dark": same artwork with the navy lettering recoloured white — for navy
+ *   / black surfaces (secondary header, footer, admin sidebar).
  *
- * Rendered inline (not as an <img>) so it stays crisp at any size, inherits no
- * network request, and can be dropped on any background.
- *
- * Variants:
- * - "mark": text only, transparent background — use on the navy header/footer.
- * - "full": text on a rounded navy card — use standalone (share previews, print, favicons).
+ * `className` sizes the image (e.g. "h-10 w-auto").
  */
 
+import { cn } from '@/lib/cn';
+
 interface LogoProps {
+  /** Kept for backwards compatibility; both variants render the same artwork. */
   variant?: 'mark' | 'full';
+  /** Which background the logo sits on: 'light' surface or 'dark' surface. */
+  tone?: 'light' | 'dark';
+  /** Adds a dark halo so the orange lettering stays readable over a dim/translucent surface. */
+  halo?: boolean;
   className?: string;
   title?: string;
 }
 
-export default function Logo({
-  variant = 'mark',
-  className,
-  title = 'Innova Cab Rentals',
-}: LogoProps) {
-  const content = (
-    <>
-      <text
-        x="4"
-        y="34"
-        fontFamily="var(--font-inter), Inter, Arial, sans-serif"
-        fontWeight={800}
-        fontSize="30"
-        letterSpacing="-0.5"
-        fill="#FFFFFF"
-      >
-        INNOVA
-      </text>
-      <text
-        x="4"
-        y="68"
-        fontFamily="var(--font-inter), Inter, Arial, sans-serif"
-        fontWeight={800}
-        fontSize="30"
-        letterSpacing="-0.5"
-        fill="#F0562B"
-      >
-        CABS
-      </text>
-      <text
-        x="4"
-        y="90"
-        fontFamily="var(--font-inter), Inter, Arial, sans-serif"
-        fontWeight={600}
-        fontSize="12"
-        letterSpacing="3"
-        fill="#9CA3AF"
-      >
-        BANGALORE
-      </text>
-    </>
-  );
-
-  if (variant === 'full') {
-    return (
-      <svg
-        viewBox="0 0 190 110"
-        role="img"
-        aria-label={title}
-        className={className}
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <title>{title}</title>
-        <rect x="0" y="0" width="190" height="110" rx="16" fill="#0B1B33" />
-        {content}
-      </svg>
-    );
-  }
-
+export default function Logo({ tone = 'light', halo = false, className, title = 'Innova Cabs Bangalore' }: LogoProps) {
   return (
-    <svg
-      viewBox="0 0 170 96"
-      role="img"
-      aria-label={title}
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <title>{title}</title>
-      {content}
-    </svg>
+    <span className="relative inline-flex">
+      {/* CABS-only copy underneath: the main logo hides its fill, so only its shadow shows. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo-cabs-only.png"
+        alt=""
+        aria-hidden="true"
+        width={1200}
+        height={349}
+        decoding="async"
+        className={cn(
+          'pointer-events-none absolute inset-0 h-full w-full select-none transition-opacity duration-300',
+          halo ? 'opacity-100' : 'opacity-0',
+          '[filter:drop-shadow(0_0_0.5px_rgba(11,27,51,0.7))_drop-shadow(0_1px_1px_rgba(11,27,51,0.5))_drop-shadow(0_0_3px_rgba(11,27,51,0.35))]'
+        )}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={tone === 'dark' ? '/logo-dark.png' : '/logo-light.png'}
+        alt={title}
+        width={1200}
+        height={349}
+        decoding="async"
+        className={cn('relative select-none', className)}
+      />
+    </span>
   );
 }

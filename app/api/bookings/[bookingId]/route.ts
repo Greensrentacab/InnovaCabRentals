@@ -51,6 +51,7 @@ export async function GET(
     pickupTime: booking.pickupTime,
     vehicleName: booking.vehicleName,
     fare: booking.fare,
+    fareBreakdown: booking.fareBreakdown ?? [],
     bookingStatus: booking.bookingStatus,
     // Driver details only when assigned
     ...(booking.bookingStatus !== 'PENDING' &&

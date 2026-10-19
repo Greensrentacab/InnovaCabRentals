@@ -27,8 +27,15 @@ export interface VehicleRates {
   outstationMinKmPerDay: number;
   /** Driver allowance (bata) per outstation day */
   driverAllowancePerDay: number | null;
-  /** Airport transfer fixed fare, each way */
+  /**
+   * Airport transfer base fare, each way. Flat fare on its own; with the two
+   * fields below it covers the first `airportIncludedKm` km (lib/pricing.ts).
+   */
   airportFare: number | null;
+  /** Km covered by the airport base fare (null = flat fare) */
+  airportIncludedKm?: number | null;
+  /** Airport rate per km beyond `airportIncludedKm` (null = flat fare) */
+  airportExtraKmRate?: number | null;
   /** Local packages (8 hr / 80 km and 12 hr / 120 km; other durations on request) */
   local8h: number | null;
   local12h: number | null;
@@ -104,6 +111,10 @@ export interface Booking {
   vehicleId: string;
   vehicleName: string;
   fare: number | null; // Nullable; never invent prices
+  /** How the server priced the trip, e.g. "Extra 2 km × ₹20/km = ₹40" */
+  fareBreakdown?: string[];
+  /** One-way trip distance used for pricing (km, 0.1 precision) */
+  distanceKm?: number | null;
   bookingStatus: BookingStatus;
   driverId: string | null;
   driverName: string | null;
@@ -126,6 +137,8 @@ export interface UserProfile {
   photoURL: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Most recent actual sign-in (ISO), from Firebase Auth */
+  lastLoginAt?: string | null;
 }
 
 export interface Driver {

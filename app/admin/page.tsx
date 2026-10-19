@@ -11,18 +11,21 @@
  * - Pricing & Tariff Management (nullable per client policy)
  * - Fleet Activation (Innova, Crysta, Hycross toggle)
  * - Tour & Contact Enquiries Lead Management
+ * - Homepage images and Terms & policies (published without a deployment)
+ * - New booking / new user alerts: live toast + chime while open, device push
+ *   notifications (Firebase Cloud Messaging) when the site is closed
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Logo from '@/components/Logo';
 import {
   Car,
   Users,
   Calendar,
   MapPin,
   Phone,
-  MessageCircle,
   CheckCircle2,
   AlertCircle,
   RefreshCw,
@@ -39,9 +42,14 @@ import {
   ArrowRight,
   Clock,
   Briefcase,
+  UserRound,
   Save,
   Undo2,
+  Image as ImageIcon,
+  FileText,
+  Bell,
 } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import {
   verifyAdminSession,
   getAdminDashboardData,
@@ -51,7 +59,10 @@ import {
   updateEnquiryStatus,
   updateVehicleRates,
   adminLogout,
+  getAdminActivity,
+  sendTestAdminAlert,
   AdminDashboardData,
+  AdminUserRow,
 } from '@/app/actions/admin';
 import { Booking, BookingStatus, Enquiry } from '@/lib/types';
 import { siteConfig } from '@/lib/siteConfig';
@@ -60,10 +71,23 @@ import VehicleRatesEditor, {
   RateInputs,
   toInputs,
   inputsToRates,
+  ratesProblem,
   ratesSetCount,
 } from '@/components/admin/VehicleRatesEditor';
+import HomepageImagesPanel from '@/components/admin/HomepageImagesPanel';
+import PoliciesPanel from '@/components/admin/PoliciesPanel';
+import NotificationsPanel from '@/components/admin/NotificationsPanel';
+import { PushState, getPushState, enablePush, disablePush, refreshPushToken } from '@/lib/adminPushClient';
 
-type AdminTab = 'overview' | 'bookings' | 'pricing' | 'fleet' | 'enquiries';
+type AdminTab = 'overview' | 'bookings' | 'users' | 'pricing' | 'fleet' | 'enquiries' | 'notifications' | 'images' | 'policies';
+
+const ADMIN_TABS: AdminTab[] = ['overview', 'bookings', 'users', 'pricing', 'fleet', 'enquiries', 'notifications', 'images', 'policies'];
+
+/** How often the open console checks for new bookings and sign-ups. */
+const ACTIVITY_POLL_MS = 30_000;
+
+/** Tabs that keep their own unpublished work, so they stay mounted once opened. */
+const PERSISTENT_TABS: AdminTab[] = ['images', 'policies'];
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: 'Pending',
@@ -101,6 +125,7 @@ export default function AdminDashboardPage() {
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [openedTabs, setOpenedTabs] = useState<AdminTab[]>([]);
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -113,6 +138,8 @@ export default function AdminDashboardPage() {
   const [bookingSearch, setBookingSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [enquiryFilter, setEnquiryFilter] = useState<string>('ALL');
+  const [userSearch, setUserSearch] = useState('');
+  const [userFilter, setUserFilter] = useState<'ALL' | 'BOOKED' | 'NEVER' | 'NO_PHONE'>('ALL');
 
   // Assign Driver Modal State
   const [assignModalBooking, setAssignModalBooking] = useState<Booking | null>(null);
@@ -126,6 +153,16 @@ export default function AdminDashboardPage() {
   const [rateBaseline, setRateBaseline] = useState<Record<string, RateInputs>>({});
   const [savingRates, setSavingRates] = useState(false);
   const [rateError, setRateError] = useState<string | null>(null);
+
+  // Alerts: this device's push status, plus what the live poll has already seen
+  const [pushState, setPushState] = useState<PushState | null>(null);
+  const [pushBusy, setPushBusy] = useState(false);
+  const pushStateRef = useRef<PushState | null>(null);
+  pushStateRef.current = pushState;
+  const seenRef = useRef<Set<string>>(new Set());
+  const cursorRef = useRef<string | null>(null);
+  const checkingRef = useRef(false);
+  const audioRef = useRef<AudioContext | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -151,6 +188,32 @@ export default function AdminDashboardPage() {
     }
   };
 
+  /** Refresh the data in place (no spinner, unsaved pricing drafts untouched). */
+  const refreshLive = async () => {
+    try {
+      setData(await getAdminDashboardData());
+      setNow(new Date());
+    } catch (err) {
+      console.error('[Admin] Live refresh failed:', err);
+    }
+  };
+
+  /** Opens the tab (and search) named in an alert link like /admin?tab=bookings&q=ICB-10482. */
+  const applyDeepLink = (href: string) => {
+    const params = new URL(href, window.location.origin).searchParams;
+    const tab = params.get('tab') as AdminTab | null;
+    if (!tab || !ADMIN_TABS.includes(tab)) return;
+    const q = params.get('q') ?? '';
+    if (tab === 'bookings') {
+      setBookingSearch(q);
+      setStatusFilter('ALL');
+    } else if (tab === 'users') {
+      setUserSearch(q);
+      setUserFilter('ALL');
+    }
+    goTab(tab);
+  };
+
   useEffect(() => {
     async function init() {
       const isAuth = await verifyAdminSession();
@@ -159,10 +222,174 @@ export default function AdminDashboardPage() {
         return;
       }
       setAuthChecked(true);
+      applyDeepLink(window.location.href);
+      if (window.location.search) window.history.replaceState(null, '', '/admin');
       loadData();
+      getPushState()
+        .then((state) => {
+          setPushState(state);
+          if (state === 'on')
+            refreshPushToken()
+              .then(setPushState)
+              .catch((err) => console.warn('[Admin] Push token refresh failed:', err));
+        })
+        .catch(() => setPushState('unsupported'));
     }
     init();
   }, []);
+
+  // Everything already on screen counts as seen, so only genuinely new items alert
+  useEffect(() => {
+    if (!data) return;
+    data.bookings.forEach((b) => seenRef.current.add(`b:${b.bookingId}`));
+    data.users.forEach((u) => seenRef.current.add(`u:${u.uid}`));
+  }, [data]);
+
+  // Browsers only allow sound after a tap on the page, so the chime is unlocked on the first one
+  useEffect(() => {
+    const unlock = () => {
+      if (audioRef.current) return;
+      try {
+        audioRef.current = new AudioContext();
+      } catch {
+        // No Web Audio: alerts stay silent
+      }
+    };
+    window.addEventListener('pointerdown', unlock, { once: true });
+    return () => window.removeEventListener('pointerdown', unlock);
+  }, []);
+
+  const playChime = () => {
+    const ctx = audioRef.current;
+    if (!ctx) return;
+    ctx.resume().catch(() => undefined);
+    [880, 1320].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const start = ctx.currentTime + i * 0.18;
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.4);
+    });
+  };
+
+  /** Poll for bookings/sign-ups created since the last check and announce new ones. */
+  const checkActivity = useCallback(async () => {
+    if (checkingRef.current) return;
+    checkingRef.current = true;
+    try {
+      // Overlap each window by 2 minutes; already-seen items are skipped below
+      const since = cursorRef.current
+        ? new Date(new Date(cursorRef.current).getTime() - 120_000).toISOString()
+        : new Date(Date.now() - 10 * 60_000).toISOString();
+      const activity = await getAdminActivity(since);
+      cursorRef.current = activity.serverTime;
+
+      const seen = seenRef.current;
+      const newBookings = activity.bookings.filter((b) => !seen.has(`b:${b.bookingId}`));
+      const newUsers = activity.users.filter((u) => !seen.has(`u:${u.uid}`));
+      if (newBookings.length === 0 && newUsers.length === 0) return;
+      newBookings.forEach((b) => seen.add(`b:${b.bookingId}`));
+      newUsers.forEach((u) => seen.add(`u:${u.uid}`));
+
+      const parts: string[] = [];
+      if (newBookings.length === 1) parts.push(`New booking #${newBookings[0].bookingId} from ${newBookings[0].customerName}`);
+      else if (newBookings.length > 1) parts.push(`${newBookings.length} new bookings`);
+      if (newUsers.length === 1) parts.push(`New user: ${newUsers[0].name || newUsers[0].email}`);
+      else if (newUsers.length > 1) parts.push(`${newUsers.length} new users signed up`);
+      const message = parts.join(' · ');
+
+      showToast(message);
+      playChime();
+      // With device push on, the service worker already shows the system notification
+      if (
+        document.visibilityState === 'hidden' &&
+        pushStateRef.current !== 'on' &&
+        'Notification' in window &&
+        Notification.permission === 'granted'
+      ) {
+        try {
+          new Notification(newBookings.length ? 'New booking' : 'New user signed up', { body: message, icon: '/logo-car.png' });
+        } catch {
+          // Android Chrome only allows notifications from a service worker
+        }
+      }
+      refreshLive();
+    } catch (err) {
+      console.warn('[Admin] Activity check failed:', err);
+    } finally {
+      checkingRef.current = false;
+    }
+  }, []);
+
+  const dataReady = data !== null;
+  useEffect(() => {
+    if (!authChecked || !dataReady) return;
+    checkActivity();
+    const timer = window.setInterval(checkActivity, ACTIVITY_POLL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') checkActivity();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    // Messages from public/firebase-messaging-sw.js: a push arrived, or a notification was tapped
+    const sw = 'serviceWorker' in navigator ? navigator.serviceWorker : null;
+    const onSwMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'admin-alert') checkActivity();
+      if (event.data?.type === 'admin-open' && typeof event.data.url === 'string') {
+        applyDeepLink(event.data.url);
+        refreshLive();
+      }
+    };
+    sw?.addEventListener('message', onSwMessage);
+    sw?.startMessages();
+
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+      sw?.removeEventListener('message', onSwMessage);
+    };
+  }, [authChecked, dataReady, checkActivity]);
+
+  const togglePush = async () => {
+    setPushBusy(true);
+    try {
+      if (pushState === 'on') {
+        setPushState(await disablePush());
+        showToast('Alerts turned off on this device');
+      } else {
+        const state = await enablePush();
+        setPushState(state);
+        showToast(
+          state === 'on'
+            ? 'Alerts on: this device will be notified of new bookings and sign-ups'
+            : state === 'blocked'
+              ? 'Notifications are blocked for this site in your browser settings'
+              : 'Alerts were not turned on'
+        );
+      }
+    } catch (err: any) {
+      console.error('[Admin] Push toggle failed:', err);
+      showToast(err?.message || 'Could not change alerts on this device');
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  const handleTestAlert = async () => {
+    setPushBusy(true);
+    const res = await sendTestAdminAlert().catch(() => ({ success: false, error: 'Could not send a test alert' }));
+    setPushBusy(false);
+    showToast(
+      res.success
+        ? 'Test alert sent. Switch away from this tab to see it as a notification.'
+        : res.error || 'Could not send a test alert'
+    );
+  };
 
   // Lock page scroll while the mobile drawer or the modal is open
   useEffect(() => {
@@ -175,6 +402,7 @@ export default function AdminDashboardPage() {
 
   const goTab = (tab: AdminTab) => {
     setActiveTab(tab);
+    if (PERSISTENT_TABS.includes(tab)) setOpenedTabs((t) => (t.includes(tab) ? t : [...t, tab]));
     setNavOpen(false);
     window.scrollTo({ top: 0 });
   };
@@ -249,8 +477,21 @@ export default function AdminDashboardPage() {
     [rateDrafts, rateBaseline]
   );
   const hasRateChanges = dirtyVehicleIds.length > 0;
+  // Incomplete tariffs (e.g. a minimum-km airport fare without its per-km rate) block saving
+  const rateProblems = useMemo(
+    () =>
+      dirtyVehicleIds
+        .map((id) => ({ id, problem: rateDrafts[id] ? ratesProblem(rateDrafts[id]) : null }))
+        .filter((r): r is { id: string; problem: NonNullable<ReturnType<typeof ratesProblem>> } => r.problem !== null),
+    [dirtyVehicleIds, rateDrafts]
+  );
 
   const saveAllRates = async () => {
+    if (rateProblems.length > 0) {
+      const first = rateProblems[0];
+      setRateError(`${data?.vehicles.find((v) => v.id === first.id)?.name || first.id}: ${first.problem.message}`);
+      return;
+    }
     setSavingRates(true);
     setRateError(null);
     const names: string[] = [];
@@ -276,7 +517,21 @@ export default function AdminDashboardPage() {
   const bookings = data?.bookings || [];
   const vehicles = data?.vehicles || [];
   const enquiries = data?.enquiries || [];
+  const users = data?.users || [];
   const stats = data?.stats;
+
+  const userMatches = (u: AdminUserRow, f: typeof userFilter) =>
+    f === 'ALL' ? true : f === 'BOOKED' ? u.bookingCount > 0 : f === 'NEVER' ? u.bookingCount === 0 : !u.phone;
+  const filteredUsers = users.filter((u) => {
+    const q = userSearch.trim().toLowerCase();
+    const qDigits = q.replace(/\D/g, '');
+    const matchesSearch =
+      !q ||
+      u.name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      (qDigits.length > 0 && u.phone.includes(qDigits));
+    return matchesSearch && userMatches(u, userFilter);
+  });
 
   const filteredBookings = bookings.filter((b) => {
     const q = bookingSearch.toLowerCase();
@@ -332,9 +587,13 @@ export default function AdminDashboardPage() {
   const tabs: { id: AdminTab; label: string; icon: React.ElementType; count?: number }[] = [
     { id: 'overview', label: 'Overview', icon: Compass },
     { id: 'bookings', label: 'Bookings & Dispatch', icon: Calendar, count: stats?.pendingBookings },
+    { id: 'users', label: 'Users', icon: UserRound, count: users.length || undefined },
     { id: 'pricing', label: 'Pricing & Tariffs', icon: Tag },
     { id: 'fleet', label: 'Fleet & Vehicles', icon: Car },
     { id: 'enquiries', label: 'Tour Enquiries', icon: Users, count: stats?.pendingEnquiries },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'images', label: 'Homepage Images', icon: ImageIcon },
+    { id: 'policies', label: 'Terms & Policies', icon: FileText },
   ];
   const activeLabel = tabs.find((t) => t.id === activeTab)?.label ?? '';
 
@@ -391,10 +650,8 @@ export default function AdminDashboardPage() {
   const sidebar = (
     <div className="flex h-full flex-col bg-[#0B1120] text-slate-300">
       <div className="flex items-center gap-3 px-5 pb-4 pt-6">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
-          <Car className="h-5 w-5" strokeWidth={2.2} />
-        </span>
-        <div className="min-w-0 leading-tight">
+        <Logo tone="dark" className="h-9 w-auto" />
+        <div className="sr-only leading-tight">
           <p className="truncate text-[15px] font-extrabold text-white">{siteConfig.brand.name}</p>
           <p className="truncate text-xs text-slate-400">Bangalore dispatch desk</p>
         </div>
@@ -819,7 +1076,7 @@ export default function AdminDashboardPage() {
                               <Phone className="h-3.5 w-3.5" /> Call
                             </a>
                             <a href={confirmWaUrl} target="_blank" rel="noopener noreferrer" className={`${smallBtn} bg-[#128C4A] text-white hover:brightness-110`}>
-                              <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                              <WhatsAppIcon className="h-3.5 w-3.5" /> WhatsApp
                             </a>
                           </div>
                         </div>
@@ -868,6 +1125,13 @@ export default function AdminDashboardPage() {
                           <p className="text-sm text-slate-600">
                             Tariff: <strong className="text-brand-700">{b.fare !== null ? `₹${b.fare}` : 'Price on request'}</strong>
                           </p>
+                          {b.fare !== null && b.fareBreakdown && b.fareBreakdown.length > 0 && (
+                            <ul className="mt-1 space-y-0.5 text-[11px] font-semibold tabular-nums text-slate-500">
+                              {b.fareBreakdown.map((line) => (
+                                <li key={line}>{line}</li>
+                              ))}
+                            </ul>
+                          )}
                           {b.driverName ? (
                             <div className="mt-2.5 rounded-xl border border-indigo-100 bg-indigo-50 p-3 text-xs text-indigo-800">
                               <p className="break-words font-bold">
@@ -950,9 +1214,14 @@ export default function AdminDashboardPage() {
             <div className="fixed inset-x-3 bottom-3 z-30 lg:left-[calc(16rem+0.75rem)] lg:right-3">
               <div className="mx-auto flex max-w-[1120px] flex-col gap-3 rounded-2xl bg-[#0B1120] px-4 py-3 text-white shadow-float-lg sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3.5 pb-safe">
                 <p className="flex min-w-0 items-center gap-2.5 text-sm font-bold">
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${rateError ? 'bg-rose-400' : hasRateChanges ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${rateError || rateProblems.length > 0 ? 'bg-rose-400' : hasRateChanges ? 'bg-amber-400' : 'bg-emerald-400'}`} />
                   <span className="min-w-0 truncate">
-                    {rateError ?? (hasRateChanges ? `Unsaved changes in ${dirtyVehicleIds.length} car${dirtyVehicleIds.length > 1 ? 's' : ''}` : 'All changes saved')}
+                    {rateError ??
+                      (rateProblems.length > 0
+                        ? `Fix ${rateProblems.length} tariff${rateProblems.length > 1 ? 's' : ''} before saving`
+                        : hasRateChanges
+                          ? `Unsaved changes in ${dirtyVehicleIds.length} car${dirtyVehicleIds.length > 1 ? 's' : ''}`
+                          : 'All changes saved')}
                   </span>
                 </p>
                 <div className="grid grid-cols-2 gap-2 sm:flex">
@@ -967,7 +1236,7 @@ export default function AdminDashboardPage() {
                   <button
                     type="button"
                     onClick={saveAllRates}
-                    disabled={!hasRateChanges || savingRates}
+                    disabled={!hasRateChanges || savingRates || rateProblems.length > 0}
                     className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2 text-sm font-extrabold text-white transition-colors hover:bg-brand-500 disabled:bg-brand-900/70 disabled:text-white/50"
                   >
                     <Save className="h-4 w-4" /> {savingRates ? 'Saving...' : 'Save tariffs'}
@@ -978,7 +1247,31 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
+        {/* ───────────── HOMEPAGE IMAGES ───────────── */}
+        {openedTabs.includes('images') && (
+          <div className={activeTab === 'images' ? 'animate-panel-in' : 'hidden'}>
+            <HomepageImagesPanel onToast={showToast} />
+          </div>
+        )}
+
+        {/* ───────────── TERMS & POLICIES ───────────── */}
+        {openedTabs.includes('policies') && (
+          <div className={activeTab === 'policies' ? 'animate-panel-in' : 'hidden'}>
+            <PoliciesPanel onToast={showToast} />
+          </div>
+        )}
+
         {/* ───────────── FLEET ───────────── */}
+        {activeTab === 'notifications' && (
+          <NotificationsPanel
+            pushState={pushState}
+            busy={pushBusy}
+            onToggle={togglePush}
+            onTest={handleTestAlert}
+            onNotice={showToast}
+          />
+        )}
+
         {activeTab === 'fleet' && (
           <div className="animate-panel-in space-y-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -1047,6 +1340,138 @@ export default function AdminDashboardPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ───────────── USERS ───────────── */}
+        {activeTab === 'users' && (
+          <div className="animate-panel-in space-y-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <h1 className={pageTitle}>Registered users</h1>
+                <p className="mt-1 max-w-xl text-sm text-slate-600">
+                  Everyone who has created an account, including people who signed in but never booked. Phone numbers come from the
+                  profile, or from their first booking.
+                </p>
+              </div>
+              <div className="relative w-full lg:w-80">
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  placeholder="Search by name, email or phone"
+                  aria-label="Search users"
+                  className="adm-field bg-white pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div role="radiogroup" aria-label="User filter" className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+                {([
+                  ['ALL', 'All'],
+                  ['BOOKED', 'Has booked'],
+                  ['NEVER', 'Never booked'],
+                  ['NO_PHONE', 'No phone'],
+                ] as const).map(([id, label]) => {
+                  const on = userFilter === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      onClick={() => setUserFilter(id)}
+                      className={`flex min-h-[44px] shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-xs font-extrabold uppercase tracking-wide transition-colors sm:min-h-[40px] ${
+                        on ? 'border-ink bg-ink text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      {label}
+                      <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${on ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
+                        {users.filter((u) => userMatches(u, id)).length}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="shrink-0 text-xs text-slate-500">
+                Showing {filteredUsers.length} of {users.length} users
+              </p>
+            </div>
+
+            {filteredUsers.length === 0 ? (
+              <div className="adm-card px-5 py-12 text-center text-sm text-slate-500">
+                {users.length === 0
+                  ? 'No users yet. Accounts appear here the first time someone signs in on the website.'
+                  : 'No users match your search.'}
+              </div>
+            ) : (
+              <div className="adm-card overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[820px] text-left text-sm">
+                    <thead className="border-b border-slate-100 bg-slate-50 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                      <tr>
+                        <th className="px-4 py-3">User</th>
+                        <th className="px-4 py-3">Phone</th>
+                        <th className="px-4 py-3 text-center">Bookings</th>
+                        <th className="px-4 py-3">Signed up</th>
+                        <th className="px-4 py-3">Last sign-in</th>
+                        <th className="px-4 py-3">Last booking</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredUsers.map((u) => {
+                        const digits = u.phone.replace(/\D/g, '');
+                        const wa = digits.length === 10 ? `91${digits}` : digits;
+                        const fmt = (iso: string | null) =>
+                          iso
+                            ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                            : '—';
+                        return (
+                          <tr key={u.uid} className="align-top">
+                            <td className="px-4 py-3.5">
+                              <p className="font-extrabold text-ink">{u.name || 'Unnamed'}</p>
+                              <p className="break-all text-xs text-slate-500">{u.email || '—'}</p>
+                            </td>
+                            <td className="px-4 py-3.5">
+                              {u.phone ? (
+                                <>
+                                  <p className="font-mono text-xs font-semibold text-ink">+91 {u.phone}</p>
+                                  {u.phoneSource === 'booking' && <p className="text-[10px] text-slate-400">from first booking</p>}
+                                  <div className="mt-1.5 flex gap-1.5">
+                                    <a href={`tel:+91${digits}`} aria-label={`Call ${u.name || u.email}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:border-slate-300">
+                                      <Phone className="h-3.5 w-3.5" />
+                                    </a>
+                                    <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${u.name || u.email}`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-emerald-600 hover:border-slate-300">
+                                      <WhatsAppIcon className="h-3.5 w-3.5" />
+                                    </a>
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="text-xs text-slate-400">Not provided</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <span
+                                className={`inline-block min-w-[2rem] rounded-full px-2.5 py-1 text-xs font-extrabold tabular-nums ${
+                                  u.bookingCount > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                                }`}
+                              >
+                                {u.bookingCount}
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-600">{fmt(u.signedUpAt)}</td>
+                            <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-600">{fmt(u.lastLoginAt)}</td>
+                            <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-600">{fmt(u.lastBookingAt)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1149,7 +1574,7 @@ export default function AdminDashboardPage() {
                             <Phone className="h-3.5 w-3.5" /> Call
                           </a>
                           <a href={tourWaUrl} target="_blank" rel="noopener noreferrer" className={`${smallBtn} bg-[#128C4A] text-white hover:brightness-110`}>
-                            <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                            <WhatsAppIcon className="h-3.5 w-3.5" /> WhatsApp
                           </a>
                         </div>
                       </div>

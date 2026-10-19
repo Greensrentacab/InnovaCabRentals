@@ -48,8 +48,13 @@ const photos: Record<string, RoutePhoto> = {
   'airport': { src: '/images/routes/airport.jpg', alt: 'Kempegowda International Airport, Terminal 1', author: 'Sameer2905', license: 'CC BY-SA 4.0', sourceUrl: 'https://commons.wikimedia.org/wiki/File:Terminal_1_of_Kempegowda_International_Airport.jpg' },
 };
 
+/** Photo key for a route slug (bangalore-to-coorg -> coorg; airport routes -> airport). */
+export const routePhotoKey = (slug: string) => (slug.includes('airport') ? 'airport' : slug.replace(/^bangalore-to-/, ''));
+
+/** Every built-in route photo by key (Admin → Homepage images lists these). */
+export const routePhotosByKey: Readonly<Record<string, RoutePhoto>> = photos;
+
 /** Photo for a route slug (bangalore-to-coorg -> coorg; airport routes -> airport). */
 export function routePhoto(slug: string): RoutePhoto | undefined {
-  if (slug.includes('airport')) return photos.airport;
-  return photos[slug.replace(/^bangalore-to-/, '')];
+  return photos[routePhotoKey(slug)];
 }

@@ -127,6 +127,11 @@ export const siteConfig = {
       label: '15 Years of Experience',
       verified: false,
     } as TrustClaim<number>,
+    customersServed: {
+      value: 3500,
+      label: '3,500+ customers served',
+      verified: false,
+    } as TrustClaim<number>,
   },
 
   /**
@@ -137,7 +142,7 @@ export const siteConfig = {
   testimonials: [] as Testimonial[],
 
   seo: {
-    title: 'Innova Cab Rentals Bangalore | Innova Crysta & Hycross Rental',
+    title: 'Innova Cabs Bangalore | Airport Taxi, Outstation & Rental',
     h1: 'Innova Airport Taxi Bangalore',
     metaDescription:
       'Book Innova, Innova Crysta, Hycross and Ertiga cabs in Bangalore for airport transfers, local rentals and outstation trips. Call or WhatsApp for fares.',

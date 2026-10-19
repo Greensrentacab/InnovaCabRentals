@@ -2,25 +2,25 @@
 
 /**
  * FareResults.tsx — available cars (same card layout as "Our fleet"), prices,
- * per-car T&Cs behind a toggle, and WhatsApp
- * actions, rendered inline directly under the booking widget's section after
- * "See Fares & Available Innovas" (design.md §3.3 cards, §3.0 buttons).
+ * per-car T&Cs behind a toggle, and WhatsApp actions, one car per row. Rendered as the car step
+ * of the booking popup (BookingFlowModal) after "See Fares & Available Innovas"
+ * (design.md §3.3 cards, §3.0 buttons).
  *
  * The WhatsApp button sends the full trip + selected car to the dispatch
- * (admin) WhatsApp number. "Request Booking" opens the booking modal so the
+ * (admin) WhatsApp number. Tapping a row selects the car; "Continue" in the
+ * popup footer moves on to the details step so the
  * request is also saved to Admin → Bookings.
  */
 
-import { useEffect, useId, useRef, useState } from 'react';
-import { Calendar, Check, ChevronDown, Clock, FileText, Info, Luggage, MapPin, MessageCircle, Pencil, Route as RouteIcon, Snowflake, Users } from 'lucide-react';
-import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
+import { Check, ChevronRight, FileText, Info, Luggage, Users } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
+import { useBookingFlow, toVehicle, type FareResult, type FareSearchState, type TripParams } from '@/context/BookingFlowContext';
 import { cn } from '@/lib/cn';
-import { useBookingFlow, type FareResult, type TripParams } from '@/context/BookingFlowContext';
 import { siteConfig } from '@/lib/siteConfig';
 import { fleetPhotos } from '@/lib/fleetPhotos';
-import PhotoCarousel from '@/components/home/PhotoCarousel';
+import TermsSheet from '@/components/ds/TermsSheet';
 import { formatDateLong, formatTime12 } from '@/lib/time';
-import { scrollToBook } from '@/components/home/scrollToBook';
 
 const SERVICE_LABEL: Record<string, string> = {
   outstation: 'Outstation (Round Trip)',
@@ -68,236 +68,272 @@ export function buildAdminWhatsAppMessage(
   return lines.join('\n');
 }
 
-/** Short tag on each car photo (factual, no ratings) */
-const CAR_TAG: Record<string, string> = {
-  ertiga: 'Best Value',
-  innova: 'Classic Comfort',
-  'innova-crysta': 'Captain Seats',
-  'innova-hycross': 'Strong Hybrid',
-};
-
-/** What the shown fare covers, in a few words */
-function fareCaption(trip: TripParams, totalKm: number | null, days: number) {
-  if (trip.serviceType === 'airport') return trip.tripType === 'round' ? 'Airport round trip' : 'Airport · one way';
-  if (trip.serviceType === 'local') return trip.packageLabel ? `${trip.packageLabel} package` : 'Local package';
-  if (trip.serviceType === 'outstation')
-    return totalKm ? `~${totalKm} km · ${days} day${days > 1 ? 's' : ''} round trip` : 'Round trip';
-  return 'Estimated fare';
+/** What the fare is for, shown under each price (e.g. "for ~15 km"). */
+function fareBasis(search: FareSearchState): string | null {
+  const trip = search.trip;
+  if (!trip) return null;
+  if (trip.serviceType === 'airport' && search.distanceKm !== null)
+    return `for ~${Math.round(search.distanceKm)} km${trip.tripType === 'round' ? ' each way' : ''}`;
+  if (trip.serviceType === 'outstation' && search.totalKm !== null)
+    return `~${Math.round(search.totalKm)} km · ${search.days} day${search.days > 1 ? 's' : ''}`;
+  if (trip.serviceType === 'local' && trip.packageHours) return `${trip.packageHours} hr package`;
+  return null;
 }
 
-/** Compact 2-up result card (mobile first): photos, specs, price, T&C toggle, actions. */
-function ResultCard({
+function ResultRow({
   car,
   trip,
+  basis,
+  isLowest,
   totalKm,
   days,
-  index,
+  inclusions,
+  exclusions,
 }: {
   car: FareResult;
   trip: TripParams;
+  basis: string | null;
+  isLowest: boolean;
   totalKm: number | null;
   days: number;
-  index: number;
+  inclusions: string[];
+  exclusions: string[];
 }) {
-  const { requestBooking } = useBookingFlow();
+  const { state, selectVehicle } = useBookingFlow();
   const [showTerms, setShowTerms] = useState(false);
-  const termsId = useId();
-  const photos = (fleetPhotos[car.vehicleId] ?? []).slice(0, 5);
+  const closeTerms = useCallback(() => setShowTerms(false), []);
+  const isSelected = state.selectedVehicle?.id === car.vehicleId;
+  // The published photo from the fare API, else the built-in photo
+  const photo = car.photos?.[0] ?? fleetPhotos[car.vehicleId]?.[0];
+  const typeTag = car.vehicleType && car.vehicleType.length <= 16 ? car.vehicleType : null;
   const waUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
     buildAdminWhatsAppMessage(trip, car, { totalKm, days })
   )}`;
-  const tag = CAR_TAG[car.vehicleId];
+  const select = () => selectVehicle(toVehicle(car));
 
   return (
-    <article className="card-float flex h-full min-w-0 flex-col overflow-hidden rounded-3xl">
-      {photos.length > 0 && (
-        <PhotoCarousel photos={photos} label={`${car.vehicleName} photos`} delay={index * 900} className="aspect-[4/3]">
-          {/* Photo opens the car's page (dots stay clickable above it) */}
-          <Link
-            href={`/${car.vehicleId}-rental-bangalore`}
-            aria-label={`View ${car.vehicleName} details`}
-            className="absolute inset-0 z-[5]"
-          />
-          {tag && (
-            <span className="pointer-events-none absolute left-2 top-2 z-10 rounded-full bg-ink/80 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur sm:left-3 sm:top-3 sm:px-2.5 sm:text-[11px]">
-              {tag}
-            </span>
-          )}
-        </PhotoCarousel>
+    <div
+      role="radio"
+      aria-checked={isSelected}
+      tabIndex={0}
+      onClick={select}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          select();
+        }
+      }}
+      className={cn(
+        'relative cursor-pointer rounded-2xl border-2 p-3 outline-none transition-all duration-200 focus-visible:ring-4 focus-visible:ring-brand-500/20 active:scale-[0.99] sm:p-3.5',
+        isSelected
+          ? 'border-brand-600 bg-brand-50/40 shadow-[0_12px_28px_-18px_rgba(37,99,235,0.7)]'
+          : 'border-slate-200/80 bg-white hover:border-brand-200',
+        isLowest && 'mt-3'
+      )}
+    >
+      {/* "Lowest fare" ribbon sits on the top border so the name line stays clean */}
+      {isLowest && (
+        <span className="absolute -top-2.5 left-3 rounded-full bg-live-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+          Lowest fare
+        </span>
       )}
 
-      <div className="flex flex-1 flex-col p-3 sm:p-4">
-        <h3 className="line-clamp-2 text-[13px] font-extrabold leading-snug tracking-tight sm:text-base">{car.vehicleName}</h3>
-        {car.vehicleType && <p className="mt-0.5 truncate text-[11px] text-slate-500 sm:text-xs">{car.vehicleType}</p>}
-
-        <p className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-semibold text-slate-600 sm:text-xs">
-          {car.seats ? (
-            <span className="flex items-center gap-1">
-              <Users className="h-3.5 w-3.5 text-brand-600" /> {car.seats}+1
-            </span>
-          ) : null}
-          {car.luggage ? (
-            <span className="flex items-center gap-1">
-              <Luggage className="h-3.5 w-3.5 text-brand-600" /> {car.luggage}
-            </span>
-          ) : null}
-          <span className="flex items-center gap-1">
-            <Snowflake className="h-3.5 w-3.5 text-brand-600" /> AC
-          </span>
-        </p>
-
-        <div className="mt-3 rounded-2xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-200/70 sm:px-3">
-          <p className="text-lg font-extrabold leading-tight tracking-tight tabular-nums text-ink sm:text-xl">
-            {car.fare !== null ? inr(car.fare) : <span className="text-sm">Price on request</span>}
-          </p>
-          <p className="mt-0.5 text-[10px] font-medium leading-snug text-slate-500 sm:text-[11px]">{fareCaption(trip, totalKm, days)}</p>
-          <p className="text-[10px] font-medium leading-snug text-amber-700 sm:text-[11px]">Tolls &amp; parking extra</p>
+      <div className="flex items-center gap-3">
+        <div className="relative h-[60px] w-[84px] shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-16 sm:w-24">
+          {photo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={photo.src}
+              alt=""
+              width={photo.width}
+              height={photo.height}
+              loading="lazy"
+              decoding="async"
+              style={{ objectPosition: photo.position }}
+              className="h-full w-full object-cover"
+            />
+          )}
         </div>
 
-        {/* Terms & conditions: hidden until tapped */}
-        <button
-          type="button"
-          aria-expanded={showTerms}
-          aria-controls={termsId}
-          onClick={() => setShowTerms((v) => !v)}
-          className="mt-2 inline-flex w-fit items-center gap-1 text-[10.5px] font-bold text-slate-500 transition hover:text-brand-700 sm:text-[11px]"
-        >
-          <FileText className="h-3 w-3" /> T&amp;C
-          <ChevronDown className={cn('h-3 w-3 transition-transform', showTerms && 'rotate-180')} />
-        </button>
-        {showTerms && (
-          <ul id={termsId} className="mt-1.5 animate-fade-in space-y-1 rounded-xl bg-slate-50 p-2">
-            {[...car.breakdown, ...car.terms].map((term) => (
-              <li key={term} className="flex items-start gap-1.5 text-[10.5px] leading-snug text-slate-600 sm:text-[11px]">
-                <Check className="mt-0.5 h-3 w-3 shrink-0 text-live-600" strokeWidth={3} />
-                {term}
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[15px] font-extrabold leading-snug tracking-tight text-ink sm:text-base">{car.vehicleName}</h3>
+          {(car.seats || car.luggage) ? (
+            <p className="mt-1 flex flex-wrap items-center gap-x-2.5 text-xs font-medium text-slate-500">
+              {car.seats ? (
+                <span className="inline-flex items-center gap-1">
+                  <Users className="h-3.5 w-3.5 shrink-0" /> {car.seats}
+                </span>
+              ) : null}
+              {car.luggage ? (
+                <span className="inline-flex items-center gap-1">
+                  <Luggage className="h-3.5 w-3.5 shrink-0" /> {car.luggage}
+                </span>
+              ) : null}
+              {typeTag && <span className="truncate text-slate-400">· {typeTag}</span>}
+            </p>
+          ) : null}
+        </div>
 
-        <div className="mt-auto grid gap-1.5 pt-3">
-          <button
-            type="button"
-            onClick={() => requestBooking(car.vehicleId)}
-            className="btn-primary w-full px-2 py-2.5 text-[13px] shadow-[0_10px_22px_-8px_rgba(56,189,248,0.8)]"
-          >
-            Book Now
-          </button>
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-whatsapp w-full px-2 py-2.5 text-[13px]"
-            aria-label={`Send ${car.vehicleName} booking details on WhatsApp`}
-          >
-            <MessageCircle className="h-4 w-4" /> WhatsApp
-          </a>
+        <div className="shrink-0 text-right">
+          <p className="text-lg font-extrabold leading-none tracking-tight tabular-nums text-ink sm:text-xl">
+            {car.fare !== null ? inr(car.fare) : <span className="text-xs font-bold">On request</span>}
+          </p>
+          {car.fare !== null && basis && <p className="mt-1 text-[11px] font-medium text-slate-400">{basis}</p>}
+        </div>
+
+        <span
+          className={cn(
+            'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
+            isSelected ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300 bg-white'
+          )}
+          aria-hidden="true"
+        >
+          {isSelected && <Check className="h-3 w-3" strokeWidth={3.5} />}
+        </span>
+      </div>
+
+      {/* Selected car: how the fare is worked out, T&Cs and WhatsApp */}
+      <div
+        className={cn(
+          'grid transition-[grid-template-rows,opacity] duration-300 ease-out',
+          isSelected ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="mt-3 rounded-xl bg-white px-3 py-2.5 ring-1 ring-slate-200/70">
+            {car.breakdown?.length > 0 && (
+              <ul className="space-y-1 text-xs font-medium tabular-nums text-slate-600">
+                {car.breakdown.map((line) => (
+                  <li key={line} className="flex gap-2">
+                    <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-300" aria-hidden="true" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className={cn('flex items-center gap-2', car.breakdown?.length > 0 && 'mt-2.5 border-t border-slate-100 pt-2.5')}>
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                tabIndex={isSelected ? 0 : -1}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowTerms(true);
+                }}
+                className="inline-flex min-h-[32px] flex-1 items-center gap-1.5 text-xs font-bold text-brand-700"
+              >
+                <FileText className="h-3.5 w-3.5" /> Terms &amp; inclusions
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+              <a
+                href={waUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                tabIndex={isSelected ? 0 : -1}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex min-h-[32px] items-center gap-1.5 rounded-full bg-[#25D366]/10 px-3 text-xs font-bold text-[#128C7E] transition hover:bg-[#25D366]/15"
+                aria-label={`Send ${car.vehicleName} booking details on WhatsApp`}
+              >
+                <WhatsAppIcon className="h-3.5 w-3.5" /> WhatsApp
+              </a>
+            </div>
+          </div>
         </div>
       </div>
-    </article>
+
+      <TermsSheet
+        open={showTerms}
+        onClose={closeTerms}
+        title={car.vehicleName}
+        subtitle={car.fare !== null ? `Estimated fare ${inr(car.fare)}` : undefined}
+        sections={[
+          { title: 'How this fare is worked out', items: car.breakdown ?? [], tone: 'fare' },
+          { title: "What's included", items: inclusions, tone: 'included' },
+          { title: 'Not included', items: exclusions, tone: 'excluded' },
+          { title: 'Terms', items: car.terms, tone: 'terms' },
+        ]}
+      />
+    </div>
   );
 }
 
+/** Car step of the booking popup: one car per row; tap a row to select it. */
 export default function FareResults() {
-  const { search } = useBookingFlow();
-  const sectionRef = useRef<HTMLElement>(null);
+  const { search, state, selectVehicle } = useBookingFlow();
+  const sorted = [...search.results].sort((a, b) => (a.fare ?? Infinity) - (b.fare ?? Infinity));
+  const lowest = sorted.find((c) => c.fare !== null);
 
-  // Bring the results into view for every new search
+  // Always have a car selected once fares arrive (the lowest priced one)
   useEffect(() => {
-    if (search.searchId === 0 || search.status !== 'loading') return;
-    const el = sectionRef.current;
-    if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - 96;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    window.scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
-  }, [search.searchId, search.status]);
+    if (search.status === 'done' && !state.selectedVehicle && lowest) selectVehicle(toVehicle(lowest));
+  }, [search.status, state.selectedVehicle, lowest, selectVehicle]);
 
   if (search.status === 'idle' || !search.trip) return null;
   const trip = search.trip;
+  const basis = fareBasis(search);
+  const notIncluded =
+    search.exclusions.length > 0
+      ? `Not included: ${search.exclusions.join(', ')}.`
+      : 'Not included: toll fees, parking and state permits.';
 
   return (
-    <section ref={sectionRef} id="fares" aria-live="polite" className="ds-scope section scroll-mt-24 pb-4 pt-10">
-      <div className="card-float p-5 sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <span className="eyebrow">Available cars</span>
-            <h2 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">{tripTypeLabel(trip)}</h2>
-            <ul className="mt-3 space-y-1.5 text-sm text-slate-600">
-              <li className="flex items-start gap-2">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-                <span className="min-w-0">
-                  {[trip.pickup, ...(trip.stops ?? []), trip.drop].map((p) => p.name).join(' → ')}
-                  {trip.serviceType === 'outstation' && ` → ${trip.pickup.name}`}
-                </span>
-              </li>
-              <li className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                <span className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-brand-600" /> {formatDateLong(trip.date)}
-                  {trip.returnDate && ` – ${formatDateLong(trip.returnDate)}`}
-                </span>
-                <span className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-brand-600" /> {formatTime12(trip.time)}
-                </span>
-                {trip.serviceType === 'outstation' && search.totalKm !== null && (
-                  <span className="flex items-center gap-2">
-                    <RouteIcon className="h-4 w-4 text-brand-600" /> ~{search.totalKm} km round trip · {search.days} day
-                    {search.days > 1 ? 's' : ''}
-                  </span>
-                )}
-              </li>
-            </ul>
-          </div>
-          <button type="button" onClick={() => scrollToBook()} className="btn-ghost shrink-0">
-            <Pencil className="h-4 w-4" /> Edit trip
-          </button>
-        </div>
-
-        <p className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
-          <Info className="mt-px h-4 w-4 shrink-0" />
-          Toll fees, parking and state permits are paid by the customer and are not included in these fares.
-        </p>
-      </div>
-
+    <div aria-live="polite">
       {search.status === 'loading' && (
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="space-y-2.5">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="card-float overflow-hidden">
-              <div className="shimmer aspect-[4/3]" />
-              <div className="space-y-2 p-3">
-                <div className="shimmer h-8 w-1/2 rounded-lg" />
-                <div className="shimmer h-3 rounded-full" />
-                <div className="shimmer h-3 w-4/5 rounded-full" />
-                <div className="shimmer h-12 rounded-full" />
+            <div key={i} className="flex items-center gap-3 rounded-2xl border-2 border-slate-100 p-3">
+              <div className="shimmer h-[60px] w-[84px] shrink-0 rounded-xl" />
+              <div className="flex-1 space-y-2">
+                <div className="shimmer h-4 w-2/3 rounded-lg" />
+                <div className="shimmer h-3 w-1/3 rounded-full" />
               </div>
+              <div className="shimmer h-6 w-16 rounded-lg" />
             </div>
           ))}
         </div>
       )}
 
       {search.status === 'error' && (
-        <div className="card-float mt-5 p-6 text-center">
+        <div className="rounded-2xl border-2 border-slate-100 p-6 text-center">
           <p className="text-sm font-semibold text-rose-600">{search.error}</p>
           <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp mt-4">
-            <MessageCircle className="h-4 w-4" /> WhatsApp for a Quick Quote
+            <WhatsAppIcon className="h-4 w-4" /> WhatsApp for a Quick Quote
           </a>
         </div>
       )}
 
       {search.status === 'done' && (
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          {search.results.map((car, i) => (
-            <div key={car.vehicleId} className="min-w-0 animate-fade-up">
-              <ResultCard car={car} trip={trip} totalKm={search.totalKm} days={search.days} index={i} />
-            </div>
-          ))}
-          {search.results.length === 0 && (
-            <p className="card-float p-6 text-sm text-slate-600 col-span-2 lg:col-span-4">
-              No cars are available for this trip right now. Please WhatsApp us and we&apos;ll arrange one.
+        <>
+          <div role="radiogroup" aria-label="Choose a car" className="space-y-2.5">
+            {sorted.map((car, i) => (
+              <div key={car.vehicleId} className="animate-fade-up" style={{ animationDelay: `${i * 60}ms` }}>
+                <ResultRow
+                  car={car}
+                  trip={trip}
+                  basis={basis}
+                  isLowest={car.vehicleId === lowest?.vehicleId}
+                  totalKm={search.totalKm}
+                  days={search.days}
+                  inclusions={search.inclusions}
+                  exclusions={search.exclusions}
+                />
+              </div>
+            ))}
+            {search.results.length === 0 && (
+              <p className="rounded-2xl border-2 border-slate-100 p-6 text-sm text-slate-600">
+                No cars are available for this trip right now. Please WhatsApp us and we&apos;ll arrange one.
+              </p>
+            )}
+          </div>
+
+          {search.results.length > 0 && (
+            <p className="mt-4 flex items-start gap-2 px-1 text-[11px] leading-relaxed text-slate-500">
+              <Info className="mt-px h-3.5 w-3.5 shrink-0 text-slate-400" />
+              <span>{notIncluded} Final fare is confirmed on WhatsApp before your trip.</span>
             </p>
           )}
-        </div>
+        </>
       )}
-    </section>
+    </div>
   );
 }

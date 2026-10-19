@@ -4,7 +4,6 @@ import {
   ArrowRight,
   CalendarCheck,
   Luggage,
-  MessageCircle,
   Phone,
   ShieldCheck,
   Radar,
@@ -12,6 +11,8 @@ import {
   Star,
   Users,
 } from 'lucide-react';
+import { cn } from '@/lib/cn';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import ServicesSection from '@/components/home/ServicesSection';
 import BookingTimeline from '@/components/home/BookingTimeline';
@@ -20,11 +21,13 @@ import FleetSection from '@/components/home/FleetSection';
 import FaqAccordion from '@/components/home/FaqAccordion';
 import BookButton from '@/components/home/BookButton';
 import Reveal from '@/components/home/Reveal';
-import FareResults from '@/components/FareResults';
 import TrustInfoSection from '@/components/home/TrustInfoSection';
 import { siteConfig } from '@/lib/siteConfig';
+import { withSeo } from '@/lib/seo';
 import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
+import { getSiteImages } from '@/lib/siteContentStore';
 import {
+  airportFromFare,
   buildFleetCards,
   buildRouteCards,
   buildWidgetData,
@@ -34,7 +37,7 @@ import {
   minFare,
   routeFromFare,
 } from '@/lib/storefrontData';
-import { HeroBand, HeroLead, HeroPicture, HeroTitle } from '@/components/home/HeroScene';
+import { HeroCover, HeroLead, HeroTitle, HeroTrustList } from '@/components/home/HeroScene';
 
 export const revalidate = 60; // Revalidate dynamic Firestore data every minute
 
@@ -60,7 +63,7 @@ const whyChooseUs = [
     desc: 'Driver allowance and night charges shared upfront; tolls paid by the customer. No surge pricing, ever.',
   },
   {
-    icon: MessageCircle,
+    icon: WhatsAppIcon,
     title: 'Easy Booking by Call or WhatsApp',
     desc: 'No apps or logins. Reach our dispatch desk directly for instant reservations.',
   },
@@ -90,13 +93,15 @@ const homeFaqs = [
 ];
 
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSeo({
+  title: siteConfig.seo.title,
+  description: siteConfig.seo.metaDescription,
   alternates: { canonical: '/' },
-};
+});
 
 
 export default async function HomePage() {
-  const [vehicles, routes, localPackages] = await Promise.all([getVehicles(), getRoutes(), getLocalPackages()]);
+  const [vehicles, routes, localPackages, images] = await Promise.all([getVehicles(), getRoutes(), getLocalPackages(), getSiteImages()]);
 
   // Fleet: confirmed models only (Toyota Innova, Innova Crysta, Maruti Suzuki Ertiga)
   const fleet = confirmedFleet(vehicles);
@@ -105,13 +110,14 @@ export default async function HomePage() {
   const outstationRoutes = routes.filter((r) => r !== airportRoute);
 
   // All prices come from the cars' admin-editable rates
-  const airportFrom = minFare(fleet.map((v) => v.rates?.airportFare));
+  const airportFrom = minFare(fleet.map(airportFromFare));
   const outstationFrom = minFare(outstationRoutes.map((r) => routeFromFare(r, fleet)));
   const localFrom = minFare(fleet.map((v) => v.rates?.local8h));
 
-  const widgetData = buildWidgetData(routes, localPackages, fleet);
-  const sliderRoutes = buildRouteCards(airportRoute ? [airportRoute, ...outstationRoutes] : outstationRoutes, fleet);
-  const fleetCards = buildFleetCards(fleet);
+  const widgetData = buildWidgetData(routes, localPackages, fleet, images);
+  const sliderRoutes = buildRouteCards(airportRoute ? [airportRoute, ...outstationRoutes] : outstationRoutes, fleet, images);
+  const fleetCards = buildFleetCards(fleet, images);
+  const heroAirport = images.hero.airport;
 
   const stats = [
     { value: `${siteConfig.trustClaims.yearsExperience.value} yrs`, label: 'Of premium Innova rentals' },
@@ -122,20 +128,6 @@ export default async function HomePage() {
   const testimonials = siteConfig.testimonials;
 
 
-  // Hero trust strip (no ratings or customer counts — client request)
-  const trustItems = (
-    <>
-      <li className="flex items-center justify-center gap-1.5 px-2">
-        <ShieldCheck className="h-4 w-4 shrink-0 text-live-600" /> Verified drivers
-      </li>
-      <li className="flex items-center justify-center gap-1.5 px-2">
-        <Radar className="h-4 w-4 shrink-0 text-brand-600" /> Flight tracking
-      </li>
-      <li className="flex items-center justify-center gap-1.5 px-2">
-        <BadgeIndianRupee className="h-4 w-4 shrink-0 text-brand-600" /> Transparent price
-      </li>
-    </>
-  );
 
   return (
     <div className="ds-scope bg-porcelain">
@@ -143,67 +135,70 @@ export default async function HomePage() {
       {/* 1. HERO + QUICK BOOKING WIDGET — light sky-blue & white theme    */}
       {/*    (no overflow-hidden: the calendar pop-up must extend past it) */}
       {/* ================================================================ */}
-      <section className="relative isolate z-10 pb-4 pt-24 sm:pt-32 lg:pb-8">
+      <section className="relative isolate z-10 pb-4 pt-0 lg:flex lg:min-h-[100svh] lg:items-center lg:pb-14 lg:pt-28">
         {/* Picture follows the selected service tab. Desktop: whole picture across the top, car on the right */}
         {/* Start loading the default (airport) picture before the page script runs */}
-        <link rel="preload" as="image" href="/images/hero/hero-airport-1920.webp" />
-        {/* Soft sky behind the whole hero (the form side on desktop) */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 -z-20 h-[760px] bg-gradient-to-b from-sky-100 via-sky-50 to-porcelain" aria-hidden="true" />
-
-        {/* Desktop: the picture spans the full hero width behind both columns */}
-        <HeroBand flip plain className="inset-x-0 top-0 -z-10 hidden h-[clamp(640px,52vw,780px)] lg:block" />
+        <link rel="preload" as="image" href={(heroAirport.mobile ?? heroAirport.desktop).src} media="(max-width: 1023px)" />
+        <link rel="preload" as="image" href={heroAirport.desktop.large} media="(min-width: 1024px)" />
+        {/* Desktop: full-bleed picture with a dark wash, same look as phones */}
+        <HeroCover desktop images={images.hero} className="-z-10 hidden lg:block" />
 
         {/* Copy + picture on the left, booking form on the right (desktop) */}
-        <div className="section grid items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,450px)] lg:gap-10">
-          <div className="relative min-w-0 pt-2 [text-shadow:0_1px_12px_rgba(255,255,255,0.95)] lg:col-start-1 lg:row-start-1 lg:pt-4">
-            {/* Picture band sized to the copy, car bottom-right */}
-            <div className="relative">
-              <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border border-live-500/20 bg-white/80 px-3 py-1.5 text-xs font-bold text-live-600 shadow-sm backdrop-blur-md">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-live-500" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-live-500" />
+        <div className="section grid w-full items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:items-center lg:gap-12">
+          <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4">
+            {/* Phones/tablets: picture runs edge to edge from the top with the copy on it; desktop uses the band above */}
+            <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
+              <HeroCover images={images.hero} className="lg:hidden" />
+              <div className="relative [text-shadow:0_1px_3px_rgba(0,0,0,0.65),0_2px_18px_rgba(0,0,0,0.5)]">
+                <span className="inline-flex animate-fade-up items-center gap-2 rounded-full border max-sm:hidden border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white shadow-sm backdrop-blur-md [text-shadow:none]">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-live-500" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  </span>
+                  Booking open now · 24 hours
                 </span>
-                Booking open now · 24 hours
-              </span>
 
-              {/* Heading + subheading follow the selected tab (server HTML = Airport Taxi, the SEO default) */}
-              <h1 className="text-balance mt-4 animate-fade-up text-[1.9rem] font-extrabold leading-[1.08] tracking-tight text-ink [animation-delay:80ms] sm:mt-6 sm:text-5xl lg:text-[3.25rem]">
-                <HeroTitle />
-              </h1>
+                {/* Heading + subheading follow the selected tab (server HTML = Airport Taxi, the SEO default) */}
+                <h1 className="text-balance mt-0 animate-fade-up text-[2.15rem] font-extrabold leading-[1.02] tracking-tight text-white [animation-delay:80ms] sm:mt-6 sm:text-5xl lg:text-[3.25rem]">
+                  <HeroTitle />
+                </h1>
 
-              <p className="mt-3 max-w-xl animate-fade-up text-[15px] font-semibold leading-relaxed text-slate-700 [animation-delay:160ms] sm:mt-5 sm:text-lg">
-                <HeroLead />
-              </p>
+                <span className="mt-3 block h-1 w-12 rounded-full bg-sky-300 lg:hidden" aria-hidden="true" />
+                <p className="mt-3 line-clamp-4 max-w-xl animate-fade-up text-[13px] font-medium leading-snug sm:line-clamp-none text-white [animation-delay:160ms] sm:mt-5 sm:text-lg">
+                  <HeroLead />
+                </p>
 
-              {/* Phones/tablets: the picture comes right after the text (never under it), trust strip on its bottom edge */}
-              <HeroPicture className="-mx-4 mt-4 sm:-mx-6 sm:mt-6 lg:hidden">
-                <ul className="relative z-10 mx-3 -mt-5 grid grid-cols-3 divide-x divide-amber-200/70 rounded-2xl border border-amber-200/70 bg-amber-50/95 py-2.5 text-[11px] font-semibold leading-tight text-slate-700 shadow-sm backdrop-blur [text-shadow:none] sm:mx-6 sm:text-sm">
-                  {trustItems}
-                </ul>
-              </HeroPicture>
+                {/* Phones/tablets: trust points in the hero, two per row */}
+                <HeroTrustList
+                  extraLabel={siteConfig.trustClaims.customersServed.label}
+                  className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 whitespace-nowrap text-[12px] font-semibold text-white sm:max-w-md sm:gap-y-3 sm:text-sm lg:hidden [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_2px_12px_rgba(0,0,0,0.5)]"
+                />
 
-              {/* Desktop: room for the car in the full-width picture, then the trust strip */}
-              <div className="hidden lg:block lg:h-[340px] xl:h-[380px]" aria-hidden="true" />
-              <ul className="mt-2 hidden grid-cols-3 divide-x divide-amber-200/70 rounded-2xl border border-amber-200/70 bg-amber-50/95 py-3 text-sm font-semibold leading-tight text-slate-700 shadow-sm backdrop-blur [text-shadow:none] lg:grid">
-                {trustItems}
-              </ul>
+                {/* Phones/tablets: room for the car in the picture */}
+                <div className="h-36 min-[420px]:h-44 sm:h-60 lg:hidden" aria-hidden="true" />
+
+                {/* Desktop: room for the car in the full-width picture, then the trust points along the bottom */}
+                <div className="hidden lg:block lg:h-[clamp(140px,26vh,300px)]" aria-hidden="true" />
+                <HeroTrustList
+                  extraLabel={siteConfig.trustClaims.customersServed.label}
+                  className="hidden items-center gap-x-6 gap-y-2 whitespace-nowrap text-[13px] font-semibold text-white lg:flex xl:text-sm [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]"
+                />
+              </div>
             </div>
-
           </div>
 
-          <div className="min-w-0 lg:col-start-2 lg:row-start-1 lg:pt-4">
+          <div className="relative z-10 -mt-[100px] min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:pt-4">
             <QuickBookingWidget {...widgetData} />
+
           </div>
         </div>
       </section>
-
-      {/* Available cars, prices & T&Cs (after "See Fares") */}
-      <FareResults />
 
       {/* ================================================================ */}
       {/* 2. OUR SERVICES (design.md §3.3)                                 */}
       {/* ================================================================ */}
       <ServicesSection
+        galleries={images.services}
         fares={{
           airport: airportFrom ? formatINR(airportFrom) : null,
           outstation: outstationFrom ? formatINR(outstationFrom) : null,
@@ -219,11 +214,11 @@ export default async function HomePage() {
       {/* ================================================================ */}
       {/* 4. FEATURED ROUTES SLIDER                                        */}
       {/* ================================================================ */}
-      <section id="routes" className="section scroll-mt-24 py-16 sm:py-20">
+      <section id="routes" className="section scroll-mt-24 pb-2 pt-10 sm:py-20">
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
           <div className="max-w-2xl">
             <span className="eyebrow">Featured routes</span>
-            <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Popular trips from Bangalore</h2>
+            <h2 className="section-title mt-3 sm:mt-4">Popular trips from Bangalore</h2>
             <p className="mt-3 text-slate-600">
               Fares shown for both models where available — otherwise get a quick quote on WhatsApp.
             </p>
@@ -247,56 +242,64 @@ export default async function HomePage() {
       {/* 6. TRUST — stats + why us (testimonials stay hidden until real   */}
       {/*    client reviews are supplied in siteConfig.testimonials)       */}
       {/* ================================================================ */}
-      <section className="section py-16 sm:py-20">
+      <section className="section py-6 sm:py-20">
         <Reveal>
-          <div className="card-float overflow-hidden p-6 sm:p-10">
-            <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-              <div>
-                <span className="eyebrow">Why travellers choose us</span>
-                <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
+          <div className="relative overflow-hidden rounded-2xl bg-ink p-4 text-white sm:rounded-3xl sm:p-10 lg:p-14">
+            <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-sky-400/15 blur-3xl" aria-hidden="true" />
+            <div className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-brand-600/30 blur-3xl" aria-hidden="true" />
+
+            <div className="relative">
+              <div className="max-w-2xl">
+                <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-sky-300">Why choose us</span>
+                <h2 className="text-balance mt-2 text-[1.5rem] font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl">
                   Comfortable cars. Reliable journeys.
                 </h2>
-                <p className="mt-3 text-slate-600">
-                  {siteConfig.brand.closingLine} Fares are shared upfront and never change at the end of the trip.
-                </p>
-                <div className="mt-8 grid grid-cols-2 gap-3">
-                  {stats.map((stat) => (
-                    <div key={stat.label} className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5">
-                      <p className="text-3xl font-extrabold tracking-tight text-brand-700">{stat.value}</p>
-                      <p className="mt-1 text-sm font-medium text-slate-600">{stat.label}</p>
-                    </div>
-                  ))}
-                </div>
               </div>
 
-              <div className="space-y-3">
-                {testimonials.length > 0
-                  ? testimonials.slice(0, 3).map((t) => (
-                      <figure key={t.id} className="rounded-2xl border border-slate-200/80 bg-white p-5">
-                        <div className="flex gap-0.5 text-amber-400" aria-label={`${t.rating} out of 5 stars`}>
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star key={i} className="h-4 w-4 fill-current" />
-                          ))}
-                        </div>
-                        <blockquote className="mt-3 text-sm leading-relaxed text-slate-700">“{t.comment}”</blockquote>
-                        <figcaption className="mt-3 text-xs font-semibold text-slate-500">
-                          <span className="text-ink">{t.name}</span>
-                          {t.source === 'google' && ' · Google review'}
-                        </figcaption>
-                      </figure>
-                    ))
-                  : whyChooseUs.map(({ icon: Icon, title, desc }) => (
-                      <div key={title} className="flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-white p-5">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
-                          <Icon className="h-5 w-5" />
-                        </span>
-                        <div>
-                          <h3 className="text-[15px] font-extrabold">{title}</h3>
-                          <p className="mt-1 text-sm leading-relaxed text-slate-600">{desc}</p>
-                        </div>
+              {/* Stats */}
+              <dl className="mt-4 grid grid-cols-4 gap-1.5 sm:mt-10 sm:gap-4">
+                {stats.map((stat) => (
+                  <div key={stat.label} className="rounded-xl border border-white/10 bg-white/[0.05] px-2 py-2.5 backdrop-blur sm:rounded-2xl sm:p-6">
+                    <dt className="text-lg font-extrabold leading-none tracking-tight text-sky-300 sm:text-5xl">{stat.value}</dt>
+                    <dd className="mt-1 text-[10px] font-medium leading-tight text-slate-300 sm:mt-3 sm:text-sm">{stat.label}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              {testimonials.length > 0 ? (
+                <div className="mt-8 grid gap-4 sm:mt-10 md:grid-cols-2">
+                  {testimonials.slice(0, 2).map((t) => (
+                    <figure key={t.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                      <blockquote className="text-sm leading-relaxed text-slate-200 sm:text-base">&ldquo;{t.comment}&rdquo;</blockquote>
+                      <figcaption className="mt-3 text-xs font-semibold text-slate-400">
+                        <span className="text-white">{t.name}</span>
+                        {t.source === 'google' && ' · Google review'}
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
+              ) : (
+                <ul className="mt-4 grid grid-cols-2 gap-2 sm:mt-8 sm:gap-4 lg:grid-cols-6">
+                  {whyChooseUs.map(({ title, desc, icon: WhyIcon }, i) => (
+                    <li
+                      key={title}
+                      className={cn(
+                        'group flex flex-row items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] p-2.5 transition-colors duration-200 hover:border-sky-300/40 hover:bg-white/[0.08] sm:items-start sm:gap-4 sm:rounded-2xl sm:p-6 lg:col-span-2',
+                        i >= 3 && 'lg:col-span-3',
+                        i === whyChooseUs.length - 1 && 'max-sm:hidden sm:max-lg:col-span-2'
+                      )}
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-400/15 text-sky-300 transition-transform duration-200 group-hover:scale-105 sm:h-12 sm:w-12">
+                        <WhyIcon className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="text-[12.5px] font-bold leading-tight sm:text-base">{title}</h3>
+                        <p className="mt-1 hidden text-[11.5px] leading-snug text-slate-300 sm:mt-1.5 sm:block sm:text-sm sm:leading-relaxed">{desc}</p>
                       </div>
-                    ))}
-              </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         </Reveal>
@@ -307,11 +310,11 @@ export default async function HomePage() {
       {/* ================================================================ */}
       {/* 7. FAQ                                                           */}
       {/* ================================================================ */}
-      <section id="faq" className="section scroll-mt-24 pb-16 sm:pb-20">
+      <section id="faq" className="section scroll-mt-24 pb-10 sm:pb-20">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="max-w-2xl">
             <span className="eyebrow">Good to know</span>
-            <h2 className="text-balance mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Frequently asked questions</h2>
+            <h2 className="section-title mt-3 sm:mt-4">Frequently asked questions</h2>
             <p className="mt-3 text-slate-600">Clear answers on tariffs, booking steps and travel terms.</p>
             <div className="mt-6 flex flex-wrap gap-2">
               <Link href="/faq" className="btn-ghost group">
@@ -319,7 +322,7 @@ export default async function HomePage() {
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-                <MessageCircle className="h-4 w-4" /> Ask on WhatsApp
+                <WhatsAppIcon className="h-4 w-4" /> Ask on WhatsApp
               </a>
             </div>
           </div>
@@ -336,7 +339,7 @@ export default async function HomePage() {
           <div className="pointer-events-none absolute -bottom-24 left-10 h-60 w-60 rounded-full bg-amber-400/20 blur-3xl" />
           <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-balance text-2xl font-extrabold tracking-tight sm:text-3xl">Ready when you are — day or night.</h2>
+              <h2 className="section-title mt-3 sm:mt-4">Ready when you are — day or night.</h2>
               <p className="mt-2 text-slate-300">
                 {siteConfig.cta.advanceBooking} — ₹0 advance and a verified chauffeur at your door.
               </p>
@@ -350,7 +353,7 @@ export default async function HomePage() {
                 <Phone className="h-4 w-4" /> Call 24/7
               </a>
               <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-                <MessageCircle className="h-4 w-4" /> WhatsApp
+                <WhatsAppIcon className="h-4 w-4" /> WhatsApp
               </a>
             </div>
           </div>

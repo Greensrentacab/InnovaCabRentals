@@ -1,16 +1,17 @@
 import type { Metadata, Viewport } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import { DM_Sans } from 'next/font/google';
 import './globals.css';
 import StorefrontShell from '@/components/StorefrontShell';
 import { siteConfig } from '@/lib/siteConfig';
 import { siteUrl } from '@/lib/siteUrl';
 import { BusinessJsonLd } from '@/components/seo/JsonLd';
+import { baseOpenGraph, defaultShareImage } from '@/lib/seo';
 
-// Design-system typeface (design.md §1.3)
-const jakarta = Plus_Jakarta_Sans({
+// Site typeface (DM Sans), exposed as --font-dm-sans for the Tailwind font-sans stack.
+const dmSans = DM_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-jakarta',
+  variable: '--font-dm-sans',
   display: 'swap',
 });
 
@@ -25,13 +26,24 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: siteConfig.brand.name }],
   robots: 'index, follow',
+  icons: {
+    icon: [
+      { url: '/icon.png?v=2', type: 'image/png', sizes: '512x512' },
+      { url: '/favicon.ico?v=2', sizes: 'any' },
+    ],
+    shortcut: '/favicon.ico?v=2',
+    apple: '/apple-icon.png?v=2',
+  },
   openGraph: {
-    type: 'website',
-    locale: 'en_IN',
-    siteName: siteConfig.brand.name,
+    ...baseOpenGraph,
     title: siteConfig.seo.title,
     description: siteConfig.seo.metaDescription,
-    images: [{ url: '/images/fleet/own/innova-side.jpg', width: 1600, height: 1200, alt: 'Toyota Innova from our Bangalore fleet' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteConfig.seo.title,
+    description: siteConfig.seo.metaDescription,
+    images: [defaultShareImage.url],
   },
 };
 
@@ -49,7 +61,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={jakarta.variable}>
+    <html lang="en" className={dmSans.variable}>
       <body className="flex min-h-screen flex-col">
         <BusinessJsonLd />
         <StorefrontShell>{children}</StorefrontShell>

@@ -11,11 +11,15 @@
     @apply bg-porcelain font-sans text-ink antialiased;
     font-feature-settings: 'ss01', 'cv11';
   }
+  /* Typography baseline: every heading shares weight, tracking and line height unless a component overrides it */
+  body { @apply leading-normal; }
+  h1, h2, h3, h4 { @apply font-extrabold leading-tight tracking-tight; }
+  p { @apply leading-relaxed; }
   ::selection { @apply bg-brand-600 text-white; }
   :focus-visible { @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white; }
 
   .ds-scope {
-    @apply font-jakarta text-ink antialiased;
+    @apply font-sans text-ink antialiased;
     font-feature-settings: 'ss01', 'cv11';
   }
   .ds-scope ::selection {
@@ -63,6 +67,8 @@
 
   /* Layout */
   .section { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
+  /* Section heading used by every homepage / landing section */
+  .section-title { @apply text-balance text-2xl font-extrabold leading-[1.1] tracking-tight sm:text-4xl; }
   .eyebrow { @apply inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-brand-700; }
 }
 

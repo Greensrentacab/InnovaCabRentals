@@ -62,6 +62,7 @@ export async function createBookingRequest(
     });
 
     const calculatedFare = fareCalculation.fares[input.vehicleId] ?? null;
+    const calculatedBreakdown = fareCalculation.results.find((r) => r.vehicleId === input.vehicleId)?.breakdown ?? [];
 
     // 2. Build official Booking object (Status: PENDING)
     const bookingId = `BK-${Date.now().toString(36).toUpperCase()}`;
@@ -85,6 +86,8 @@ export async function createBookingRequest(
       vehicleId: input.vehicleId,
       vehicleName: input.vehicleName,
       fare: calculatedFare, // Server-calculated fare only
+      fareBreakdown: calculatedFare !== null ? calculatedBreakdown : [],
+      distanceKm: fareCalculation.distanceKm,
       bookingStatus: 'PENDING',
       driverId: null,
       driverName: null,

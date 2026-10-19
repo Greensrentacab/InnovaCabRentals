@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
+    "predev": "node -e \"require('fs').rmSync('.next-dev',{recursive:true,force:true})\"",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "npx -y tsx scripts/seed.ts"
+    "seed": "npx -y tsx scripts/seed.ts",
+    "test": "npx -y tsx --conditions=react-server --test \"tests/**/*.test.ts\""
   },
   "dependencies": {
     "firebase": "^12.19.0",

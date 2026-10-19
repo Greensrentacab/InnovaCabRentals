@@ -11,7 +11,7 @@ import { cn } from '@/lib/cn';
 
 export default function FaqAccordion({
   faqs,
-  defaultOpen = 0,
+  defaultOpen = null,
 }: {
   faqs: { q: string; a: string }[];
   /** Index opened on load; null keeps every item closed. */

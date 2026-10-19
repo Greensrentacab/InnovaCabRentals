@@ -1,11 +1,14 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Check, Clock, IndianRupee, Luggage, MessageCircle, Phone, Route as RouteIcon, Users } from 'lucide-react';
+import { ArrowRight, BadgeIndianRupee, Check, ChevronRight, Clock, IndianRupee, Luggage, Phone, Radar, Route as RouteIcon, ShieldCheck, Users } from 'lucide-react';
+import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import QuickBookingWidget from '@/components/home/QuickBookingWidget';
 import FaqAccordion from '@/components/home/FaqAccordion';
 import Reveal from '@/components/home/Reveal';
-import PageHero from '@/components/ds/PageHero';
+import { BreadcrumbJsonLd } from '@/components/seo/JsonLd';
+import { withSeo } from '@/lib/seo';
+import { HeroCover } from '@/components/home/HeroScene';
 import SectionHeading, { Hairline } from '@/components/ds/SectionHeading';
 import CtaBand from '@/components/ds/CtaBand';
 import { PhotoCredit } from '@/components/ds/VehiclePhotoCard';
@@ -13,9 +16,8 @@ import { getLocalPackages, getRoutes, getVehicles } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
 import { LocationData } from '@/lib/googlePlaces';
 import { primaryPhoto } from '@/lib/fleetPhotos';
-import { routePhoto } from '@/lib/routePhotos';
-import { buildWidgetData, confirmedFleet, fareOrRequest, formatINR, routeFromFare, routeRoundTripFare } from '@/lib/storefrontData';
-import FareResults from '@/components/FareResults';
+import { buildWidgetData, confirmedFleet, fareOrRequest, formatINR, routeCardPhoto, routeFromFare, routeRoundTripFare } from '@/lib/storefrontData';
+import { getSiteImages } from '@/lib/siteContentStore';
 
 interface RoutePageProps {
   params: {
@@ -346,8 +348,8 @@ export async function generateMetadata({ params }: RoutePageProps): Promise<Meta
   const h1 = details?.h1 || `${route.name} Cab`;
   const destination = route.destination;
 
-  return {
-    title: `${h1} | Innova & Crysta Rental Bangalore | ${siteConfig.brand.name}`,
+  return withSeo({
+    title: `${h1} | ${siteConfig.brand.name}`,
     alternates: { canonical: `/routes/${route.slug}` },
     description: `Book ${h1} with experienced driver. Clean Toyota Innova, Innova Crysta, Hycross & Ertiga round-trip rental for travel between ${route.origin} and ${destination} (${route.distanceKm} km, ${route.durationText}). Zero surge, transparent pricing.`,
     keywords: [
@@ -358,7 +360,7 @@ export async function generateMetadata({ params }: RoutePageProps): Promise<Meta
       'Innova Cabs Bangalore',
       'Innova Outstation Rental',
     ],
-  };
+  });
 }
 
 export default async function RouteDetailPage({ params }: RoutePageProps) {
@@ -369,10 +371,11 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
     notFound();
   }
 
-  const [allVehicles, localPackages] = await Promise.all([getVehicles(), getLocalPackages()]);
+  const [allVehicles, localPackages, images] = await Promise.all([getVehicles(), getLocalPackages(), getSiteImages()]);
   const vehicles = confirmedFleet(allVehicles);
-  const widgetData = buildWidgetData(routes, localPackages, vehicles);
+  const widgetData = buildWidgetData(routes, localPackages, vehicles, images);
   const isAirportRoute = params.slug.includes('airport');
+  const heroScene = isAirportRoute ? 'airport' : 'outstation';
   const routeFrom = routeFromFare(route, vehicles);
 
   const customDetails = routeDetailMap[params.slug] || {
@@ -413,7 +416,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
     ],
   };
 
-  const destPhoto = routePhoto(route.slug);
+  const destPhoto = routeCardPhoto(route.slug, images);
 
   const whatsappRouteUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
     `Hello ${siteConfig.brand.name}, I would like to book the ${customDetails.h1} (${route.distanceKm} km) in Toyota Innova. Please share current quote.`
@@ -421,94 +424,134 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
 
   return (
     <div className="bg-porcelain">
-      <PageHero
-        breadcrumbs={[{ label: 'Outstation Routes', href: '/routes' }, { label: customDetails.h1 }]}
-        eyebrow={`${route.origin} → ${route.destination}`}
-        title={customDetails.h1}
-        lead={
-          <>
-            <p className="font-bold text-brand-700">{customDetails.tagline}</p>
-            <p className="mt-3">
+      {/* Hero: same layout as the homepage — fare form right under the heading */}
+      <section className="ds-scope relative isolate z-10 pb-4 pt-0 lg:flex lg:min-h-[100svh] lg:items-center lg:pb-14 lg:pt-28">
+        {/* Desktop: full-bleed picture with a dark wash, same look as phones */}
+        <HeroCover desktop scene={heroScene} images={images.hero} className="-z-10 hidden lg:block" />
+
+        <div className="section grid w-full items-start gap-6 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:items-center lg:gap-12">
+          <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4">
+            <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
+              <HeroCover scene={heroScene} images={images.hero} className="lg:hidden" />
+              <div className="relative max-lg:[text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_2px_16px_rgba(0,0,0,0.45)]">
+                <BreadcrumbJsonLd items={[{ label: 'Outstation Routes', href: '/routes' }, { label: customDetails.h1 }]} />
+                <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs font-semibold text-white/80 [text-shadow:none]">
+                  <Link href="/" className="hover:text-white">Home</Link>
+                  <ChevronRight className="h-3 w-3" />
+                  <Link href="/routes" className="hover:text-white">Outstation Routes</Link>
+                </nav>
+                <h1 className="text-balance animate-fade-up text-[2.15rem] font-extrabold leading-[1.02] tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">
+                  {customDetails.h1}
+                </h1>
+                <span className="mt-3 block h-1 w-12 rounded-full bg-sky-300 lg:hidden" aria-hidden="true" />
+                <p className="mt-3 max-w-xl animate-fade-up text-[13px] font-medium leading-snug text-white [animation-delay:160ms] sm:mt-5 sm:text-lg">
+                  {customDetails.tagline}
+                </p>
+
+                <div className="h-14 sm:h-56 lg:hidden" aria-hidden="true" />
+                <div className="hidden lg:block lg:h-[clamp(120px,22vh,260px)]" aria-hidden="true" />
+                <ul className="mt-2 hidden max-w-xl grid-cols-3 divide-x divide-white/15 rounded-2xl border border-white/15 bg-white/10 py-3 text-sm font-semibold leading-tight text-white backdrop-blur-md lg:grid">
+                  <li className="flex items-center justify-center gap-1.5 px-2"><ShieldCheck className="h-4 w-4 text-emerald-400" /> Verified drivers</li>
+                  {/* Flight tracking applies to airport trips only */}
+                  {isAirportRoute ? (
+                    <li className="flex items-center justify-center gap-1.5 px-2"><Radar className="h-4 w-4 text-sky-300" /> Flight tracking</li>
+                  ) : (
+                    <li className="flex items-center justify-center gap-1.5 px-2"><Clock className="h-4 w-4 text-sky-300" /> {siteConfig.contact.hours}</li>
+                  )}
+                  <li className="flex items-center justify-center gap-1.5 px-2"><BadgeIndianRupee className="h-4 w-4 text-sky-300" /> Transparent price</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative z-10 -mt-[100px] min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:pt-4">
+            <QuickBookingWidget
+              {...widgetData}
+              initialService={isAirportRoute ? 'airport' : 'outstation'}
+              initialOutstation={
+                isAirportRoute
+                  ? undefined
+                  : { pickup: customDetails.pickupData, drop: customDetails.dropData, routeSlug: params.slug }
+              }
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Route facts */}
+      <section className="section py-10 sm:py-14">
+        <div className="max-w-3xl">
+          <div className="space-y-5">
+            <p className="text-slate-600">
               Travel in premium air-conditioned comfort with our verified chauffeurs. Fixed transparent billing, zero surge,
               and dependable 24/7 service.
             </p>
-          </>
-        }
-        aside={
-          <QuickBookingWidget
-            {...widgetData}
-            initialService={isAirportRoute ? 'airport' : 'outstation'}
-            initialOutstation={
-              isAirportRoute
-                ? undefined
-                : { pickup: customDetails.pickupData, drop: customDetails.dropData, routeSlug: params.slug }
-            }
-          />
-        }
-      >
-        <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <a href={siteConfig.contact.phone.tel} className="btn-primary">
-            <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
-          </a>
-          <a href={whatsappRouteUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <MessageCircle className="h-4 w-4" /> {siteConfig.cta.quickQuote}
-          </a>
-        </div>
-
         {/* Distance / duration / fare (null fare = "Price on request") */}
-        <dl className="mt-8 grid grid-cols-3 divide-x divide-slate-200/80 rounded-2xl border border-slate-200/80 bg-white text-center shadow-float">
-          <div className="p-3 sm:p-4">
-            <dt className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
-              <RouteIcon className="h-3 w-3" /> Distance
-            </dt>
-            <dd className="mt-1 text-lg font-extrabold tabular-nums sm:text-xl">{route.distanceKm} km</dd>
-            <dd className="text-[11px] text-slate-500">From Bangalore</dd>
-          </div>
-          <div className="p-3 sm:p-4">
-            <dt className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
-              <Clock className="h-3 w-3" /> Duration
-            </dt>
-            <dd className="mt-1 text-lg font-extrabold sm:text-xl">{route.durationText}</dd>
-            <dd className="text-[11px] text-slate-500">Standard driving time</dd>
-          </div>
-          <div className="p-3 sm:p-4">
-            <dt className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
-              <IndianRupee className="h-3 w-3" /> Tariff
-            </dt>
-            <dd className="mt-1 text-lg font-extrabold text-brand-700 sm:text-xl">
-              {routeFrom ? `from ${formatINR(routeFrom)}` : 'On request'}
-            </dd>
-            <dd className="text-[11px] text-slate-500">Round trip · tolls extra</dd>
-          </div>
-        </dl>
+            <dl className="grid grid-cols-3 divide-x divide-slate-200/80 rounded-2xl border border-slate-200/80 bg-white text-center shadow-float">
+              <div className="p-3 sm:p-4">
+                <dt className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                  <RouteIcon className="h-3 w-3" /> Distance
+                </dt>
+                <dd className="mt-1 text-lg font-extrabold tabular-nums sm:text-xl">{route.distanceKm} km</dd>
+                <dd className="text-[11px] text-slate-500">From Bangalore</dd>
+              </div>
+              <div className="p-3 sm:p-4">
+                <dt className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                  <Clock className="h-3 w-3" /> Duration
+                </dt>
+                <dd className="mt-1 text-lg font-extrabold sm:text-xl">{route.durationText}</dd>
+                <dd className="text-[11px] text-slate-500">Standard driving time</dd>
+              </div>
+              <div className="p-3 sm:p-4">
+                <dt className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                  <IndianRupee className="h-3 w-3" /> Tariff
+                </dt>
+                <dd className="mt-1 text-lg font-extrabold text-brand-700 sm:text-xl">
+                  {routeFrom ? `from ${formatINR(routeFrom)}` : 'On request'}
+                </dd>
+                <dd className="text-[11px] text-slate-500">Round trip · tolls extra</dd>
+              </div>
+            </dl>
 
-        {destPhoto && (
-          <figure className="mt-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-float">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={destPhoto.src}
-              alt={destPhoto.alt}
-              width={800}
-              height={500}
-              loading="lazy"
-              decoding="async"
-              className="aspect-[16/9] w-full object-cover"
-            />
-            <figcaption className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 text-[11px] text-slate-500">
-              <span className="font-semibold text-slate-700">{destPhoto.alt}</span>
-              <a href={destPhoto.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-700">
-                Photo: {destPhoto.author} / Wikimedia Commons, {destPhoto.license}
+            {destPhoto && (
+              <figure className="mt-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-float">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={destPhoto.src}
+                  srcSet={destPhoto.srcSet}
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  alt={destPhoto.alt}
+                  width={800}
+                  height={500}
+                  loading="lazy"
+                  decoding="async"
+                  style={{ objectPosition: destPhoto.position }}
+                  className="aspect-[16/9] w-full object-cover"
+                />
+                <figcaption className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2 text-[11px] text-slate-500">
+                  <span className="font-semibold text-slate-700">{destPhoto.alt}</span>
+                  {destPhoto.credit && (
+                    <a href={destPhoto.credit.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-brand-700">
+                      Photo: {destPhoto.credit.author} / Wikimedia Commons, {destPhoto.credit.license}
+                    </a>
+                  )}
+                </figcaption>
+              </figure>
+            )}
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <a href={siteConfig.contact.phone.tel} className="btn-primary">
+                <Phone className="h-4 w-4" /> {siteConfig.cta.instantBooking}
               </a>
-            </figcaption>
-          </figure>
-        )}
-      </PageHero>
-
-      {/* Available cars, prices & T&Cs (after "See Fares") */}
-      <FareResults />
+              <a href={whatsappRouteUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+                <WhatsAppIcon className="h-4 w-4" /> {siteConfig.cta.quickQuote}
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Why book this route */}
-      <section className="section py-16 sm:py-20">
+      <section className="section py-10 sm:py-20">
         <Reveal>
           <div className="card-float p-6 sm:p-10">
             <SectionHeading
@@ -535,7 +578,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
       </section>
 
       {/* Vehicle options for this route */}
-      <section className="relative bg-white py-16 sm:py-20">
+      <section className="relative bg-white py-10 sm:py-20">
         <Hairline />
         <div className="section">
           <SectionHeading
@@ -545,7 +588,10 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
           />
           <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {vehicles.map((v, i) => {
-              const photo = primaryPhoto(v.id);
+              const fleetPhoto = primaryPhoto(v.id);
+              // Uploaded photo from Admin → Homepage images, else the built-in one (credited when third-party)
+              const photo = images.fleet[v.id]?.[0] ?? fleetPhoto;
+              const showCredit = Boolean(fleetPhoto && !images.fleet[v.id]?.[0]?.custom);
               const whatsappVehicleUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
                 `Hello, I would like to book a ${v.name} for the ${customDetails.h1}. Please share tariff and availability.`
               )}`;
@@ -596,10 +642,10 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
                           <span className="text-lg font-extrabold tabular-nums">{fareOrRequest(routeRoundTripFare(route, v))}</span>
                         </span>
                         <a href={whatsappVehicleUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp px-4 py-2.5">
-                          <MessageCircle className="h-4 w-4" /> Quick Quote
+                          <WhatsAppIcon className="h-4 w-4" /> Quick Quote
                         </a>
                       </div>
-                      {photo && <PhotoCredit photo={photo} className="mt-3 block" />}
+                      {showCredit && fleetPhoto && <PhotoCredit photo={fleetPhoto} className="mt-3 block" />}
                     </div>
                   </article>
                 </Reveal>
@@ -610,7 +656,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
       </section>
 
       {/* Route FAQ */}
-      <section className="section py-16 sm:py-20">
+      <section className="section py-10 sm:py-20">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="max-w-2xl">
             <span className="eyebrow">Route information</span>

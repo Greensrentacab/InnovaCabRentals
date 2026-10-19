@@ -11,7 +11,7 @@
  */
 
 import React, { useState } from 'react';
-import { AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, ArrowRight, ChevronLeft, Eye, EyeOff, Mail } from 'lucide-react';
 import { AuthFlowError, AuthMode, useAuth } from '@/context/AuthContext';
 import SegmentedControl from '@/components/home/SegmentedControl';
 import { cn } from '@/lib/cn';
@@ -35,9 +35,11 @@ interface AuthPanelProps {
   idPrefix?: string;
   onSuccess?: () => void;
   className?: string;
+  /** Tighter layout for small spaces (booking flow): text tabs, no welcome heading, smaller fields */
+  compact?: boolean;
 }
 
-export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', onSuccess, className }: AuthPanelProps) {
+export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', onSuccess, className, compact = false }: AuthPanelProps) {
   const { signInWithGoogle, signUpWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>(initialMode);
@@ -45,11 +47,16 @@ export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', o
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  // Compact layout: Google first, email form only when asked for
+  const [emailOpen, setEmailOpen] = useState(!compact);
   const [busy, setBusy] = useState<'google' | 'email' | null>(null);
   const [error, setError] = useState<AuthFlowError | null>(null);
   const [invalidField, setInvalidField] = useState<'name' | 'email' | 'password' | null>(null);
 
   const isSignUp = mode === 'signup';
+  const fieldCls = compact ? 'h-11 rounded-xl py-0' : '';
+  const labelCls = compact ? 'label !mb-1 !text-[10px]' : 'label';
+  const btnCls = compact ? '!min-h-0 h-11 !rounded-xl text-sm' : '';
 
   const switchMode = (next: AuthMode) => {
     setMode(next);
@@ -93,18 +100,20 @@ export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', o
   // Full panel always renders; without Firebase keys every action shows the
   // "sign-in unavailable" message (thrown by AuthContext) instead of hiding the UI.
   return (
-    <div className={cn('space-y-4', className)}>
-      <SegmentedControl
-        ariaLabel="Sign in or create an account"
-        options={[
-          { value: 'signin', label: 'Sign In' },
-          { value: 'signup', label: 'Sign Up' },
-        ]}
-        value={mode}
-        onChange={switchMode}
-      />
+    <div className={cn(compact ? 'space-y-3' : 'space-y-4', className)}>
+      {!compact && (
+        <SegmentedControl
+          ariaLabel="Sign in or create an account"
+          options={[
+            { value: 'signin', label: 'Sign In' },
+            { value: 'signup', label: 'Sign Up' },
+          ]}
+          value={mode}
+          onChange={switchMode}
+        />
+      )}
 
-      <div>
+      <div className={cn(compact && 'hidden')}>
         <h3 className="text-base font-extrabold">{isSignUp ? 'Create your account' : 'Welcome back'}</h3>
         <p className="text-xs text-slate-500">
           {isSignUp
@@ -134,11 +143,60 @@ export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', o
         </div>
       )}
 
+      {compact && !emailOpen ? (
+        <div className="space-y-2.5">
+          <button
+            type="button"
+            onClick={handleGoogle}
+            disabled={busy !== null}
+            className={cn('btn-ghost w-full !h-12 border-slate-300 text-[15px]', btnCls, error?.useGoogle && 'border-brand-300 ring-4 ring-brand-500/10')}
+          >
+            {busy === 'google' ? (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+            ) : (
+              <GoogleMark className="h-[18px] w-[18px]" />
+            )}
+            {isSignUp ? 'Sign up with Google' : 'Sign in with Google'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setEmailOpen(true)}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-100 text-[15px] font-bold text-ink transition hover:bg-slate-200"
+          >
+            <Mail className="h-[18px] w-[18px] text-slate-600" /> {isSignUp ? 'Sign up with email' : 'Continue with email'}
+          </button>
+          <p className="pt-1 text-center text-xs text-slate-500">
+            {isSignUp ? 'Already have an account? ' : 'New here? '}
+            <button
+              type="button"
+              onClick={() => switchMode(isSignUp ? 'signin' : 'signup')}
+              className="font-bold text-brand-700 hover:text-brand-800"
+            >
+              {isSignUp ? 'Sign in' : 'Create an account'}
+            </button>
+          </p>
+        </div>
+      ) : (
+        <>
+          {compact ? (
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setEmailOpen(false)}
+                className="inline-flex items-center gap-1 rounded-md py-1 pr-2 text-xs font-bold text-slate-600 transition hover:text-ink"
+              >
+                <ChevronLeft className="h-4 w-4" /> Other options
+              </button>
+              <span className="text-xs font-bold text-ink">{isSignUp ? 'Create account' : 'Sign in with email'}</span>
+            </div>
+          ) : (
+            <>
       <button
         type="button"
         onClick={handleGoogle}
         disabled={busy !== null}
-        className={cn('btn-ghost w-full', error?.useGoogle && 'border-brand-300 ring-4 ring-brand-500/10')}
+        className={cn('btn-ghost w-full', btnCls, error?.useGoogle && 'border-brand-300 ring-4 ring-brand-500/10')}
       >
         {busy === 'google' ? (
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
@@ -148,16 +206,18 @@ export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', o
         {isSignUp ? 'Sign up with Google' : 'Sign in with Google'}
       </button>
 
-      <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">
+      <div className={cn('flex items-center gap-3 font-bold uppercase tracking-[0.08em] text-slate-400', compact ? 'text-[10px]' : 'text-[11px]')}>
         <span className="h-px flex-1 bg-slate-200" />
         or with email
         <span className="h-px flex-1 bg-slate-200" />
       </div>
 
-      <form onSubmit={handleEmail} noValidate className="space-y-3">
+            </>
+          )}
+      <form onSubmit={handleEmail} noValidate className={compact ? 'space-y-2.5' : 'space-y-3'}>
         {isSignUp && (
           <div>
-            <label htmlFor={`${idPrefix}-name`} className="label">
+            <label htmlFor={`${idPrefix}-name`} className={labelCls}>
               Full Name
             </label>
             <input
@@ -167,13 +227,13 @@ export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', o
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Suresh Kumar"
-              className={cn('field', invalidField === 'name' && 'field-error')}
+              className={cn('field', fieldCls, invalidField === 'name' && 'field-error')}
             />
           </div>
         )}
 
         <div>
-          <label htmlFor={`${idPrefix}-email`} className="label">
+          <label htmlFor={`${idPrefix}-email`} className={labelCls}>
             Email Address
           </label>
           <input
@@ -184,12 +244,12 @@ export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', o
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className={cn('field', invalidField === 'email' && 'field-error')}
+            className={cn('field', fieldCls, invalidField === 'email' && 'field-error')}
           />
         </div>
 
         <div>
-          <label htmlFor={`${idPrefix}-password`} className="label">
+          <label htmlFor={`${idPrefix}-password`} className={labelCls}>
             Password
           </label>
           <div className="relative">
@@ -200,7 +260,7 @@ export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', o
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={isSignUp ? 'Minimum 6 characters' : 'Your password'}
-              className={cn('field pr-12', invalidField === 'password' && 'field-error')}
+              className={cn('field pr-12', fieldCls, invalidField === 'password' && 'field-error')}
             />
             <button
               type="button"
@@ -213,7 +273,7 @@ export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', o
           </div>
         </div>
 
-        <button type="submit" disabled={busy !== null} className="btn-primary group w-full">
+        <button type="submit" disabled={busy !== null} className={cn('btn-primary group w-full', btnCls)}>
           {busy === 'email' ? (
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
           ) : null}
@@ -222,7 +282,10 @@ export default function AuthPanel({ initialMode = 'signin', idPrefix = 'auth', o
         </button>
       </form>
 
-      <p className="text-center text-xs text-slate-500">
+        </>
+      )}
+
+      <p className={cn('text-center text-xs text-slate-500', compact && !emailOpen && 'hidden')}>
         {isSignUp ? 'Already have an account? ' : 'New to us? '}
         <button
           type="button"

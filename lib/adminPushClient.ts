@@ -1,7 +1,7 @@
 /**
  * adminPushClient.ts
  *
- * Browser side of the admin alerts (Admin → sidebar "Booking alerts").
+ * Browser side of the admin alerts (Admin → Notifications).
  * Registers public/firebase-messaging-sw.js, asks for notification permission,
  * gets this device's FCM token and hands it to the server (lib/adminPush.ts).
  *
@@ -12,6 +12,7 @@
 import {
   registerAdminPushDevice,
   unregisterAdminPushDevice,
+  isAdminPushDeviceRegistered,
 } from '@/app/actions/admin';
 
 const SW_URL = '/firebase-messaging-sw.js';
@@ -96,15 +97,31 @@ export async function disablePush(): Promise<PushState> {
   return 'off';
 }
 
-/** FCM tokens rotate; on each console visit re-send the current one if it changed. */
-export async function refreshPushToken(): Promise<void> {
+/** This device's id in the server's device list (sha256 of its token), or null when alerts are off here. */
+export async function currentDeviceId(): Promise<string | null> {
+  const token = storedToken();
+  if (!token || !crypto?.subtle) return null;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * On each console visit: if this device was removed from another device's
+ * Notifications tab it is now 'off'; otherwise re-send the FCM token if it rotated.
+ */
+export async function refreshPushToken(): Promise<PushState> {
   const previous = storedToken();
-  if (!previous || Notification.permission !== 'granted') return;
+  if (!previous || Notification.permission !== 'granted') return 'off';
+  if (!(await isAdminPushDeviceRegistered(previous))) {
+    storeToken(null);
+    return 'off';
+  }
   const token = await fetchToken();
-  if (token === previous) return;
+  if (token === previous) return 'on';
   const res = await registerAdminPushDevice(token, deviceLabel());
   if (res.success) {
     storeToken(token);
     await unregisterAdminPushDevice(previous);
   }
+  return 'on';
 }

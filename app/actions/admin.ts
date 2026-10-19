@@ -39,7 +39,15 @@ import {
   updateVehicleRatesInStore,
   fetchActivitySince,
 } from '@/lib/adminStore';
-import { removeAdminPushToken, saveAdminPushToken, sendAdminAlert } from '@/lib/adminPush';
+import {
+  AdminPushDevice,
+  hasAdminPushToken,
+  listAdminPushDevices,
+  removeAdminPushDeviceById,
+  removeAdminPushToken,
+  saveAdminPushToken,
+  sendAdminAlert,
+} from '@/lib/adminPush';
 import { siteConfig } from '@/lib/siteConfig';
 import { formatTime12 } from '@/lib/time';
 import { validateVehicleRates } from '@/lib/pricing';
@@ -465,4 +473,28 @@ export async function sendTestAdminAlert(): Promise<{ success: boolean; delivere
   } catch (error: any) {
     return { success: false, error: error.message || 'Could not send a test alert' };
   }
+}
+
+/** Devices currently receiving alerts (Admin → Notifications). */
+export async function getAdminPushDevices(): Promise<AdminPushDevice[]> {
+  await requireAdmin();
+  return listAdminPushDevices();
+}
+
+/** Stop alerts on another device (e.g. a lost phone) by its id from getAdminPushDevices. */
+export async function removeAdminPushDevice(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+    if (typeof id !== 'string' || !/^[0-9a-f]{64}$/.test(id)) return { success: false, error: 'Unknown device' };
+    await removeAdminPushDeviceById(id);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Could not remove the device' };
+  }
+}
+
+/** False once this device was removed (from another device's Notifications tab). */
+export async function isAdminPushDeviceRegistered(token: string): Promise<boolean> {
+  await requireAdmin();
+  return typeof token === 'string' && token.length > 0 && hasAdminPushToken(token);
 }

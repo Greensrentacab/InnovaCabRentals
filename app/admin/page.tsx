@@ -48,7 +48,6 @@ import {
   Image as ImageIcon,
   FileText,
   Bell,
-  BellRing,
 } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import {
@@ -77,11 +76,12 @@ import VehicleRatesEditor, {
 } from '@/components/admin/VehicleRatesEditor';
 import HomepageImagesPanel from '@/components/admin/HomepageImagesPanel';
 import PoliciesPanel from '@/components/admin/PoliciesPanel';
+import NotificationsPanel from '@/components/admin/NotificationsPanel';
 import { PushState, getPushState, enablePush, disablePush, refreshPushToken } from '@/lib/adminPushClient';
 
-type AdminTab = 'overview' | 'bookings' | 'users' | 'pricing' | 'fleet' | 'enquiries' | 'images' | 'policies';
+type AdminTab = 'overview' | 'bookings' | 'users' | 'pricing' | 'fleet' | 'enquiries' | 'notifications' | 'images' | 'policies';
 
-const ADMIN_TABS: AdminTab[] = ['overview', 'bookings', 'users', 'pricing', 'fleet', 'enquiries', 'images', 'policies'];
+const ADMIN_TABS: AdminTab[] = ['overview', 'bookings', 'users', 'pricing', 'fleet', 'enquiries', 'notifications', 'images', 'policies'];
 
 /** How often the open console checks for new bookings and sign-ups. */
 const ACTIVITY_POLL_MS = 30_000;
@@ -228,7 +228,10 @@ export default function AdminDashboardPage() {
       getPushState()
         .then((state) => {
           setPushState(state);
-          if (state === 'on') refreshPushToken().catch((err) => console.warn('[Admin] Push token refresh failed:', err));
+          if (state === 'on')
+            refreshPushToken()
+              .then(setPushState)
+              .catch((err) => console.warn('[Admin] Push token refresh failed:', err));
         })
         .catch(() => setPushState('unsupported'));
     }
@@ -588,6 +591,7 @@ export default function AdminDashboardPage() {
     { id: 'pricing', label: 'Pricing & Tariffs', icon: Tag },
     { id: 'fleet', label: 'Fleet & Vehicles', icon: Car },
     { id: 'enquiries', label: 'Tour Enquiries', icon: Users, count: stats?.pendingEnquiries },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'images', label: 'Homepage Images', icon: ImageIcon },
     { id: 'policies', label: 'Terms & Policies', icon: FileText },
   ];
@@ -692,49 +696,6 @@ export default function AdminDashboardPage() {
       </nav>
 
       <div className="space-y-3 border-t border-white/10 px-5 pb-6 pt-4">
-        {pushState && (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-            <p className="flex items-center gap-2 text-xs font-extrabold text-white">
-              {pushState === 'on' ? <BellRing className="h-4 w-4 text-emerald-400" /> : <Bell className="h-4 w-4 text-slate-400" />}
-              Booking alerts {pushState === 'on' ? 'on' : 'off'}
-            </p>
-            <p className="mt-1 text-[11px] leading-snug text-slate-400">
-              {pushState === 'on'
-                ? 'This device is notified of new bookings and sign-ups, even when the site is closed.'
-                : pushState === 'off'
-                  ? 'Get a notification on this phone or computer for every new booking and sign-up, even when the site is closed.'
-                  : pushState === 'blocked'
-                    ? 'Notifications are blocked for this site. Allow them in the browser’s site settings, then reload.'
-                    : pushState === 'unconfigured'
-                      ? 'Add NEXT_PUBLIC_FIREBASE_VAPID_KEY to the server to switch on device alerts.'
-                      : 'This browser can’t receive alerts. Use Chrome on Android or a desktop browser.'}
-            </p>
-            {(pushState === 'on' || pushState === 'off') && (
-              <div className="mt-2.5 flex gap-2">
-                <button
-                  type="button"
-                  onClick={togglePush}
-                  disabled={pushBusy}
-                  className={`flex min-h-[40px] flex-1 items-center justify-center rounded-lg px-3 text-xs font-bold transition-colors disabled:opacity-60 ${
-                    pushState === 'on' ? 'border border-white/15 text-slate-300 hover:bg-white/10' : 'bg-emerald-500 text-emerald-950 hover:bg-emerald-400'
-                  }`}
-                >
-                  {pushState === 'on' ? 'Turn off' : 'Turn on alerts'}
-                </button>
-                {pushState === 'on' && (
-                  <button
-                    type="button"
-                    onClick={handleTestAlert}
-                    disabled={pushBusy}
-                    className="flex min-h-[40px] flex-1 items-center justify-center rounded-lg bg-white/10 px-3 text-xs font-bold text-white transition-colors hover:bg-white/15 disabled:opacity-60"
-                  >
-                    Send test
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
         <p className="truncate text-xs text-slate-400">greensrentacab@gmail.com</p>
         <button
           type="button"
@@ -1301,6 +1262,16 @@ export default function AdminDashboardPage() {
         )}
 
         {/* ───────────── FLEET ───────────── */}
+        {activeTab === 'notifications' && (
+          <NotificationsPanel
+            pushState={pushState}
+            busy={pushBusy}
+            onToggle={togglePush}
+            onTest={handleTestAlert}
+            onNotice={showToast}
+          />
+        )}
+
         {activeTab === 'fleet' && (
           <div className="animate-panel-in space-y-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

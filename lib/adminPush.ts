@@ -63,6 +63,41 @@ export async function removeAdminPushToken(token: string): Promise<void> {
   await adminDb.collection(COLLECTION).doc(tokenDocId(token)).delete();
 }
 
+export async function hasAdminPushToken(token: string): Promise<boolean> {
+  if (!hasFirestore()) return false;
+  const { adminDb } = await getAdminApp();
+  return (await adminDb.collection(COLLECTION).doc(tokenDocId(token)).get()).exists;
+}
+
+/** A device receiving alerts (Admin → Notifications). The token itself never leaves the server. */
+export interface AdminPushDevice {
+  /** sha256 of the FCM token (the doc id) */
+  id: string;
+  device: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function listAdminPushDevices(): Promise<AdminPushDevice[]> {
+  if (!hasFirestore()) return [];
+  const { adminDb } = await getAdminApp();
+  const snapshot = await adminDb.collection(COLLECTION).get();
+  return snapshot.docs
+    .map((doc) => ({
+      id: doc.id,
+      device: (doc.get('device') as string) || 'Unknown device',
+      createdAt: doc.get('createdAt') as string,
+      updatedAt: doc.get('updatedAt') as string,
+    }))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function removeAdminPushDeviceById(id: string): Promise<void> {
+  if (!hasFirestore()) return;
+  const { adminDb } = await getAdminApp();
+  await adminDb.collection(COLLECTION).doc(id).delete();
+}
+
 /** Push an alert to every registered admin device. Resolves with how many received it. */
 export async function sendAdminAlert(alert: AdminAlert): Promise<number> {
   if (!hasFirestore()) {

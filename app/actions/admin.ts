@@ -51,6 +51,8 @@ import {
 import { siteConfig } from '@/lib/siteConfig';
 import { formatTime12 } from '@/lib/time';
 import { validateVehicleRates } from '@/lib/pricing';
+import { checkTierOrder } from '@/lib/fleetOrder';
+import { getVehicles as getStorefrontVehicles } from '@/lib/dataService';
 
 const ADMIN_COOKIE_NAME = 'innova_admin_session';
 const SESSION_MAX_AGE_S = 60 * 60 * 24 * 7; // 7 days
@@ -392,6 +394,10 @@ export async function updateVehicleRates(
     // Incomplete minimum-km tariffs are rejected (same check as the admin form)
     const problem = validateVehicleRates(clean);
     if (problem) return { success: false, error: problem.message };
+
+    // Prices must stay in the premium order (Ertiga → Innova → Crysta → Hycross)
+    const orderProblem = checkTierOrder(vehicleId, clean, await getStorefrontVehicles());
+    if (orderProblem) return { success: false, error: orderProblem };
 
     await updateVehicleRatesInStore(vehicleId, clean);
     revalidatePath('/', 'layout');

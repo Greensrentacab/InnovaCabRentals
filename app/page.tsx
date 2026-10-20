@@ -37,7 +37,7 @@ import {
   minFare,
   routeFromFare,
 } from '@/lib/storefrontData';
-import { HeroCover, HeroLead, HeroTitle } from '@/components/home/HeroScene';
+import { HeroCover, HeroLead, HeroTitle, HeroTrustList } from '@/components/home/HeroScene';
 
 export const revalidate = 60; // Revalidate dynamic Firestore data every minute
 
@@ -128,12 +128,6 @@ export default async function HomePage() {
   const testimonials = siteConfig.testimonials;
 
 
-  // Hero trust strip (client-supplied claims only; no star ratings)
-  const trustList = [
-    { icon: ShieldCheck, tone: 'text-emerald-300', label: 'Verified drivers' },
-    { icon: Radar, tone: 'text-sky-300', label: 'Flight tracking' },
-    { icon: BadgeIndianRupee, tone: 'text-sky-300', label: 'Transparent price' },
-  ];
 
   return (
     <div className="ds-scope bg-porcelain">
@@ -175,32 +169,20 @@ export default async function HomePage() {
                 </p>
 
                 {/* Phones/tablets: trust points in the hero, two per row */}
-                <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 sm:gap-y-3 whitespace-nowrap text-[12px] font-semibold text-white sm:max-w-md sm:text-sm lg:hidden [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_2px_12px_rgba(0,0,0,0.5)]">
-                  {trustList.map(({ icon: Icon, tone, label }) => (
-                    <li key={label} className="flex items-center gap-2">
-                      <Icon className={`h-[18px] w-[18px] shrink-0 ${tone}`} /> {label}
-                    </li>
-                  ))}
-                  <li className="flex items-center gap-2">
-                    <Users className="h-[18px] w-[18px] shrink-0 text-sky-300" /> {siteConfig.trustClaims.customersServed.label}
-                  </li>
-                </ul>
+                <HeroTrustList
+                  extraLabel={siteConfig.trustClaims.customersServed.label}
+                  className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 whitespace-nowrap text-[12px] font-semibold text-white sm:max-w-md sm:gap-y-3 sm:text-sm lg:hidden [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_2px_12px_rgba(0,0,0,0.5)]"
+                />
 
                 {/* Phones/tablets: room for the car in the picture */}
                 <div className="h-36 min-[420px]:h-44 sm:h-60 lg:hidden" aria-hidden="true" />
 
                 {/* Desktop: room for the car in the full-width picture, then the trust points along the bottom */}
                 <div className="hidden lg:block lg:h-[clamp(140px,26vh,300px)]" aria-hidden="true" />
-                <ul className="hidden items-center gap-x-6 gap-y-2 whitespace-nowrap text-[13px] font-semibold text-white lg:flex xl:text-sm [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">
-                  {trustList.map(({ icon: Icon, tone, label }) => (
-                    <li key={label} className="flex items-center gap-2">
-                      <Icon className={`h-[18px] w-[18px] shrink-0 ${tone}`} /> {label}
-                    </li>
-                  ))}
-                  <li className="flex items-center gap-2 text-white/85">
-                    <Users className="h-[18px] w-[18px] shrink-0 text-sky-300" /> {siteConfig.trustClaims.customersServed.label}
-                  </li>
-                </ul>
+                <HeroTrustList
+                  extraLabel={siteConfig.trustClaims.customersServed.label}
+                  className="hidden items-center gap-x-6 gap-y-2 whitespace-nowrap text-[13px] font-semibold text-white lg:flex xl:text-sm [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]"
+                />
               </div>
             </div>
           </div>

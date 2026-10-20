@@ -16,6 +16,7 @@
  * Always recalculated on the server — never trust a browser-sent fare.
  */
 
+import { byFleetOrder } from '@/lib/fleetOrder';
 import { ServiceType, TripType, Vehicle, Route, VehicleRates } from '@/lib/types';
 import { getRoutes, getVehicles } from '@/lib/dataService';
 import { airportTariff, quoteDistanceFare, roundKm, tariffMode } from '@/lib/pricing';
@@ -187,7 +188,8 @@ export async function calculateServerFare(input: FareCalculationInput): Promise<
   const policy = policies.services[policyServiceFor(input.serviceType)];
 
   // Active cars only (switched off in Admin → Fleet = hidden)
-  const confirmedVehicles = allVehicles.filter((v) => v.confirmed !== false);
+  // …always listed (and priced) in the premium order: Ertiga → Innova → Crysta → Hycross
+  const confirmedVehicles = allVehicles.filter((v) => v.confirmed !== false).sort(byFleetOrder);
   const vehiclesToCalculate: Vehicle[] = input.vehicleId
     ? confirmedVehicles.filter((v) => v.id === input.vehicleId)
     : confirmedVehicles;

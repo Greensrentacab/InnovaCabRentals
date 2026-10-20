@@ -216,7 +216,7 @@ export default async function LandingTemplate({
             <SectionHeading
               eyebrow="Flexible hourly & daily tariffs"
               title="Local Rental Packages"
-              subtitle="Choose between flexible point-to-point rides or hourly full-day rental packages for city travel."
+              subtitle="Choose between flexible point-to-point rides or 8 hr and 12 hr rental packages for city travel."
             />
             <div className="mt-10">
               <PackageSelector

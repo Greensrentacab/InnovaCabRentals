@@ -35,7 +35,7 @@ export default async function InnovaCrystaRentalBangalorePage() {
     'VIP Kempegowda Airport (BLR) Chauffeur Transfers',
     'Luxury Hill Station Escapes (Coorg, Ooty, Wayanad)',
     'Bridal & Groom Wedding Entourage Transport',
-    'Extended Multi-Day South Indian Vacation Circuits',
+    'Multi-Day South Indian Vacation Circuits',
   ];
 
   const detailedSpecs = [

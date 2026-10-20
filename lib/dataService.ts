@@ -1,4 +1,5 @@
 import { Vehicle, Route, LocalPackage } from '@/lib/types';
+import { byFleetOrder } from '@/lib/fleetOrder';
 import { fetchAdminRoutes, fetchAdminVehicles } from '@/lib/adminStore';
 
 /**
@@ -9,15 +10,15 @@ import { fetchAdminRoutes, fetchAdminVehicles } from '@/lib/adminStore';
 export const defaultLocalPackages: LocalPackage[] = [
   {
     id: 'full-day-8hr-80km',
-    name: 'Full Day City Rental (8 Hr / 80 Km)',
+    name: '8 Hours City Rental (8 Hr / 80 Km)',
     durationHours: 8,
     distanceKm: 80,
-    description: 'Perfect for full-day city sightseeing, family shopping across Bangalore hubs, and corporate delegations.',
+    description: 'Ideal for city sightseeing, family shopping across Bangalore hubs, and corporate delegations.',
     fares: {},
   },
   {
     id: 'extended-day-12hr-120km',
-    name: 'Extended Full Day (12 Hr / 120 Km)',
+    name: '12 Hours City Rental (12 Hr / 120 Km)',
     durationHours: 12,
     distanceKm: 120,
     description: 'Comprehensive coverage for wedding events, tech park tours, and long working days across the city.',
@@ -41,7 +42,8 @@ const localRateKey = { 8: 'local8h', 12: 'local12h' } as const;
  * always merged with the seed catalogue so new cars appear automatically.
  */
 export async function getVehicles(): Promise<Vehicle[]> {
-  return fetchAdminVehicles();
+  // Always in the premium order everywhere on the site (lib/fleetOrder.ts)
+  return (await fetchAdminVehicles()).sort(byFleetOrder);
 }
 
 /**

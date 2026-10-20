@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { BadgeIndianRupee, Radar, ShieldCheck, Users } from 'lucide-react';
 import { SERVICE_EVENT, type HomeService } from '@/components/home/scrollToBook';
 import { cn } from '@/lib/cn';
 // Type-only: lib/siteImages pulls in zod, which must stay out of the storefront bundle
@@ -259,7 +260,7 @@ export function HeroTitle() {
   const service = useHeroService();
   return (
     <>
-      {COPY[service].title} <span className="text-sky-300 lg:bg-brand-600 lg:text-white">Bangalore</span>
+      {COPY[service].title} <span className="text-sky-300">Bangalore</span>
     </>
   );
 }
@@ -267,4 +268,27 @@ export function HeroTitle() {
 export function HeroLead() {
   const service = useHeroService();
   return <>{COPY[service].lead}</>;
+}
+
+/**
+ * Hero trust points. "Flight tracking" only applies to airport trips, so it
+ * is hidden while the Outstation or Local & Hourly tab is selected.
+ */
+export function HeroTrustList({ className, itemClassName, extraLabel }: { className?: string; itemClassName?: string; extraLabel?: string }) {
+  const service = useHeroService();
+  const items = [
+    { icon: ShieldCheck, tone: 'text-emerald-300', label: 'Verified drivers' },
+    ...(service === 'airport' ? [{ icon: Radar, tone: 'text-sky-300', label: 'Flight tracking' }] : []),
+    { icon: BadgeIndianRupee, tone: 'text-sky-300', label: 'Transparent price' },
+    ...(extraLabel ? [{ icon: Users, tone: 'text-sky-300', label: extraLabel }] : []),
+  ];
+  return (
+    <ul className={className}>
+      {items.map(({ icon: Icon, tone, label }) => (
+        <li key={label} className={cn('flex items-center gap-2', itemClassName)}>
+          <Icon className={cn('h-[18px] w-[18px] shrink-0', tone)} /> {label}
+        </li>
+      ))}
+    </ul>
+  );
 }

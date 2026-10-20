@@ -38,7 +38,7 @@ export default function PackageSelector({ packages, vehicles, vehiclePhotos }: P
       {/* 1. What kind of rental */}
       <div role="tablist" aria-label="Rental type" className="mx-auto grid max-w-2xl grid-cols-2 gap-2.5 sm:gap-3">
         {[
-          { value: 'packages' as const, icon: Clock, title: 'Hourly & Full Day', hint: '8 hr and 12 hr packages' },
+          { value: 'packages' as const, icon: Clock, title: '8 Hr & 12 Hr', hint: 'Hourly city packages' },
           { value: 'point-to-point' as const, icon: Navigation, title: 'Point-to-Point', hint: 'One-way city rides' },
         ].map(({ value, icon: Icon, title, hint }) => {
           const on = activeTab === value;

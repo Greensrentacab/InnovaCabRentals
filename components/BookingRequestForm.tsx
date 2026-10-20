@@ -57,10 +57,10 @@ export default function BookingRequestForm() {
                   Vehicle Model
                 </label>
                 <select className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-orange/50">
+                  <option>Maruti Suzuki Ertiga</option>
                   <option>Toyota Innova (7/8 Seater)</option>
                   <option>Toyota Innova Crysta</option>
                   <option>Toyota Innova Hycross</option>
-                  <option>Maruti Suzuki Ertiga</option>
                 </select>
               </div>
             </div>

@@ -25,7 +25,7 @@ export const minFare = (values: Array<number | null | undefined>) => {
 export const fareOrRequest = (n: number | null | undefined) =>
   typeof n === 'number' && n > 0 ? formatINR(n) : 'On request';
 
-const PACKAGE_LABELS: Record<number, string> = { 0: 'Custom', 8: 'Standard', 12: 'Extended' };
+const PACKAGE_LABELS: Record<number, string> = { 0: 'Custom', 8: '8 Hours', 12: '12 Hours' };
 
 export const packageLabel = (pkg: LocalPackage) => PACKAGE_LABELS[pkg.durationHours] ?? `${pkg.durationHours} hr`;
 

@@ -35,7 +35,8 @@ export const emptyRates = (): VehicleRates => ({
  * Starting tariffs (INR) in line with typical Bangalore market rates, Oct 2026.
  * The client changes these any time in Admin → Pricing.
  * Order: per km, driver allowance/day, airport (each way), 8 hr/80 km,
- * 12 hr/120 km, extra km, extra hour.
+ * 12 hr/120 km, extra km, extra hour, airport per km beyond 40 km.
+ * Every rate rises with the tier (lib/fleetOrder.ts), so fares follow the display order.
  */
 const defaultRates = (
   outstationPerKm: number,
@@ -44,15 +45,16 @@ const defaultRates = (
   local8h: number,
   local12h: number,
   extraKmRate: number,
-  extraHourRate: number
+  extraHourRate: number,
+  airportExtraKmRate: number
 ): VehicleRates => ({
   outstationPerKm,
   outstationMinKmPerDay: 300,
   driverAllowancePerDay,
   airportFare,
-  // Flat airport fare until a minimum-km tariff is set in Admin → Pricing
-  airportIncludedKm: null,
-  airportExtraKmRate: null,
+  // Airport: base fare covers the first 40 km (city ↔ BLR), then a per-km rate
+  airportIncludedKm: 40,
+  airportExtraKmRate,
   local8h,
   local12h,
   extraKmRate,
@@ -64,6 +66,22 @@ const defaultRates = (
  * Seats, luggage, and features are placeholders until verified with client fleet.
  */
 export const seedVehicles: Vehicle[] = [
+  {
+    id: 'ertiga',
+    name: 'Maruti Suzuki Ertiga',
+    type: 'Compact 7 Seater MPV',
+    seats: 6, // PLACEHOLDER (6 passengers + driver)
+    luggage: 2, // PLACEHOLDER
+    features: [
+      'Dual AC with Rear Roof Vents',
+      'Comfortable 3-Row Seating',
+      'Economical for Small Groups',
+      'Experienced Chauffeur',
+    ], // PLACEHOLDER
+    confirmed: true,
+    baseFare: null, // REPLACE WITH CLIENT PRICING
+    rates: defaultRates(13, 400, 1600, 2400, 3400, 14, 180, 14),
+  },
   {
     id: 'innova',
     name: 'Toyota Innova',
@@ -78,7 +96,7 @@ export const seedVehicles: Vehicle[] = [
     ], // PLACEHOLDER
     confirmed: true,
     baseFare: null, // REPLACE WITH CLIENT PRICING
-    rates: defaultRates(16, 450, 2000, 2800, 3900, 16, 200),
+    rates: defaultRates(16, 450, 2000, 2800, 3900, 16, 200, 16),
   },
   {
     id: 'innova-crysta',
@@ -94,23 +112,7 @@ export const seedVehicles: Vehicle[] = [
     ], // PLACEHOLDER
     confirmed: true,
     baseFare: null, // REPLACE WITH CLIENT PRICING
-    rates: defaultRates(19, 500, 2500, 3300, 4600, 19, 250),
-  },
-  {
-    id: 'ertiga',
-    name: 'Maruti Suzuki Ertiga',
-    type: 'Compact 7 Seater MPV',
-    seats: 6, // PLACEHOLDER (6 passengers + driver)
-    luggage: 2, // PLACEHOLDER
-    features: [
-      'Dual AC with Rear Roof Vents',
-      'Comfortable 3-Row Seating',
-      'Economical for Small Groups',
-      'Experienced Chauffeur',
-    ], // PLACEHOLDER
-    confirmed: true,
-    baseFare: null, // REPLACE WITH CLIENT PRICING
-    rates: defaultRates(13, 400, 1600, 2400, 3400, 14, 180),
+    rates: defaultRates(19, 500, 2500, 3300, 4600, 19, 250, 19),
   },
   {
     id: 'innova-hycross',
@@ -126,7 +128,7 @@ export const seedVehicles: Vehicle[] = [
     ], // PLACEHOLDER
     confirmed: true, // confirmed by the client (Oct 2026)
     baseFare: null, // REPLACE WITH CLIENT PRICING
-    rates: defaultRates(23, 500, 3000, 4000, 5500, 23, 300),
+    rates: defaultRates(23, 550, 3000, 4000, 5500, 23, 300, 23),
   },
 ];
 

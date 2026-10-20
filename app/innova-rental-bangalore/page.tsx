@@ -32,7 +32,7 @@ export default async function InnovaRentalBangalorePage() {
   const idealFor = [
     'Family Holiday Trips (Mysore, Coorg, Ooty)',
     'Kempegowda Airport (BLR) Pickup & Drop',
-    'Full-Day Bangalore City Shopping & Events',
+    'Bangalore City Shopping & Events (8 / 12 hr)',
     'Wedding Guest Transit & Group Logistics',
     'South India Temple Tours & Weekend Road Trips',
   ];

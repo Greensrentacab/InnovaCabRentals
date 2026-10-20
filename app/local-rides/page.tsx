@@ -7,9 +7,9 @@ import { withSeo } from '@/lib/seo';
 
 export const metadata: Metadata = withSeo({
   alternates: { canonical: '/local-rides' },
-  title: 'Local Innova Rental Bangalore | Hourly & Full Day Packages',
+  title: 'Local Innova Rental Bangalore | 8 Hr & 12 Hr Packages',
   description:
-    'Rent Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga in Bangalore for local city travel. 8hr/80km full-day and 12hr/120km extended rental packages, custom durations on request, and point-to-point city transfers.',
+    'Rent Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga in Bangalore for local city travel. 8 hr / 80 km and 12 hr / 120 km rental packages, custom durations on request, and point-to-point city transfers.',
 });
 
 export default async function LocalRidesPage() {
@@ -31,7 +31,7 @@ export default async function LocalRidesPage() {
     {
       icon: ShieldCheck,
       title: 'Zero Peak Hour Surge',
-      description: 'Unlike app aggregators, our hourly and full-day tariffs remain locked with zero sudden surge multipliers during peak office hours.',
+      description: 'Unlike app aggregators, our 8 hr and 12 hr tariffs remain locked with zero sudden surge multipliers during peak office hours.',
     },
     {
       icon: Car,
@@ -42,7 +42,7 @@ export default async function LocalRidesPage() {
 
   const faqs = [
     {
-      q: 'What is included in the 8 Hour / 80 Km full day local package?',
+      q: 'What is included in the 8 Hour / 80 Km local package?',
       a: 'The package covers 8 continuous hours and up to 80 kilometers of city driving from your scheduled pickup time. Additional kilometers and extra hours are billed at a transparent nominal rate.',
     },
     {
@@ -64,9 +64,9 @@ export default async function LocalRidesPage() {
       breadcrumb="Local Rides"
       badge="Local City Hire & Hourly Packages"
       title="Local Innova Car Rental in Bangalore"
-      subtitle="Chauffeur-driven Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga rentals for point-to-point city transfers, full-day business meetings, and extended family outings."
+      subtitle="Chauffeur-driven Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga rentals for point-to-point city transfers, business meetings, and family outings."
       heroNotice="8 Hr & 12 Hr Packages • Custom Durations On Request • Zero Surge"
-      benefitsTitle="Why Book a Full-Day Local Innova Rental"
+      benefitsTitle="Why Book a Local Innova Rental"
       benefitsSubtitle="Enjoy the convenience of a dedicated chauffeur and spacious MPV at your disposal."
       benefits={benefits}
       routesTitle="Popular City Transit & Peripheral Routes"

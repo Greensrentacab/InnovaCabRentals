@@ -452,7 +452,12 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
                 <div className="hidden lg:block lg:h-[clamp(120px,22vh,260px)]" aria-hidden="true" />
                 <ul className="mt-2 hidden max-w-xl grid-cols-3 divide-x divide-white/15 rounded-2xl border border-white/15 bg-white/10 py-3 text-sm font-semibold leading-tight text-white backdrop-blur-md lg:grid">
                   <li className="flex items-center justify-center gap-1.5 px-2"><ShieldCheck className="h-4 w-4 text-emerald-400" /> Verified drivers</li>
-                  <li className="flex items-center justify-center gap-1.5 px-2"><Radar className="h-4 w-4 text-sky-300" /> Flight tracking</li>
+                  {/* Flight tracking applies to airport trips only */}
+                  {isAirportRoute ? (
+                    <li className="flex items-center justify-center gap-1.5 px-2"><Radar className="h-4 w-4 text-sky-300" /> Flight tracking</li>
+                  ) : (
+                    <li className="flex items-center justify-center gap-1.5 px-2"><Clock className="h-4 w-4 text-sky-300" /> {siteConfig.contact.hours}</li>
+                  )}
                   <li className="flex items-center justify-center gap-1.5 px-2"><BadgeIndianRupee className="h-4 w-4 text-sky-300" /> Transparent price</li>
                 </ul>
               </div>

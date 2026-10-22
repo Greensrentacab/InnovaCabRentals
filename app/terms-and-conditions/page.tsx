@@ -8,7 +8,7 @@ import { siteConfig } from '@/lib/siteConfig';
 import { withSeo } from '@/lib/seo';
 
 /**
- * /terms — Terms & Conditions plus what each service includes and excludes.
+ * /terms-and-conditions — Terms & Conditions plus what each service includes and excludes.
  * All copy is published from Admin → Terms & policies (no deployment needed);
  * publishing revalidates this page immediately.
  */
@@ -16,7 +16,7 @@ import { withSeo } from '@/lib/seo';
 export const revalidate = 3600;
 
 export const metadata: Metadata = withSeo({
-  alternates: { canonical: '/terms' },
+  alternates: { canonical: '/terms-and-conditions' },
   title: `Terms & Conditions | ${siteConfig.brand.name}`,
   description: `Booking, fare, payment and cancellation terms for ${siteConfig.brand.name}, plus what is included in airport, outstation and local cab fares.`,
 });
@@ -27,7 +27,7 @@ export default async function TermsPage() {
   return (
     <div className="ds-scope bg-porcelain">
       <PageHero
-        breadcrumbs={[{ label: 'Terms & Conditions', href: '/terms' }]}
+        breadcrumbs={[{ label: 'Terms & Conditions', href: '/terms-and-conditions' }]}
         eyebrow="Policies"
         title="Terms & Conditions"
         lead="How booking, fares, payment and cancellation work, and what each type of trip includes."

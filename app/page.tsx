@@ -323,7 +323,7 @@ export default async function HomePage() {
             <h2 className="section-title mt-3 sm:mt-4">Frequently asked questions</h2>
             <p className="mt-3 text-slate-600">Clear answers on tariffs, booking steps and travel terms.</p>
             <div className="mt-6 flex flex-wrap gap-2">
-              <Link href="/faq" className="btn-ghost group">
+              <Link href="/frequently-asked-questions" className="btn-ghost group">
                 Read full FAQ
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>

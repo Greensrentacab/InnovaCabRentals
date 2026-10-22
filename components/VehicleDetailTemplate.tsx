@@ -187,7 +187,7 @@ export default async function VehicleDetailTemplate({
               </ul>
 
               <div className="mt-6 grid gap-2">
-                <Link href="/contact" className="btn-primary group w-full py-3.5 text-[15px]">
+                <Link href="/contact-and-booking" className="btn-primary group w-full py-3.5 text-[15px]">
                   Reserve {vehicle.name}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>

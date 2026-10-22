@@ -2,6 +2,9 @@
  * Footer.tsx — design.md §3.6 footer: dark ink band, brand column + four link
  * columns, contact list with brand-400 / WhatsApp icons, bottom bar.
  * Bottom padding (pb-28) clears the mobile dock below lg.
+ *
+ * The route columns show the built-in routes, then the destinations published
+ * from Admin → Footer destinations (`destinationLinks`, in the admin's order).
  */
 
 import Link from 'next/link';
@@ -9,40 +12,13 @@ import Logo from '@/components/Logo';
 import { Banknote, Car, ChevronDown, Clock, Mail, MapPin, Phone, QrCode } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
-import { catalogRoutes } from '@/lib/routeCatalog';
+import { BUILT_IN_FOOTER_COLUMNS, type FooterDestinationLink } from '@/lib/footerColumns';
 
 const PAYMENT_ICONS = [QrCode, Banknote];
 
-// Outstation routes in three groups (every catalogue route exactly once)
-const ROUTE_GROUPS: { title: string; slugs: string[] }[] = [
-  {
-    title: 'Popular Hill Stations & Weekend Trips',
-    slugs: ['coorg', 'ooty', 'mysore', 'wayanad', 'kodaikanal', 'chikmagalur', 'pondicherry', 'nandi-hills', 'yercaud', 'munnar', 'bandipur-kabini', 'adiyogi-chikkaballapur'],
-  },
-  {
-    title: 'Karnataka Destinations',
-    slugs: ['gokarna', 'hampi', 'dandeli', 'udupi', 'murudeshwar', 'kukke-subramanya', 'dharmasthala', 'shivanasamudra', 'srirangapatna', 'sringeri', 'horanadu'],
-  },
-  {
-    title: 'South India Pilgrimage & Long Trips',
-    slugs: ['tirupati', 'guruvayur', 'kochi', 'mangalore', 'rameshwaram', 'alleppey', 'srirangam', 'kanyakumari', 'srikalahasti', 'mantralayam'],
-  },
-];
-
-const routeBySlug = new Map(catalogRoutes.map((r) => [r.slug, r]));
-const groupedSlugs = new Set(ROUTE_GROUPS.flatMap((g) => g.slugs.map((s) => `bangalore-to-${s}`)));
-// Any route added to the catalogue later still appears (in the first group)
-const ungrouped = catalogRoutes.filter((r) => r.category !== 'airport' && !groupedSlugs.has(r.slug)).map((r) => r.slug);
-
-const routeGroups = ROUTE_GROUPS.map((g, i) => ({
-  title: g.title,
-  routes: [...g.slugs.map((s) => `bangalore-to-${s}`), ...(i === 0 ? ungrouped : [])]
-    .map((slug) => routeBySlug.get(slug))
-    .filter((r): r is NonNullable<typeof r> => Boolean(r))
-    .map((r) => ({ label: r.name, href: `/routes/${r.slug}` })),
-}));
-
-const linkClass = 'transition-colors hover:text-white';
+// overflow-wrap:anywhere: long names wrap inside their column instead of overflowing it
+// (break-word would not, since it leaves the min-content width of flex/grid items unchanged)
+const linkClass = '[overflow-wrap:anywhere] transition-colors hover:text-white';
 
 // Service names (SEO) — each points to the existing page that covers it
 const columns: { title: string; links: { label: string; href: string }[] }[] = [
@@ -55,7 +31,7 @@ const columns: { title: string; links: { label: string; href: string }[] }[] = [
       { label: 'Local City Taxi', href: '/bangalore-local-city-taxi' },
       { label: 'Hourly Cab Rental (8 / 12 hr)', href: '/bangalore-hourly-cab-rental' },
       { label: 'Custom Tour Packages', href: '/bangalore-tour-packages' },
-      { label: 'Corporate & Family Travel', href: '/contact' },
+      { label: 'Corporate & Family Travel', href: '/contact-and-booking' },
     ],
   },
   {
@@ -71,17 +47,21 @@ const columns: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: 'Company',
     links: [
-      { label: 'About Us', href: '/about' },
+      { label: 'About Us', href: '/about-us' },
       { label: 'All Outstation Routes', href: '/routes' },
-      { label: 'Frequently Asked Questions', href: '/faq' },
-      { label: 'Terms & Conditions', href: '/terms' },
-      { label: 'Contact & Booking', href: '/contact' },
+      { label: 'Frequently Asked Questions', href: '/frequently-asked-questions' },
+      { label: 'Terms & Conditions', href: '/terms-and-conditions' },
+      { label: 'Contact & Booking', href: '/contact-and-booking' },
     ],
   },
 ];
 
-export default function Footer() {
+export default function Footer({ destinationLinks = [] }: { destinationLinks?: FooterDestinationLink[] }) {
   const currentYear = new Date().getFullYear();
+  const routeGroups = BUILT_IN_FOOTER_COLUMNS.map((c) => ({
+    title: c.title,
+    routes: [...c.links, ...destinationLinks.filter((l) => l.column === c.id)],
+  }));
 
   return (
     <footer className="ds-scope bg-ink pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-14 text-slate-300 lg:pb-14">
@@ -99,7 +79,7 @@ export default function Footer() {
         </div>
 
         {columns.map((col) => (
-          <div key={col.title}>
+          <div key={col.title} className="min-w-0">
             <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{col.title}</h3>
             <ul className="mt-4 space-y-2 text-sm text-slate-400">
               {col.links.map((link) => (
@@ -158,10 +138,10 @@ export default function Footer() {
                 {g.title}
                 <ChevronDown className="h-4 w-4 shrink-0 text-slate-500 transition-transform group-open:rotate-180" />
               </summary>
-              <ul className="grid grid-cols-2 gap-x-4 gap-y-2 pb-4 text-sm text-slate-400">
+              <ul className="grid grid-cols-2 gap-x-4 pb-3 text-sm text-slate-400">
                 {g.routes.map((r) => (
                   <li key={r.href} className="min-w-0">
-                    <Link href={r.href} className={linkClass}>
+                    <Link href={r.href} className={`${linkClass} flex min-h-touch items-center py-1 leading-snug`}>
                       {r.label}
                     </Link>
                   </li>
@@ -170,9 +150,9 @@ export default function Footer() {
             </details>
           ))}
         </div>
-        <div className="mt-5 hidden gap-8 md:grid md:grid-cols-3">
+        <div className="mt-5 hidden items-start gap-8 md:grid md:grid-cols-3">
           {routeGroups.map((g) => (
-            <div key={g.title}>
+            <div key={g.title} className="min-w-0">
               <h4 className="text-sm font-bold text-slate-200">{g.title}</h4>
               <ul className="mt-3 space-y-2 text-sm text-slate-400">
                 {g.routes.map((r) => (

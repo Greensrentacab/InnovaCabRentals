@@ -111,7 +111,7 @@ export default function TermsSheet({
                 </div>
               );
             })}
-          <Link href="/terms" className="inline-block text-xs font-bold text-brand-700 underline-offset-4 hover:underline" onClick={onClose}>
+          <Link href="/terms-and-conditions" className="inline-block text-xs font-bold text-brand-700 underline-offset-4 hover:underline" onClick={onClose}>
             Full terms &amp; conditions
           </Link>
         </div>

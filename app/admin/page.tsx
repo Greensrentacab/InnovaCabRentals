@@ -11,7 +11,7 @@
  * - Pricing & Tariff Management (nullable per client policy)
  * - Fleet Activation (Innova, Crysta, Hycross toggle)
  * - Tour & Contact Enquiries Lead Management
- * - Homepage images and Terms & policies (published without a deployment)
+ * - Homepage images, Terms & policies and Footer destinations (published without a deployment)
  * - New booking / new user alerts: live toast + chime while open, device push
  *   notifications (Firebase Cloud Messaging) when the site is closed
  */
@@ -48,6 +48,7 @@ import {
   Image as ImageIcon,
   FileText,
   Bell,
+  Signpost,
 } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import {
@@ -76,18 +77,20 @@ import VehicleRatesEditor, {
 } from '@/components/admin/VehicleRatesEditor';
 import HomepageImagesPanel from '@/components/admin/HomepageImagesPanel';
 import PoliciesPanel from '@/components/admin/PoliciesPanel';
+import FooterDestinationsPanel from '@/components/admin/FooterDestinationsPanel';
 import NotificationsPanel from '@/components/admin/NotificationsPanel';
+import StickyActionBar from '@/components/admin/StickyActionBar';
 import { PushState, getPushState, enablePush, disablePush, refreshPushToken } from '@/lib/adminPushClient';
 
-type AdminTab = 'overview' | 'bookings' | 'users' | 'pricing' | 'fleet' | 'enquiries' | 'notifications' | 'images' | 'policies';
+type AdminTab = 'overview' | 'bookings' | 'users' | 'pricing' | 'fleet' | 'enquiries' | 'notifications' | 'images' | 'policies' | 'destinations';
 
-const ADMIN_TABS: AdminTab[] = ['overview', 'bookings', 'users', 'pricing', 'fleet', 'enquiries', 'notifications', 'images', 'policies'];
+const ADMIN_TABS: AdminTab[] = ['overview', 'bookings', 'users', 'pricing', 'fleet', 'enquiries', 'notifications', 'images', 'policies', 'destinations'];
 
 /** How often the open console checks for new bookings and sign-ups. */
 const ACTIVITY_POLL_MS = 30_000;
 
 /** Tabs that keep their own unpublished work, so they stay mounted once opened. */
-const PERSISTENT_TABS: AdminTab[] = ['images', 'policies'];
+const PERSISTENT_TABS: AdminTab[] = ['images', 'policies', 'destinations'];
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: 'Pending',
@@ -594,6 +597,7 @@ export default function AdminDashboardPage() {
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'images', label: 'Homepage Images', icon: ImageIcon },
     { id: 'policies', label: 'Terms & Policies', icon: FileText },
+    { id: 'destinations', label: 'Footer Destinations', icon: Signpost },
   ];
   const activeLabel = tabs.find((t) => t.id === activeTab)?.label ?? '';
 
@@ -1175,7 +1179,7 @@ export default function AdminDashboardPage() {
 
         {/* ───────────── PRICING ───────────── */}
         {activeTab === 'pricing' && (
-          <div className="animate-panel-in space-y-5 pb-28 sm:pb-24">
+          <div className="animate-panel-in space-y-5">
             <div className="min-w-0">
               <h1 className={pageTitle}>Car prices &amp; tariffs</h1>
               <p className="mt-1 max-w-2xl text-sm text-slate-600">
@@ -1183,6 +1187,39 @@ export default function AdminDashboardPage() {
                 automatically.
               </p>
             </div>
+
+            {/* Save bar, pinned to the top while scrolling */}
+            <StickyActionBar>
+              <p className="flex min-w-0 items-center gap-2.5 text-sm font-bold">
+                <span className={`h-2 w-2 shrink-0 rounded-full ${rateError || rateProblems.length > 0 ? 'bg-rose-400' : hasRateChanges ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                <span className="min-w-0 truncate">
+                  {rateError ??
+                    (rateProblems.length > 0
+                      ? `Fix ${rateProblems.length} tariff${rateProblems.length > 1 ? 's' : ''} before saving`
+                      : hasRateChanges
+                        ? `Unsaved changes in ${dirtyVehicleIds.length} car${dirtyVehicleIds.length > 1 ? 's' : ''}`
+                        : 'All changes saved')}
+                </span>
+              </p>
+              <div className="grid grid-cols-2 gap-2 sm:flex">
+                <button
+                  type="button"
+                  onClick={discardRates}
+                  disabled={!hasRateChanges || savingRates}
+                  className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-white/20 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10 disabled:opacity-40"
+                >
+                  <Undo2 className="h-4 w-4" /> Discard
+                </button>
+                <button
+                  type="button"
+                  onClick={saveAllRates}
+                  disabled={!hasRateChanges || savingRates || rateProblems.length > 0}
+                  className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2 text-sm font-extrabold text-white transition-colors hover:bg-brand-500 disabled:bg-brand-900/70 disabled:text-white/50"
+                >
+                  <Save className="h-4 w-4" /> {savingRates ? 'Saving...' : 'Save tariffs'}
+                </button>
+              </div>
+            </StickyActionBar>
 
             {carsWithoutRates.length > 0 && (
               <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
@@ -1209,41 +1246,6 @@ export default function AdminDashboardPage() {
                 />
               ))}
             </div>
-
-            {/* Sticky save bar */}
-            <div className="fixed inset-x-3 bottom-3 z-30 lg:left-[calc(16rem+0.75rem)] lg:right-3">
-              <div className="mx-auto flex max-w-[1120px] flex-col gap-3 rounded-2xl bg-[#0B1120] px-4 py-3 text-white shadow-float-lg sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3.5 pb-safe">
-                <p className="flex min-w-0 items-center gap-2.5 text-sm font-bold">
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${rateError || rateProblems.length > 0 ? 'bg-rose-400' : hasRateChanges ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-                  <span className="min-w-0 truncate">
-                    {rateError ??
-                      (rateProblems.length > 0
-                        ? `Fix ${rateProblems.length} tariff${rateProblems.length > 1 ? 's' : ''} before saving`
-                        : hasRateChanges
-                          ? `Unsaved changes in ${dirtyVehicleIds.length} car${dirtyVehicleIds.length > 1 ? 's' : ''}`
-                          : 'All changes saved')}
-                  </span>
-                </p>
-                <div className="grid grid-cols-2 gap-2 sm:flex">
-                  <button
-                    type="button"
-                    onClick={discardRates}
-                    disabled={!hasRateChanges || savingRates}
-                    className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-white/20 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10 disabled:opacity-40"
-                  >
-                    <Undo2 className="h-4 w-4" /> Discard
-                  </button>
-                  <button
-                    type="button"
-                    onClick={saveAllRates}
-                    disabled={!hasRateChanges || savingRates || rateProblems.length > 0}
-                    className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2 text-sm font-extrabold text-white transition-colors hover:bg-brand-500 disabled:bg-brand-900/70 disabled:text-white/50"
-                  >
-                    <Save className="h-4 w-4" /> {savingRates ? 'Saving...' : 'Save tariffs'}
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
@@ -1258,6 +1260,13 @@ export default function AdminDashboardPage() {
         {openedTabs.includes('policies') && (
           <div className={activeTab === 'policies' ? 'animate-panel-in' : 'hidden'}>
             <PoliciesPanel onToast={showToast} />
+          </div>
+        )}
+
+        {/* ───────────── FOOTER DESTINATIONS ───────────── */}
+        {openedTabs.includes('destinations') && (
+          <div className={activeTab === 'destinations' ? 'animate-panel-in' : 'hidden'}>
+            <FooterDestinationsPanel onToast={showToast} />
           </div>
         )}
 
@@ -1593,7 +1602,7 @@ export default function AdminDashboardPage() {
             <div className="grid gap-3 sm:grid-cols-3">
               {[
                 { k: 'From /bangalore-tour-packages', t: 'Tour package requests', d: 'Destination, dates and group size from people planning a trip with you.' },
-                { k: 'From /contact', t: 'Contact messages', d: 'General questions and quote requests sent through the contact form.' },
+                { k: 'From /contact-and-booking', t: 'Contact messages', d: 'General questions and quote requests sent through the contact form.' },
                 { k: 'Reply fast', t: 'Call or WhatsApp', d: 'Every lead gets the same Call and WhatsApp buttons you use on bookings.' },
               ].map((c) => (
                 <div key={c.t} className="adm-card p-4">

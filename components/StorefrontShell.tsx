@@ -18,11 +18,15 @@ import HomeDock from '@/components/home/HomeDock';
 import AuthDialog from '@/components/auth/AuthDialog';
 import { BookingFlowProvider } from '@/context/BookingFlowContext';
 import { AuthProvider } from '@/context/AuthContext';
+import type { FooterDestinationLink } from '@/lib/footerColumns';
 
 export default function StorefrontShell({
   children,
+  footerLinks,
 }: {
   children: React.ReactNode;
+  /** Published Admin → Footer destinations (loaded by the root layout) */
+  footerLinks: FooterDestinationLink[];
 }) {
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith('/admin');
@@ -36,7 +40,7 @@ export default function StorefrontShell({
       <BookingFlowProvider>
         <HomeHeader />
         <main className="flex-1 bg-porcelain">{children}</main>
-        <Footer />
+        <Footer destinationLinks={footerLinks} />
         <HomeDock />
         <BookingFlowModal />
         <AuthDialog />

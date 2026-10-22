@@ -1,6 +1,6 @@
 /**
  * PolicyViews.tsx — customer-facing rendering of the Terms & policies
- * published in Admin → Terms & policies. Used by /terms, the service
+ * published in Admin → Terms & policies. Used by /terms-and-conditions, the service
  * landing pages and the admin preview, so the preview matches the site.
  * No hooks: works in server and client components. Plain text only.
  */

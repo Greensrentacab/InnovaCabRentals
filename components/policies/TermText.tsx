@@ -9,7 +9,7 @@ import { siteConfig } from '@/lib/siteConfig';
 export default function TermText({ text, onNavigate }: { text: string; onNavigate?: () => void }) {
   if (text.trim() !== siteConfig.policies.cancellation) return <>{text}</>;
   return (
-    <Link href="/terms" onClick={onNavigate} className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800">
+    <Link href="/terms-and-conditions" onClick={onNavigate} className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-800">
       {text}
     </Link>
   );

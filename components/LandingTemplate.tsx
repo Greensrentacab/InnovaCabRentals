@@ -255,7 +255,7 @@ export default async function LandingTemplate({
         />
         <IncludedExcluded policy={policies.services[serviceType]} className="mx-auto mt-8 max-w-4xl sm:mt-10" />
         <p className="mt-5 text-center text-sm">
-          <Link href={`/terms#${serviceType}`} className="font-bold text-brand-700 underline-offset-4 hover:text-brand-800 hover:underline">
+          <Link href={`/terms-and-conditions#${serviceType}`} className="font-bold text-brand-700 underline-offset-4 hover:text-brand-800 hover:underline">
             Read the full terms &amp; conditions
           </Link>
         </p>
@@ -329,7 +329,7 @@ export default async function LandingTemplate({
             <span className="eyebrow">Got questions?</span>
             <h2 className="section-title mt-3 sm:mt-4">Frequently Asked Questions</h2>
             <div className="mt-6 flex flex-wrap gap-2">
-              <Link href="/faq" className="btn-ghost group">
+              <Link href="/frequently-asked-questions" className="btn-ghost group">
                 Read full FAQ
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>

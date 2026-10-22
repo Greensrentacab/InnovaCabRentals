@@ -10,7 +10,7 @@ import type { Metadata } from 'next';
 import { withSeo } from '@/lib/seo';
 
 export const metadata: Metadata = withSeo({
-  alternates: { canonical: '/about' },
+  alternates: { canonical: '/about-us' },
   title: `About ${siteConfig.brand.name} | Innova Cabs in Bangalore`,
   description: `Learn about ${siteConfig.brand.name} - ${siteConfig.trustClaims.yearsExperience.label} providing reliable, premium Toyota Innova and Crysta car rentals with professional chauffeurs in Bangalore.`,
   keywords: [

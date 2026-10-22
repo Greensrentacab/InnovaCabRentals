@@ -6,6 +6,7 @@ import { siteConfig } from '@/lib/siteConfig';
 import { siteUrl } from '@/lib/siteUrl';
 import { BusinessJsonLd } from '@/components/seo/JsonLd';
 import { baseOpenGraph, defaultShareImage } from '@/lib/seo';
+import { getFooterDestinationLinks } from '@/lib/destinationStore';
 
 // Site typeface (DM Sans), exposed as --font-dm-sans for the Tailwind font-sans stack.
 const dmSans = DM_Sans({
@@ -55,16 +56,19 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Admin → Footer destinations (published links; never throws)
+  const footerLinks = await getFooterDestinationLinks();
+
   return (
     <html lang="en" className={dmSans.variable}>
       <body className="flex min-h-screen flex-col">
         <BusinessJsonLd />
-        <StorefrontShell>{children}</StorefrontShell>
+        <StorefrontShell footerLinks={footerLinks}>{children}</StorefrontShell>
       </body>
     </html>
   );

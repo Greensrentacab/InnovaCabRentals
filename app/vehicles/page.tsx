@@ -245,7 +245,7 @@ export default async function VehiclesPage() {
                       Full details
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                     </Link>
-                    <Link href="/contact" className="btn-primary px-3">
+                    <Link href="/contact-and-booking" className="btn-primary px-3">
                       Reserve Now
                     </Link>
                   </div>

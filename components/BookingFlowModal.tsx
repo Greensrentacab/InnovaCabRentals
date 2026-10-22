@@ -440,7 +440,7 @@ export default function BookingFlowModal() {
                     <span>
                       Next: sign in to confirm. Our team checks availability and sends driver details on WhatsApp. Tolls, parking &amp;
                       permits are paid by you. By booking you agree to our{' '}
-                      <Link href="/terms" target="_blank" className="font-bold text-brand-700 underline underline-offset-2">
+                      <Link href="/terms-and-conditions" target="_blank" className="font-bold text-brand-700 underline underline-offset-2">
                         Terms &amp; Conditions
                       </Link>
                       .

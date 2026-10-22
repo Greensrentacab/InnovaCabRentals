@@ -84,9 +84,9 @@ const navGroups: NavGroup[] = [
     label: 'More',
     items: [
       { label: 'Local & Hourly Rentals', hint: '8 hr, 12 hr & custom-duration hire', href: '/bangalore-local-city-taxi', icon: Hourglass },
-      { label: 'About Us', hint: `${siteConfig.trustClaims.yearsExperience.value}+ years of trusted travel`, href: '/about', icon: Building2 },
-      { label: 'FAQ', hint: 'Fares, tolls, payments & more', href: '/faq', icon: HelpCircle },
-      { label: 'Contact', hint: siteConfig.contact.hours, href: '/contact', icon: Info },
+      { label: 'About Us', hint: `${siteConfig.trustClaims.yearsExperience.value}+ years of trusted travel`, href: '/about-us', icon: Building2 },
+      { label: 'FAQ', hint: 'Fares, tolls, payments & more', href: '/frequently-asked-questions', icon: HelpCircle },
+      { label: 'Contact', hint: siteConfig.contact.hours, href: '/contact-and-booking', icon: Info },
     ],
   },
 ];

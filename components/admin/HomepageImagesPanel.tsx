@@ -38,6 +38,8 @@ import {
   publishSiteImages,
   type SiteImagesAdminData,
 } from '@/app/actions/siteContent';
+import StickyActionBar from '@/components/admin/StickyActionBar';
+import { checkFile, mb, sendToCloudinary } from '@/components/admin/imageUpload';
 import {
   cloudinaryUrl,
   defaultSlotValue,
@@ -73,78 +75,11 @@ const canon = (v: unknown) =>
 
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 const pos = (focus: Focus, fallback: string) => (focus ? `${focus.x}% ${focus.y}%` : fallback);
-const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
 function previewSrc(img: PlacedImage, cloudName: string | null, width = 960): string {
   const s = img.source;
   if (s.kind === 'static') return s.src;
   return cloudName ? cloudinaryUrl(cloudName, s, Math.min(width, s.width)) : '';
-}
-
-const EXT_OK = /\.(jpe?g|png|webp|avif)$/i;
-
-async function readDimensions(file: File): Promise<{ width: number; height: number } | null> {
-  try {
-    if (typeof createImageBitmap === 'function') {
-      const bmp = await createImageBitmap(file);
-      const d = { width: bmp.width, height: bmp.height };
-      bmp.close();
-      return d;
-    }
-  } catch {
-    // fall through to <img> decoding
-  }
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      resolve({ width: img.naturalWidth, height: img.naturalHeight });
-      URL.revokeObjectURL(url);
-    };
-    img.onerror = () => {
-      resolve(null);
-      URL.revokeObjectURL(url);
-    };
-    img.src = url;
-  });
-}
-
-/** Browser-side checks (repeated on the server). Returns a message or null. */
-async function checkFile(file: File, min: { w: number; h: number }): Promise<string | null> {
-  const typeOk = (IMAGE_RULES.mimeTypes as readonly string[]).includes(file.type) || (!file.type && EXT_OK.test(file.name));
-  if (!typeOk) return `"${file.name}" is not a supported picture. Use JPG, PNG, WebP or AVIF.`;
-  if (file.size > IMAGE_RULES.maxBytes) return `"${file.name}" is ${mb(file.size)}; the limit is ${mb(IMAGE_RULES.maxBytes)}.`;
-  const dims = await readDimensions(file);
-  if (!dims) return `"${file.name}" could not be opened as a picture. It may be damaged; try exporting it again.`;
-  if (dims.width < min.w || dims.height < min.h) {
-    return `"${file.name}" is ${dims.width}×${dims.height}px; this spot needs at least ${min.w}×${min.h}px so it stays sharp.`;
-  }
-  return null;
-}
-
-function sendToCloudinary(url: string, fields: Record<string, string>, file: File, onProgress: (pct: number) => void): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const form = new FormData();
-    Object.entries(fields).forEach(([k, v]) => form.append(k, v));
-    form.append('file', file);
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', url);
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
-    };
-    xhr.onload = () => {
-      let body: { public_id?: string; error?: { message?: string } } | null = null;
-      try {
-        body = JSON.parse(xhr.responseText);
-      } catch {
-        // non-JSON error page
-      }
-      if (xhr.status >= 200 && xhr.status < 300 && body?.public_id) resolve();
-      else reject(new Error(body?.error?.message ? `Upload refused: ${body.error.message}` : `Upload failed (${xhr.status}). Please try again.`));
-    };
-    xhr.onerror = () => reject(new Error('Upload failed. Check the internet connection and try again.'));
-    xhr.send(form);
-  });
 }
 
 // ─── Small building blocks ──────────────────────────────────────────────────
@@ -762,7 +697,7 @@ export default function HomepageImagesPanel({ onToast }: { onToast: (message: st
   const groupInfo = SLOT_GROUPS.find((g) => g.id === group)!;
 
   return (
-    <div className="space-y-5 pb-28 sm:pb-24">
+    <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-extrabold tracking-tight text-ink sm:text-[28px]">Homepage images</h1>
@@ -775,6 +710,55 @@ export default function HomepageImagesPanel({ onToast }: { onToast: (message: st
           <ExternalLink className="h-4 w-4" /> View homepage
         </a>
       </div>
+
+      {/* Publish bar, pinned to the top while scrolling */}
+      <StickyActionBar>
+        <p className="flex min-w-0 items-center gap-2.5 text-sm font-bold">
+          {dirty ? <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" /> : <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />}
+          <span className="min-w-0 truncate">
+            {anyBusy
+              ? 'Uploading…'
+              : dirty
+                ? `${changedIds.length} picture spot${changedIds.length > 1 ? 's' : ''} changed — not live yet`
+                : data.updatedAt
+                  ? `Live · last published ${new Date(data.updatedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}`
+                  : 'Showing the built-in pictures'}
+          </span>
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <button
+            type="button"
+            onClick={discard}
+            disabled={!dirty || publishing || anyBusy}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-white/20 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10 disabled:opacity-40"
+          >
+            <Undo2 className="h-4 w-4" /> Discard
+          </button>
+          <button
+            type="button"
+            onClick={publish}
+            disabled={!dirty || publishing || anyBusy}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2 text-sm font-extrabold text-white transition-colors hover:bg-brand-500 disabled:bg-brand-900/70 disabled:text-white/50"
+          >
+            <Save className="h-4 w-4" /> {publishing ? 'Publishing…' : 'Publish'}
+          </button>
+        </div>
+      </StickyActionBar>
+
+      {(publishError || publishErrors.length > 0) && (
+        <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+          <p className="flex items-center gap-2 font-bold">
+            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" /> {publishError}
+          </p>
+          {publishErrors.length > 0 && (
+            <ul className="mt-2 list-disc space-y-1 pl-6 text-xs">
+              {publishErrors.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {!uploadsEnabled && (
         <div role="alert" className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -844,57 +828,6 @@ export default function HomepageImagesPanel({ onToast }: { onToast: (message: st
           if (file) void onFile(file);
         }}
       />
-
-      {(publishError || publishErrors.length > 0) && (
-        <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
-          <p className="flex items-center gap-2 font-bold">
-            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" /> {publishError}
-          </p>
-          {publishErrors.length > 0 && (
-            <ul className="mt-2 list-disc space-y-1 pl-6 text-xs">
-              {publishErrors.map((e) => (
-                <li key={e}>{e}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {/* Sticky publish bar */}
-      <div className="fixed inset-x-3 bottom-3 z-30 lg:left-[calc(16rem+0.75rem)] lg:right-3">
-        <div className="mx-auto flex max-w-[1120px] flex-col gap-3 rounded-2xl bg-[#0B1120] px-4 py-3 text-white shadow-float-lg sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3.5 pb-safe">
-          <p className="flex min-w-0 items-center gap-2.5 text-sm font-bold">
-            {dirty ? <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" /> : <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />}
-            <span className="min-w-0 truncate">
-              {anyBusy
-                ? 'Uploading…'
-                : dirty
-                  ? `${changedIds.length} picture spot${changedIds.length > 1 ? 's' : ''} changed — not live yet`
-                  : data.updatedAt
-                    ? `Live · last published ${new Date(data.updatedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}`
-                    : 'Showing the built-in pictures'}
-            </span>
-          </p>
-          <div className="grid grid-cols-2 gap-2 sm:flex">
-            <button
-              type="button"
-              onClick={discard}
-              disabled={!dirty || publishing || anyBusy}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-white/20 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10 disabled:opacity-40"
-            >
-              <Undo2 className="h-4 w-4" /> Discard
-            </button>
-            <button
-              type="button"
-              onClick={publish}
-              disabled={!dirty || publishing || anyBusy}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2 text-sm font-extrabold text-white transition-colors hover:bg-brand-500 disabled:bg-brand-900/70 disabled:text-white/50"
-            >
-              <Save className="h-4 w-4" /> {publishing ? 'Publishing…' : 'Publish'}
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

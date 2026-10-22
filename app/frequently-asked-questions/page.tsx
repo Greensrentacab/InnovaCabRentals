@@ -10,7 +10,7 @@ import type { Metadata } from 'next';
 import { withSeo } from '@/lib/seo';
 
 export const metadata: Metadata = withSeo({
-  alternates: { canonical: '/faq' },
+  alternates: { canonical: '/frequently-asked-questions' },
   title: `Innova Cab Booking FAQs | ${siteConfig.brand.name} Bangalore`,
   description:
     'Comprehensive answers to questions about booking procedures, toll and driver allowance billing, luggage capacity in 7 & 8 seater Innova, and 24/7 airport and outstation services.',
@@ -180,7 +180,7 @@ export default function FaqPage() {
                 <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
                   <WhatsAppIcon className="h-4 w-4" /> Message on WhatsApp
                 </a>
-                <Link href="/contact" className="btn border border-white/20 bg-white/10 text-white hover:bg-white/15">
+                <Link href="/contact-and-booking" className="btn border border-white/20 bg-white/10 text-white hover:bg-white/15">
                   Submit Request <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>

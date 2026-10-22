@@ -4,7 +4,7 @@
  * website without a deployment (stored in Firestore siteContent/policies).
  *
  * Shared by the admin editor (client) and the server (validation, storage,
- * fare calculator, /terms page). Content is plain text only — React escapes
+ * fare calculator, /terms-and-conditions page). Content is plain text only — React escapes
  * it on render, so no HTML can be injected.
  *
  * The starting content is assembled only from statements already on the

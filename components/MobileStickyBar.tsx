@@ -33,7 +33,7 @@ export default function MobileStickyBar() {
 
         {/* Book Now CTA */}
         <Link
-          href="/contact"
+          href="/contact-and-booking"
           className="min-h-[44px] flex flex-col items-center justify-center bg-brand-orange hover:bg-brand-orange-hover active:scale-95 text-white rounded-lg p-1.5 transition-all shadow-md"
           aria-label="Book Now"
         >

@@ -47,7 +47,7 @@ const items: Item[] = [
     tone: 'bg-live-500/10 text-live-600',
     title: 'Cancellation policy',
     text: 'See our Terms & Conditions for cancellation',
-    href: '/terms',
+    href: '/terms-and-conditions',
   },
   {
     icon: PhoneCall,

@@ -36,6 +36,7 @@ import {
   savePoliciesDraft,
   type PoliciesAdminData,
 } from '@/app/actions/siteContent';
+import StickyActionBar from '@/components/admin/StickyActionBar';
 import {
   checkPublishable,
   newBlockId,
@@ -219,7 +220,7 @@ function TermsEditor({ blocks, onChange, showEmpty }: { blocks: PolicyBlock[]; o
 }
 
 const SERVICE_LISTS: { key: keyof ServicePolicy; title: string; hint: string; add: string; placeholder: string; name: string }[] = [
-  { key: 'inclusions', title: "What's included", hint: 'Shown on the service page, in every fare’s terms and on /terms.', add: 'Add inclusion', placeholder: 'e.g. Driver charges', name: 'Inclusion' },
+  { key: 'inclusions', title: "What's included", hint: 'Shown on the service page, in every fare’s terms and on /terms-and-conditions.', add: 'Add inclusion', placeholder: 'e.g. Driver charges', name: 'Inclusion' },
   { key: 'exclusions', title: 'Not included', hint: 'Charges the customer pays separately (shown under the fares too).', add: 'Add exclusion', placeholder: 'e.g. Toll charges', name: 'Exclusion' },
   {
     key: 'terms',
@@ -348,7 +349,7 @@ export default function PoliciesPanel({ onToast }: { onToast: (message: string) 
     setWorking({ ...working, services: { ...working.services, [s]: { ...working.services[s], ...patch } } });
 
   return (
-    <div className="space-y-5 pb-36 sm:pb-24">
+    <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-extrabold tracking-tight text-ink sm:text-[28px]">Terms &amp; policies</h1>
@@ -357,10 +358,71 @@ export default function PoliciesPanel({ onToast }: { onToast: (message: string) 
             press <strong>Publish</strong>.
           </p>
         </div>
-        <a href="/terms" target="_blank" rel="noopener noreferrer" className="adm-btn-ghost shrink-0">
+        <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="adm-btn-ghost shrink-0">
           <ExternalLink className="h-4 w-4" /> View live page
         </a>
       </div>
+
+      {/* Action bar, pinned to the top while scrolling */}
+      <StickyActionBar>
+        <p className="flex min-w-0 items-center gap-2.5 text-sm font-bold">
+          {unsaved || data.draft ? <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" /> : <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />}
+          <span className="min-w-0 truncate">
+            {busy === 'save'
+              ? 'Saving draft…'
+              : busy === 'publish'
+                ? 'Publishing…'
+                : unsaved
+                  ? 'Unsaved changes'
+                  : data.draft
+                    ? `Draft saved ${when(data.draftSavedAt)} — not live yet`
+                    : data.isStartingContent
+                      ? 'Showing the starting content'
+                      : `Live · version ${data.version}, ${when(data.publishedAt)}`}
+          </span>
+        </p>
+        <div className="grid grid-cols-3 gap-2 sm:flex">
+          <button
+            type="button"
+            onClick={() => run('discard', discardPoliciesDraft, 'Draft discarded — back to the live version')}
+            disabled={busy !== null || (!unsaved && !data.draft)}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-white/20 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10 disabled:opacity-40"
+          >
+            <Undo2 className="h-4 w-4" /> Discard
+          </button>
+          <button
+            type="button"
+            onClick={() => run('save', () => savePoliciesDraft(working), 'Draft saved')}
+            disabled={busy !== null || !unsaved}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-white/20 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10 disabled:opacity-40"
+          >
+            <Save className="h-4 w-4" /> Save draft
+          </button>
+          <button
+            type="button"
+            onClick={publish}
+            disabled={busy !== null || (!differsFromLive && !data.isStartingContent)}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-extrabold text-white transition-colors hover:bg-brand-500 disabled:bg-brand-900/70 disabled:text-white/50"
+          >
+            <Upload className="h-4 w-4" /> Publish
+          </button>
+        </div>
+      </StickyActionBar>
+
+      {(actionError || actionErrors.length > 0) && (
+        <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+          <p className="flex items-center gap-2 font-bold">
+            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" /> {actionError}
+          </p>
+          {actionErrors.length > 0 && (
+            <ul className="mt-2 list-disc space-y-1 pl-6 text-xs">
+              {actionErrors.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {data.isStartingContent && (
         <p className="rounded-2xl border border-brand-200 bg-brand-50/60 px-4 py-3 text-sm text-brand-900">
@@ -474,68 +536,6 @@ export default function PoliciesPanel({ onToast }: { onToast: (message: string) 
         </div>
       </details>
 
-      {(actionError || actionErrors.length > 0) && (
-        <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
-          <p className="flex items-center gap-2 font-bold">
-            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" /> {actionError}
-          </p>
-          {actionErrors.length > 0 && (
-            <ul className="mt-2 list-disc space-y-1 pl-6 text-xs">
-              {actionErrors.map((e) => (
-                <li key={e}>{e}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {/* Sticky action bar */}
-      <div className="fixed inset-x-3 bottom-3 z-30 lg:left-[calc(16rem+0.75rem)] lg:right-3">
-        <div className="mx-auto flex max-w-[1120px] flex-col gap-3 rounded-2xl bg-[#0B1120] px-4 py-3 text-white shadow-float-lg sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3.5 pb-safe">
-          <p className="flex min-w-0 items-center gap-2.5 text-sm font-bold">
-            {unsaved || data.draft ? <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400" /> : <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />}
-            <span className="min-w-0 truncate">
-              {busy === 'save'
-                ? 'Saving draft…'
-                : busy === 'publish'
-                  ? 'Publishing…'
-                  : unsaved
-                    ? 'Unsaved changes'
-                    : data.draft
-                      ? `Draft saved ${when(data.draftSavedAt)} — not live yet`
-                      : data.isStartingContent
-                        ? 'Showing the starting content'
-                        : `Live · version ${data.version}, ${when(data.publishedAt)}`}
-            </span>
-          </p>
-          <div className="grid grid-cols-3 gap-2 sm:flex">
-            <button
-              type="button"
-              onClick={() => run('discard', discardPoliciesDraft, 'Draft discarded — back to the live version')}
-              disabled={busy !== null || (!unsaved && !data.draft)}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-white/20 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10 disabled:opacity-40"
-            >
-              <Undo2 className="h-4 w-4" /> Discard
-            </button>
-            <button
-              type="button"
-              onClick={() => run('save', () => savePoliciesDraft(working), 'Draft saved')}
-              disabled={busy !== null || !unsaved}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-white/20 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10 disabled:opacity-40"
-            >
-              <Save className="h-4 w-4" /> Save draft
-            </button>
-            <button
-              type="button"
-              onClick={publish}
-              disabled={busy !== null || (!differsFromLive && !data.isStartingContent)}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-extrabold text-white transition-colors hover:bg-brand-500 disabled:bg-brand-900/70 disabled:text-white/50"
-            >
-              <Upload className="h-4 w-4" /> Publish
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

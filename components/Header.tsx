@@ -16,8 +16,8 @@ const navLinks = [
   { label: 'Tour Packages', href: '/bangalore-tour-packages' },
   { label: 'Vehicles', href: '/vehicles' },
   { label: 'Routes', href: '/routes' },
-  { label: 'FAQ', href: '/faq' },
-  { label: 'Contact', href: '/contact' },
+  { label: 'FAQ', href: '/frequently-asked-questions' },
+  { label: 'Contact', href: '/contact-and-booking' },
 ];
 
 export default function Header() {
@@ -128,7 +128,7 @@ export default function Header() {
             </a>
 
             <Link
-              href="/contact"
+              href="/contact-and-booking"
               className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-brand-orange hover:bg-brand-orange-hover text-white text-xs font-bold tracking-wide shadow-[0_4px_16px_-4px_rgba(240,86,43,0.6)] hover:shadow-[0_8px_22px_-4px_rgba(240,86,43,0.75)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all"
             >
               <span>Book Now</span>
@@ -213,7 +213,7 @@ export default function Header() {
             </a>
 
             <Link
-              href="/contact"
+              href="/contact-and-booking"
               onClick={closeMenu}
               className="min-h-[44px] w-full flex items-center justify-center gap-2 rounded-xl bg-brand-orange hover:bg-brand-orange-hover text-white font-bold text-base py-3 shadow-[0_6px_20px_-4px_rgba(240,86,43,0.65)]"
             >

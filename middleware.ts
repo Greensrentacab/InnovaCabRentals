@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
  *
  * To hide pages again later: set RELEASED_ROUTES in Netlify/Vercel
  * (Site/Project Settings -> Environment Variables) to a comma-separated list
- * of the paths that SHOULD be public, e.g. "/,/about,/contact". Everything
+ * of the paths that SHOULD be public, e.g. "/,/about-us,/contact-and-booking". Everything
  * else will then show "Coming Soon" instead. A trailing "/*" releases a path
  * and everything nested under it, e.g. "/routes/*" releases /routes and
  * /routes/mysore, /routes/coorg, etc. Redeploy after changing it (no code

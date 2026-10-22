@@ -59,7 +59,7 @@ export const siteConfig = {
 
   /** Booking policies shown in fare T&Cs and the trust section. */
   policies: {
-    /** Shown wherever cancellation comes up; links to /terms */
+    /** Shown wherever cancellation comes up; links to /terms-and-conditions */
     cancellation: 'See our Terms & Conditions for cancellation and rescheduling.',
     /** Default wording of the cancellation section on the Terms page (editable in Admin → Policies) */
     cancellationTerms: 'To cancel or reschedule, contact our team on call or WhatsApp as early as possible before the scheduled pickup. Any applicable charges are confirmed by our team at the time of the request.',

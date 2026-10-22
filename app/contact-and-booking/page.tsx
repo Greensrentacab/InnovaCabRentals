@@ -7,7 +7,7 @@ import type { Metadata } from 'next';
 import { withSeo } from '@/lib/seo';
 
 export const metadata: Metadata = withSeo({
-  alternates: { canonical: '/contact' },
+  alternates: { canonical: '/contact-and-booking' },
   title: 'Contact Us | 24/7 Innova Cab Booking in Bangalore',
   description: `Contact ${siteConfig.brand.name} in Bangalore. 24/7 phone ${siteConfig.contact.phone.display}, WhatsApp quick quotes, and instant booking requests for Toyota Innova and Innova Crysta rentals.`,
   keywords: [

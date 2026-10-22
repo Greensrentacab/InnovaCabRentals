@@ -46,7 +46,7 @@ variables, **redeploy** (Deployments → … → Redeploy).
 4. **Homepage Images:** replace any homepage picture (festival pictures etc.)
    and press Publish — live immediately, no redeploy.
 5. **Terms & Policies:** review the Terms & Conditions and each service's
-   inclusions / exclusions, then Publish (shown on `/terms`, the service
+   inclusions / exclusions, then Publish (shown on `/terms-and-conditions`, the service
    pages and with every fare).
 6. Optional: deploy `firestore.rules` from the Firebase console/CLI.
 7. Add your custom domain under Project Settings → Domains.

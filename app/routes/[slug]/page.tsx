@@ -18,6 +18,11 @@ import { LocationData } from '@/lib/googlePlaces';
 import { primaryPhoto } from '@/lib/fleetPhotos';
 import { buildWidgetData, confirmedFleet, fareOrRequest, formatINR, routeCardPhoto, routeFromFare, routeRoundTripFare } from '@/lib/storefrontData';
 import { getSiteImages } from '@/lib/siteContentStore';
+import { getLiveDestination } from '@/lib/destinationStore';
+import { pageDescription, type DestinationContent } from '@/lib/destinations';
+import { cloudinaryCloudName } from '@/lib/cloudinary';
+import { cloudinaryUrl } from '@/lib/siteImages';
+import DestinationView from '@/components/destinations/DestinationView';
 
 interface RoutePageProps {
   params: {
@@ -334,12 +339,40 @@ export async function generateStaticParams() {
   }));
 }
 
+/** Metadata of a page from Admin → Footer destinations (share image = its main photo). */
+function destinationMetadata(content: DestinationContent): Metadata {
+  const cloudName = cloudinaryCloudName();
+  const photo = content.heroImage && cloudName ? cloudinaryUrl(cloudName, content.heroImage, Math.min(1200, content.heroImage.width)) : null;
+  return withSeo({
+    title: `${content.heading} | ${siteConfig.brand.name}`,
+    description: pageDescription(content),
+    alternates: { canonical: `/routes/${content.slug}` },
+    ...(photo ? { openGraph: { images: [{ url: photo, alt: content.heroImage!.alt || content.heading }] }, twitter: { images: [photo] } } : {}),
+  });
+}
+
+/** A destination page added in Admin → Footer destinations, with the site's booking band. */
+function DestinationPage({ content }: { content: DestinationContent }) {
+  const whatsappUrl = `${siteConfig.contact.phone.whatsappUrl}?text=${encodeURIComponent(
+    `Hello ${siteConfig.brand.name}, I would like to book a cab for ${content.linkText}. Please share the current quote.`
+  )}`;
+  return (
+    <div className="bg-porcelain">
+      <BreadcrumbJsonLd items={[{ label: 'Outstation Routes', href: '/routes' }, { label: content.heading }]} />
+      <DestinationView content={content} cloudName={cloudinaryCloudName()} />
+      <CtaBand title={`Book your ${content.linkText} trip`} whatsappUrl={whatsappUrl} service="outstation" />
+    </div>
+  );
+}
+
 export async function generateMetadata({ params }: RoutePageProps): Promise<Metadata> {
   const routes = await getRoutes();
   const route = routes.find((r) => r.slug === params.slug);
   const details = routeDetailMap[params.slug];
 
   if (!route) {
+    const destination = await getLiveDestination(params.slug);
+    if (destination) return destinationMetadata(destination);
     return {
       title: `Outstation Cab | ${siteConfig.brand.name}`,
     };
@@ -368,7 +401,10 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
   const route = routes.find((r) => r.slug === params.slug);
 
   if (!route) {
-    notFound();
+    // Not a built-in route: a published destination from Admin → Footer destinations?
+    const destination = await getLiveDestination(params.slug);
+    if (!destination) notFound();
+    return <DestinationPage content={destination} />;
   }
 
   const [allVehicles, localPackages, images] = await Promise.all([getVehicles(), getLocalPackages(), getSiteImages()]);

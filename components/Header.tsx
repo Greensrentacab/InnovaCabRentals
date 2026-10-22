@@ -10,10 +10,10 @@ import Logo from '@/components/Logo';
 
 const navLinks = [
   { label: 'Home', href: '/' },
-  { label: 'Airport Taxi', href: '/airport-taxi' },
-  { label: 'Outstation', href: '/outstation-cabs' },
-  { label: 'Local Rides', href: '/local-rides' },
-  { label: 'Tour Packages', href: '/tour-packages' },
+  { label: 'Airport Taxi', href: '/bangalore-airport-taxi' },
+  { label: 'Outstation', href: '/bangalore-outstation-cab-service' },
+  { label: 'Local Rides', href: '/bangalore-local-city-taxi' },
+  { label: 'Tour Packages', href: '/bangalore-tour-packages' },
   { label: 'Vehicles', href: '/vehicles' },
   { label: 'Routes', href: '/routes' },
   { label: 'FAQ', href: '/faq' },

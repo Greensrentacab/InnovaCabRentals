@@ -6,7 +6,7 @@ import type { Metadata } from 'next';
 import { withSeo } from '@/lib/seo';
 
 export const metadata: Metadata = withSeo({
-  alternates: { canonical: '/airport-taxi' },
+  alternates: { canonical: '/bangalore-airport-taxi' },
   title: 'Innova Airport Taxi Bangalore | BLR Airport Pickup & Drop',
   description:
     'Book Toyota Innova, Innova Crysta, Hycross & Ertiga airport taxi in Bangalore. Reliable 24/7 Kempegowda International Airport pickup and drop with zero surge charges and flight tracking.',

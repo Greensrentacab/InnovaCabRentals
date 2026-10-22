@@ -57,17 +57,17 @@ const navGroups: NavGroup[] = [
   {
     label: 'Airport',
     items: [
-      { label: 'Airport Pickup', hint: 'BLR arrivals → your doorstep', href: '/airport-taxi', icon: PlaneLanding },
-      { label: 'Airport Drop', hint: 'Your doorstep → BLR departures', href: '/airport-taxi', icon: PlaneTakeoff },
+      { label: 'Airport Pickup', hint: 'BLR arrivals → your doorstep', href: '/bangalore-airport-taxi', icon: PlaneLanding },
+      { label: 'Airport Drop', hint: 'Your doorstep → BLR departures', href: '/bangalore-airport-taxi', icon: PlaneTakeoff },
       { label: 'Airport ↔ City Route', hint: 'Kempegowda Airport to city hubs', href: '/routes/bangalore-airport-to-city', icon: RouteIcon },
     ],
   },
   {
     label: 'Outstation',
     items: [
-      { label: 'Outstation Cabs', hint: 'Round trips from Bangalore, up to 3 stops', href: '/outstation-cabs', icon: Mountain },
+      { label: 'Outstation Cabs', hint: 'Round trips from Bangalore, up to 3 stops', href: '/bangalore-outstation-cab-service', icon: Mountain },
       { label: 'Popular Routes', hint: 'Mysore, Coorg, Ooty, Wayanad & more', href: '/routes', icon: Map },
-      { label: 'Tour Packages', hint: 'Custom multi-day itineraries', href: '/tour-packages', icon: Sparkles },
+      { label: 'Tour Packages', hint: 'Custom multi-day itineraries', href: '/bangalore-tour-packages', icon: Sparkles },
     ],
   },
   {
@@ -83,7 +83,7 @@ const navGroups: NavGroup[] = [
   {
     label: 'More',
     items: [
-      { label: 'Local & Hourly Rentals', hint: '8 hr, 12 hr & custom-duration hire', href: '/local-rides', icon: Hourglass },
+      { label: 'Local & Hourly Rentals', hint: '8 hr, 12 hr & custom-duration hire', href: '/bangalore-local-city-taxi', icon: Hourglass },
       { label: 'About Us', hint: `${siteConfig.trustClaims.yearsExperience.value} years of Innova rentals`, href: '/about', icon: Building2 },
       { label: 'FAQ', hint: 'Fares, tolls, payments & more', href: '/faq', icon: HelpCircle },
       { label: 'Contact', hint: siteConfig.contact.hours, href: '/contact', icon: Info },

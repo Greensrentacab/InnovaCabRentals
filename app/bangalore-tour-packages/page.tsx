@@ -11,7 +11,7 @@ import type { Metadata } from 'next';
 import { withSeo } from '@/lib/seo';
 
 export const metadata: Metadata = withSeo({
-  alternates: { canonical: '/tour-packages' },
+  alternates: { canonical: '/bangalore-tour-packages' },
   title: 'Tour Packages from Bangalore | Innova Cab Hire',
   description:
     'Customised enquiry-based tour packages from Bangalore to Coorg, Ooty, Mysore, Wayanad, Chikmagalur, and Kodaikanal with Toyota Innova Crysta. Experienced chauffeurs and flexible itineraries.',

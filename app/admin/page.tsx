@@ -1516,7 +1516,7 @@ export default function AdminDashboardPage() {
                   When someone submits the tour-packages or contact form, their details appear here with one-tap call and WhatsApp buttons.
                 </p>
                 <div className="mt-6 grid gap-2 sm:flex sm:justify-center">
-                  <Link href="/tour-packages" target="_blank" className="adm-btn-primary">
+                  <Link href="/bangalore-tour-packages" target="_blank" className="adm-btn-primary">
                     <ExternalLink className="h-4 w-4" /> Open tour packages page
                   </Link>
                   <button type="button" onClick={loadData} className="adm-btn-ghost">
@@ -1592,7 +1592,7 @@ export default function AdminDashboardPage() {
 
             <div className="grid gap-3 sm:grid-cols-3">
               {[
-                { k: 'From /tour-packages', t: 'Tour package requests', d: 'Destination, dates and group size from people planning a trip with you.' },
+                { k: 'From /bangalore-tour-packages', t: 'Tour package requests', d: 'Destination, dates and group size from people planning a trip with you.' },
                 { k: 'From /contact', t: 'Contact messages', d: 'General questions and quote requests sent through the contact form.' },
                 { k: 'Reply fast', t: 'Call or WhatsApp', d: 'Every lead gets the same Call and WhatsApp buttons you use on bookings.' },
               ].map((c) => (

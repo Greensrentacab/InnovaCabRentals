@@ -199,7 +199,7 @@ export default async function VehicleDetailTemplate({
                 </a>
               </div>
               <p className="mt-3 text-center text-[11px] text-slate-500">
-                No advance payment needed. Submitting reserves your booking request.
+                Submitting reserves your booking request. Contact our team to pre-book in advance.
               </p>
             </div>
 

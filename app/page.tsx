@@ -8,6 +8,10 @@ import {
   ShieldCheck,
   Radar,
   BadgeIndianRupee,
+  Award,
+  Wallet,
+  Car,
+  Clock,
   Star,
   Users,
 } from 'lucide-react';
@@ -37,7 +41,7 @@ import {
   minFare,
   routeFromFare,
 } from '@/lib/storefrontData';
-import { HeroCover, HeroLead, HeroTitle, HeroTrustList } from '@/components/home/HeroScene';
+import { HeroCover, HeroFeatures, HeroLead, HeroSub, HeroTitle } from '@/components/home/HeroScene';
 
 export const revalidate = 60; // Revalidate dynamic Firestore data every minute
 
@@ -83,8 +87,8 @@ const homeFaqs = [
     a: 'Toyota Innova (7/8 seater), Toyota Innova Crysta (luxury 7 seater with captain seats) and Maruti Suzuki Ertiga (compact 7 seater). Let us know your seating preference when booking.',
   },
   {
-    q: 'Is advance payment required to book a cab?',
-    a: 'No upfront payment or card details are required. Your booking is placed as a request (Status: PENDING) and confirmed directly with our team via a WhatsApp link or phone call.',
+    q: 'How do I pre-book a cab?',
+    a: 'Contact our team on call or WhatsApp to pre-book or reserve your cab in advance. Your booking is placed as a request and confirmed directly by our team.',
   },
   {
     q: 'Are your vehicles and drivers available 24/7 for late-night airport drops?',
@@ -120,10 +124,10 @@ export default async function HomePage() {
   const heroAirport = images.hero.airport;
 
   const stats = [
-    { value: `${siteConfig.trustClaims.yearsExperience.value} yrs`, label: 'Of premium Innova rentals' },
-    { value: '₹0', label: 'Advance payment' },
-    { value: '4', label: 'Car models to choose from' },
-    { value: '24/7', label: 'Booking & dispatch' },
+    { icon: Award, value: `${siteConfig.trustClaims.yearsExperience.value}+ years`, label: 'Of trusted travel' },
+    { icon: Wallet, value: 'UPI · Cash', label: 'Easy payment options' },
+    { icon: Car, value: '4', label: 'Car models to choose from' },
+    { icon: Clock, value: '24/7', label: 'Booking & dispatch' },
   ];
   const testimonials = siteConfig.testimonials;
 
@@ -164,25 +168,22 @@ export default async function HomePage() {
                 </h1>
 
                 <span className="mt-3 block h-1 w-12 rounded-full bg-sky-300 lg:hidden" aria-hidden="true" />
-                <p className="mt-3 line-clamp-4 max-w-xl animate-fade-up text-[13px] font-medium leading-snug sm:line-clamp-none text-white [animation-delay:160ms] sm:mt-5 sm:text-lg">
+                <p className="mt-3 max-w-xl animate-fade-up text-[14px] font-semibold leading-snug text-white [animation-delay:160ms] sm:mt-5 sm:text-xl">
                   <HeroLead />
                 </p>
+                <p className="mt-1.5 max-w-xl animate-fade-up text-[12.5px] font-medium leading-snug text-white/85 [animation-delay:200ms] sm:mt-2 sm:text-base">
+                  <HeroSub />
+                </p>
 
-                {/* Phones/tablets: trust points in the hero, two per row */}
-                <HeroTrustList
-                  extraLabel={siteConfig.trustClaims.customersServed.label}
-                  className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 whitespace-nowrap text-[12px] font-semibold text-white sm:max-w-md sm:gap-y-3 sm:text-sm lg:hidden [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_2px_12px_rgba(0,0,0,0.5)]"
-                />
+                {/* Phones/tablets: four highlights for the selected tab */}
+                <HeroFeatures className="mt-4 [text-shadow:0_1px_3px_rgba(0,0,0,0.7)] lg:hidden" />
 
                 {/* Phones/tablets: room for the car in the picture */}
                 <div className="h-36 min-[420px]:h-44 sm:h-60 lg:hidden" aria-hidden="true" />
 
                 {/* Desktop: room for the car in the full-width picture, then the trust points along the bottom */}
                 <div className="hidden lg:block lg:h-[clamp(140px,26vh,300px)]" aria-hidden="true" />
-                <HeroTrustList
-                  extraLabel={siteConfig.trustClaims.customersServed.label}
-                  className="hidden items-center gap-x-6 gap-y-2 whitespace-nowrap text-[13px] font-semibold text-white lg:flex xl:text-sm [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]"
-                />
+                <HeroFeatures className="hidden max-w-2xl [text-shadow:0_1px_6px_rgba(0,0,0,0.6)] lg:grid" />
               </div>
             </div>
           </div>
@@ -257,11 +258,16 @@ export default async function HomePage() {
               </div>
 
               {/* Stats */}
-              <dl className="mt-4 grid grid-cols-4 gap-1.5 sm:mt-10 sm:gap-4">
-                {stats.map((stat) => (
-                  <div key={stat.label} className="rounded-xl border border-white/10 bg-white/[0.05] px-2 py-2.5 backdrop-blur sm:rounded-2xl sm:p-6">
-                    <dt className="text-lg font-extrabold leading-none tracking-tight text-sky-300 sm:text-5xl">{stat.value}</dt>
-                    <dd className="mt-1 text-[10px] font-medium leading-tight text-slate-300 sm:mt-3 sm:text-sm">{stat.label}</dd>
+              <dl className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-10 sm:gap-4 lg:grid-cols-4">
+                {stats.map(({ icon: Icon, value, label }) => (
+                  <div key={label} className="flex min-w-0 flex-col items-start gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.09] to-white/[0.02] p-3.5 backdrop-blur sm:gap-4 sm:p-6">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-400/15 text-sky-300 ring-1 ring-sky-300/20 sm:h-12 sm:w-12">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <dt className="whitespace-nowrap text-[1.2rem] font-extrabold leading-none tracking-tight text-white min-[400px]:text-[1.4rem] sm:text-4xl lg:text-[2.6rem]">{value}</dt>
+                      <dd className="mt-1.5 text-xs font-medium leading-snug text-slate-300 sm:mt-2 sm:text-sm">{label}</dd>
+                    </div>
                   </div>
                 ))}
               </dl>
@@ -341,7 +347,7 @@ export default async function HomePage() {
             <div>
               <h2 className="section-title mt-3 sm:mt-4">Ready when you are — day or night.</h2>
               <p className="mt-2 text-slate-300">
-                {siteConfig.cta.advanceBooking} — ₹0 advance and a verified chauffeur at your door.
+                Reserve your Innova in advance and enjoy comfortable, chauffeur-driven travel across Bangalore. Book your Innova today.
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">

@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { Check, Minus, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import TermText from '@/components/policies/TermText';
 
 export interface TermsSection {
   title: string;
@@ -62,7 +63,7 @@ export default function TermsSheet({
   if (!open || typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center" role="presentation">
+    <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center max-lg:pb-[calc(6rem+env(safe-area-inset-bottom))]" role="presentation">
       <div className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
       <div
         role="dialog"
@@ -103,7 +104,7 @@ export default function TermsSheet({
                         <span className={cn('mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full', mark.cls)}>
                           <mark.icon className="h-3 w-3" strokeWidth={3} />
                         </span>
-                        {item}
+                        <TermText text={item} />
                       </li>
                     ))}
                   </ul>

@@ -2,48 +2,26 @@
 
 /**
  * HomeDock.tsx — mobile/tablet quick-action dock + desktop WhatsApp FAB
- * (design.md §3.5). The dock slides up after 240px of scroll; both hide
- * while the booking flow modal is open, and the dock also hides while the
- * fare results (#fares) are on screen.
+ * (design.md §3.5). The dock stays fixed at the bottom on phones/tablets at
+ * all times except while the 4-step booking request is open (pop-ups keep
+ * clear of it with bottom padding). Book Now opens the booking request when
+ * the page's booking form already has pickup + drop, else scrolls to it.
  */
 
-import { useEffect, useState } from 'react';
 import { Phone, ReceiptText } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 import { cn } from '@/lib/cn';
 import { useBookingFlow } from '@/context/BookingFlowContext';
-import { scrollToBook, scrollToId } from '@/components/home/scrollToBook';
+import { BOOK_SUBMIT_EVENT, scrollToBook, scrollToId } from '@/components/home/scrollToBook';
 
 const itemClass =
   'flex flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1.5 text-[11px] font-bold text-slate-600 transition active:scale-95';
 
 export default function HomeDock() {
   const { state } = useBookingFlow();
-  const [scrolledPast, setScrolledPast] = useState(false);
-  const [inFares, setInFares] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => {
-      setScrolledPast(window.scrollY > 240);
-      // Keep the dock out of the way while the customer is looking at the car results
-      const fares = document.getElementById('fares');
-      const r = fares?.getBoundingClientRect();
-      setInFares(!!r && r.top < window.innerHeight && r.bottom > 0);
-    };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    // Results render after a search (no scroll event yet), so re-check periodically
-    const id = window.setInterval(onScroll, 400);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-      window.clearInterval(id);
-    };
-  }, []);
-
-  const dockVisible = scrolledPast && !inFares && !state.isOpen;
+  // Always on screen except during the 4-step booking request
+  const dockVisible = !state.isOpen;
 
   return (
     <div className="ds-scope">
@@ -51,7 +29,7 @@ export default function HomeDock() {
         aria-label="Quick actions"
         aria-hidden={!dockVisible}
         className={cn(
-          'pb-safe fixed inset-x-0 bottom-0 z-40 px-3 transition-all duration-500 ease-premium lg:hidden',
+          'pb-safe fixed inset-x-0 bottom-0 z-[110] px-3 transition-all duration-500 ease-premium lg:hidden',
           dockVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-[120px] opacity-0'
         )}
       >
@@ -82,7 +60,12 @@ export default function HomeDock() {
           </button>
           <button
             type="button"
-            onClick={() => scrollToBook()}
+            onClick={() => {
+              // Trip already filled in on this page → open the 4-step booking request; otherwise go to the form
+              const detail = { handled: false };
+              window.dispatchEvent(new CustomEvent(BOOK_SUBMIT_EVENT, { detail }));
+              if (!detail.handled) scrollToBook();
+            }}
             className="btn-primary ml-auto flex-1 rounded-[22px] py-3.5 text-sm"
             tabIndex={dockVisible ? 0 : -1}
           >

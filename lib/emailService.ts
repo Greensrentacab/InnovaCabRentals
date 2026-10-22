@@ -178,7 +178,7 @@ export async function sendCustomerBookingEmail(
           <tr>
             <td>
               <h1 style="margin:0;font-size:22px;line-height:1.3;font-weight:600;color:#111111;">We&rsquo;ve received your booking request</h1>
-              <p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:#444444;">Hi ${escapeHtml(greetingName)}, thanks for booking with us. Our team will confirm it shortly and message you on WhatsApp. Nothing to pay in advance.</p>
+              <p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:#444444;">Hi ${escapeHtml(greetingName)}, thanks for booking with us. Our team will confirm it shortly and message you on WhatsApp.</p>
               <p style="margin:16px 0 0;font-size:13px;color:#6b6b6b;">Reference <span style="font-family:Consolas,Menlo,monospace;color:#111111;">#${escapeHtml(booking.bookingId)}</span></p>
             </td>
           </tr>

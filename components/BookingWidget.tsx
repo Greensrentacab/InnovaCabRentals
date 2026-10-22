@@ -279,7 +279,7 @@ export default function BookingWidget({
         </div>
 
         <p className="text-[11px] text-center text-gray-400">
-          Instant WhatsApp quote • No advance booking payment required
+          Instant WhatsApp quote • Contact our team to pre-book
         </p>
       </form>
 

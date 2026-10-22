@@ -101,7 +101,7 @@ export default function BookingRequestForm() {
       </div>
 
       <p className="text-[11px] text-gray-400 text-center mt-4">
-        No upfront payment required. Submitting sends a booking request (Status: PENDING) for admin review.
+        Submitting sends a booking request (Status: PENDING) for admin review.
       </p>
     </div>
   );

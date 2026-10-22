@@ -49,16 +49,20 @@ export const siteConfig = {
     hours: 'Open 24/7',
   },
 
-  /** Accepted payment methods (client confirmed: all types accepted). */
+  /** Accepted payment methods: UPI and cash only (client). Advance payment is
+   *  never mentioned on the site; customers arrange it with the team. */
   payments: {
-    methods: ['UPI (GPay, PhonePe, Paytm)', 'Cash', 'Debit & credit cards', 'Bank transfer (NEFT / IMPS)'],
-    schema: 'Cash, UPI, Credit Card, Debit Card, Bank Transfer',
-    advance: 'No advance payment needed to book. Pay after the trip.',
+    methods: ['UPI', 'Cash'],
+    schema: 'Cash, UPI',
+    prebook: 'Contact our team to pre-book or reserve your cab in advance.',
   },
 
   /** Booking policies shown in fare T&Cs and the trust section. */
   policies: {
-    cancellation: 'Free cancellation or rescheduling up to 4 hours before pickup.',
+    /** Shown wherever cancellation comes up; links to /terms */
+    cancellation: 'See our Terms & Conditions for cancellation and rescheduling.',
+    /** Default wording of the cancellation section on the Terms page (editable in Admin → Policies) */
+    cancellationTerms: 'To cancel or reschedule, contact our team on call or WhatsApp as early as possible before the scheduled pickup. Any applicable charges are confirmed by our team at the time of the request.',
     confirmation: 'Every booking is confirmed by our team on call or WhatsApp before the car is dispatched.',
     tolls: 'Tolls, parking, state permits and entry taxes are paid by the customer.',
   },

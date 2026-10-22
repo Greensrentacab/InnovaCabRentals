@@ -70,8 +70,8 @@ export default function ContactEnquiryForm() {
         <div>
           <h2 className="text-lg font-extrabold tracking-tight text-ink">Send a Booking Request</h2>
           <p className="mt-0.5 text-xs font-medium text-slate-500">
-            Submit your journey details. Our dispatch desk confirms all bookings directly via WhatsApp or phone with zero
-            upfront charges.
+            Submit your journey details. Our dispatch desk confirms all bookings directly via WhatsApp or phone. Contact our
+            team to pre-book in advance.
           </p>
         </div>
         <span className="chip-live shrink-0">
@@ -239,7 +239,7 @@ export default function ContactEnquiryForm() {
 
           <p className="flex items-center justify-center gap-1.5 text-xs font-medium text-slate-500">
             <ShieldCheck className="h-3.5 w-3.5 text-live-600" />
-            No advance payment required. Saved securely to our dispatch team for immediate review and confirmation.
+            Saved securely to our dispatch team for immediate review and confirmation.
           </p>
         </form>
       )}

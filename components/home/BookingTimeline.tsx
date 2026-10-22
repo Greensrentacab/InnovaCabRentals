@@ -31,7 +31,7 @@ const STEPS: { icon: LucideIcon; title: string; desc: string }[] = [
   {
     icon: Wallet,
     title: 'Travel & Pay',
-    desc: 'No advance payment and no card details. Pay after the trip.',
+    desc: 'Pay by UPI or cash. Contact our team to pre-book in advance.',
   },
 ];
 
@@ -99,7 +99,7 @@ export default function BookingTimeline() {
         <div className="mx-auto max-w-2xl text-center">
           <span className="eyebrow">How booking works</span>
           <h2 className="section-title mt-3 sm:mt-4">From quote to doorstep in four steps</h2>
-          <p className="mt-3 text-slate-600">No app, no login, no advance payment — booking takes about a minute.</p>
+          <p className="mt-3 text-slate-600">No app needed — booking takes about a minute.</p>
         </div>
 
         <ol ref={listRef} className="relative mt-14 grid gap-8 md:grid-cols-4 md:gap-6">

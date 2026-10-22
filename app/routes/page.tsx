@@ -40,6 +40,8 @@ export default async function RoutesPage() {
       <PageHero
         breadcrumbs={[{ label: 'Routes' }]}
         eyebrow="Searchable Highway & Outstation Corridors"
+        scene="outstation"
+        features="outstation"
         title="Popular Outstation Cab Routes from Bangalore"
         lead={
           <>

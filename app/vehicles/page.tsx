@@ -267,7 +267,7 @@ export default async function VehiclesPage() {
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-slate-100 bg-slate-50/70 text-[10px] font-bold uppercase tracking-wide text-slate-400">
               <tr>
-                <th className="px-5 py-3">Feature</th>
+                <th className="px-5 py-3">Vehicle types</th>
                 {confirmedVehicles.map((v) => (
                   <th key={v.id} className="px-5 py-3 text-ink">
                     <Link href={`/${v.id}-rental-bangalore`} className="text-sm font-extrabold normal-case tracking-tight hover:text-brand-700">

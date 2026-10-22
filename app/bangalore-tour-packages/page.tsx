@@ -82,6 +82,8 @@ export default function TourPackagesPage() {
       <PageHero
         breadcrumbs={[{ label: 'Tour Packages' }]}
         eyebrow="Enquiry-Based Custom Itineraries"
+        scene="outstation"
+        features="outstation"
         title="Custom Innova Tour Packages from Bangalore"
         lead={
           <>

@@ -1,18 +1,11 @@
 import { MapPin, ShieldCheck, Compass, Users, HeartHandshake } from 'lucide-react';
-import LandingTemplate from '@/components/LandingTemplate';
+import LandingTemplate, { type LandingTemplateProps } from '@/components/LandingTemplate';
+import ScrollToSection from '@/components/ScrollToSection';
 import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
-import type { Metadata } from 'next';
-import { withSeo } from '@/lib/seo';
 
-export const metadata: Metadata = withSeo({
-  alternates: { canonical: '/outstation-cabs' },
-  title: 'Outstation Innova Cabs Bangalore | Mysore, Coorg, Ooty',
-  description:
-    'Book outstation round-trip Innova, Crysta and Ertiga cabs from Bangalore with up to 3 stops on the way. Seasoned highway drivers and transparent per-km billing; tolls paid by customer.',
-});
-
-export default async function OutstationCabsPage() {
+/** `overrides` lets an alias URL (round-trip / hourly) set its own heading text; `scrollToId` jumps to a section on load. */
+export default async function OutstationLanding({ overrides, scrollToId }: { overrides?: Partial<LandingTemplateProps>; scrollToId?: string } = {}) {
   const vehicles = await getVehicles();
   const allRoutes = await getRoutes();
   const localPackages = await getLocalPackages();
@@ -61,6 +54,8 @@ export default async function OutstationCabsPage() {
   ];
 
   return (
+    <>
+    {scrollToId && <ScrollToSection id={scrollToId} />}
     <LandingTemplate
       breadcrumb="Outstation Cabs"
       badge="Intercity & Hill Station Travel"
@@ -80,6 +75,8 @@ export default async function OutstationCabsPage() {
       showLocalAreas={false}
       customCtaTitle="Reserve Your Outstation Innova Cab"
       serviceType="outstation"
+      {...overrides}
     />
+    </>
   );
 }

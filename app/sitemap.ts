@@ -4,12 +4,14 @@ import { absoluteUrl } from '@/lib/siteUrl';
 
 const STATIC_PAGES: { path: string; priority: number }[] = [
   { path: '/', priority: 1 },
-  { path: '/airport-taxi', priority: 0.9 },
-  { path: '/outstation-cabs', priority: 0.9 },
-  { path: '/local-rides', priority: 0.9 },
+  { path: '/bangalore-airport-taxi', priority: 0.9 },
+  { path: '/bangalore-outstation-cab-service', priority: 0.9 },
+  { path: '/bangalore-local-city-taxi', priority: 0.9 },
+  { path: '/bangalore-round-trip-cab-rental', priority: 0.8 },
+  { path: '/bangalore-hourly-cab-rental', priority: 0.8 },
   { path: '/vehicles', priority: 0.8 },
   { path: '/routes', priority: 0.8 },
-  { path: '/tour-packages', priority: 0.7 },
+  { path: '/bangalore-tour-packages', priority: 0.7 },
   { path: '/about', priority: 0.5 },
   { path: '/faq', priority: 0.5 },
   { path: '/contact', priority: 0.6 },

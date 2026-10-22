@@ -1,6 +1,6 @@
 /**
- * LandingTemplate.tsx — service landing pages (/airport-taxi, /local-rides,
- * /outstation-cabs), built to design.md:
+ * LandingTemplate.tsx — service landing pages (/bangalore-airport-taxi, /bangalore-local-city-taxi,
+ * /bangalore-outstation-cab-service), built to design.md:
  *  - Inner page hero with aside (§2.3, §3.6) + Quick Fare Estimate widget (§3.2)
  *  - Local packages (§3.2.4 / §3.3), benefits cards, route grid (§3.3)
  *  - Local coverage grid, fleet cards (§3.3), FAQ accordion + dark CTA band (§3.6)

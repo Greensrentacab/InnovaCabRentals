@@ -49,12 +49,12 @@ const columns: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: 'Services',
     links: [
-      { label: 'Bangalore Airport Taxi', href: '/airport-taxi' },
-      { label: 'Outstation Cab Service', href: '/outstation-cabs' },
-      { label: 'Round-Trip Cab Rental', href: '/outstation-cabs#routes' },
-      { label: 'Local City Taxi', href: '/local-rides' },
-      { label: 'Hourly Cab Rental (8 / 12 hr)', href: '/local-rides#packages' },
-      { label: 'Custom Tour Packages', href: '/tour-packages' },
+      { label: 'Bangalore Airport Taxi', href: '/bangalore-airport-taxi' },
+      { label: 'Outstation Cab Service', href: '/bangalore-outstation-cab-service' },
+      { label: 'Round-Trip Cab Rental', href: '/bangalore-round-trip-cab-rental' },
+      { label: 'Local City Taxi', href: '/bangalore-local-city-taxi' },
+      { label: 'Hourly Cab Rental (8 / 12 hr)', href: '/bangalore-hourly-cab-rental' },
+      { label: 'Custom Tour Packages', href: '/bangalore-tour-packages' },
       { label: 'Corporate & Family Travel', href: '/contact' },
     ],
   },

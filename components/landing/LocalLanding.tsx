@@ -1,18 +1,11 @@
 import { Car, Clock, ShieldCheck, MapPin, CheckCircle2 } from 'lucide-react';
-import LandingTemplate from '@/components/LandingTemplate';
+import LandingTemplate, { type LandingTemplateProps } from '@/components/LandingTemplate';
+import ScrollToSection from '@/components/ScrollToSection';
 import { getVehicles, getRoutes, getLocalPackages } from '@/lib/dataService';
 import { siteConfig } from '@/lib/siteConfig';
-import type { Metadata } from 'next';
-import { withSeo } from '@/lib/seo';
 
-export const metadata: Metadata = withSeo({
-  alternates: { canonical: '/local-rides' },
-  title: 'Local Innova Rental Bangalore | 8 Hr & 12 Hr Packages',
-  description:
-    'Rent Toyota Innova, Innova Crysta and Maruti Suzuki Ertiga in Bangalore for local city travel. 8 hr / 80 km and 12 hr / 120 km rental packages, custom durations on request, and point-to-point city transfers.',
-});
-
-export default async function LocalRidesPage() {
+/** `overrides` lets an alias URL (round-trip / hourly) set its own heading text; `scrollToId` jumps to a section on load. */
+export default async function LocalLanding({ overrides, scrollToId }: { overrides?: Partial<LandingTemplateProps>; scrollToId?: string } = {}) {
   const vehicles = await getVehicles();
   const allRoutes = await getRoutes();
   const localPackages = await getLocalPackages();
@@ -60,6 +53,8 @@ export default async function LocalRidesPage() {
   ];
 
   return (
+    <>
+    {scrollToId && <ScrollToSection id={scrollToId} />}
     <LandingTemplate
       breadcrumb="Local Rides"
       badge="Local City Hire & Hourly Packages"
@@ -81,6 +76,8 @@ export default async function LocalRidesPage() {
       showPackages={true}
       customCtaTitle="Reserve Your Local Innova Rental"
       serviceType="local"
+      {...overrides}
     />
+    </>
   );
 }

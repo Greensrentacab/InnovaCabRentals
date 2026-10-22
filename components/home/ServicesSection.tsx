@@ -57,7 +57,7 @@ export default function ServicesSection({
       fare: fares.airport,
       fareCaption: 'starting fare',
       cta: 'Airport taxi',
-      href: '/airport-taxi',
+      href: '/bangalore-airport-taxi',
     },
     {
       title: 'Outstation Trips',
@@ -69,7 +69,7 @@ export default function ServicesSection({
       fare: fares.outstation,
       fareCaption: 'starting fare',
       cta: 'Outstation',
-      href: '/outstation-cabs',
+      href: '/bangalore-outstation-cab-service',
     },
     {
       title: 'Local & Hourly Rentals',
@@ -81,7 +81,7 @@ export default function ServicesSection({
       fare: fares.local,
       fareCaption: '8 hr / 80 km package',
       cta: 'Local rentals',
-      href: '/local-rides',
+      href: '/bangalore-local-city-taxi',
     },
   ];
 

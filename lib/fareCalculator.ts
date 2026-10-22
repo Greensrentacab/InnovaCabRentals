@@ -188,7 +188,7 @@ export async function calculateServerFare(input: FareCalculationInput): Promise<
   const policy = policies.services[policyServiceFor(input.serviceType)];
 
   // Active cars only (switched off in Admin → Fleet = hidden)
-  // …always listed (and priced) in the premium order: Ertiga → Innova → Crysta → Hycross
+  // …returned in the fleet's listing order; the booking popup re-sorts them by fare (lib/fareSort.ts)
   const confirmedVehicles = allVehicles.filter((v) => v.confirmed !== false).sort(byFleetOrder);
   const vehiclesToCalculate: Vehicle[] = input.vehicleId
     ? confirmedVehicles.filter((v) => v.id === input.vehicleId)

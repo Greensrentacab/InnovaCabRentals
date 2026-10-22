@@ -36,7 +36,7 @@ export const emptyRates = (): VehicleRates => ({
  * The client changes these any time in Admin → Pricing.
  * Order: per km, driver allowance/day, airport (each way), 8 hr/80 km,
  * 12 hr/120 km, extra km, extra hour, airport per km beyond 40 km.
- * Every rate rises with the tier (lib/fleetOrder.ts), so fares follow the display order.
+ * Each car's rates are independent of the other cars'.
  */
 const defaultRates = (
   outstationPerKm: number,

@@ -19,6 +19,7 @@ import { useBookingFlow, toVehicle, type FareResult, type FareSearchState, type 
 import { cn } from '@/lib/cn';
 import { siteConfig } from '@/lib/siteConfig';
 import { fleetPhotos } from '@/lib/fleetPhotos';
+import { cheapestByFare, sortByFare } from '@/lib/fareSort';
 import TermsSheet from '@/components/ds/TermsSheet';
 import { formatDateLong, formatTime12 } from '@/lib/time';
 
@@ -260,8 +261,8 @@ function ResultRow({
 /** Car step of the booking popup: one car per row; tap a row to select it. */
 export default function FareResults() {
   const { search, state, selectVehicle } = useBookingFlow();
-  const sorted = [...search.results].sort((a, b) => (a.fare ?? Infinity) - (b.fare ?? Infinity));
-  const lowest = sorted.find((c) => c.fare !== null);
+  const sorted = sortByFare(search.results);
+  const lowest = cheapestByFare(sorted);
 
   // Always have a car selected once fares arrive (the lowest priced one)
   useEffect(() => {

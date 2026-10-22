@@ -23,6 +23,7 @@ import { formatTime12 } from '@/lib/time';
 import { siteConfig } from '@/lib/siteConfig';
 import { useAuth } from '@/context/AuthContext';
 import type { FleetPhoto } from '@/lib/fleetPhotos';
+import { cheapestByFare, sortByFare } from '@/lib/fareSort';
 
 export type BookingStep =
   | 'loading'
@@ -230,10 +231,9 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
       if (!response.ok || !data.success) throw new Error(data.error || 'Could not fetch fares');
 
       // Pre-select the lowest priced car
-      const results: FareResult[] = data.results || [];
-      const cheapest = results
-        .filter((r) => r.fare !== null)
-        .sort((a, b) => (a.fare as number) - (b.fare as number))[0];
+      // …and keep the results cheapest-first so every step lists them the same way
+      const results: FareResult[] = sortByFare<FareResult>(data.results || []);
+      const cheapest = cheapestByFare(results);
       setState((prev) => ({
         ...prev,
         distanceKm: data.distanceKm ?? null,
@@ -242,7 +242,7 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
       setSearch((prev) => ({
         ...prev,
         status: 'done',
-        results: data.results || [],
+        results,
         distanceKm: data.distanceKm ?? null,
         totalKm: data.totalKm ?? null,
         days: data.days ?? 1,

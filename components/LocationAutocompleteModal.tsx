@@ -15,6 +15,8 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import MapPickerDialog from '@/components/MapPickerDialog';
 import {
   MapPin,
   Search,
@@ -23,6 +25,8 @@ import {
   AlertCircle,
   RotateCcw,
   Pencil,
+  Map as MapIcon,
+  ChevronRight,
 } from 'lucide-react';
 import {
   LocationData,
@@ -44,6 +48,13 @@ interface LocationAutocompleteModalProps {
   variant?: 'modal' | 'dropdown';
   /** Only offer places in Bengaluru (airport transfers, local rentals) */
   bengaluruOnly?: boolean;
+  /**
+   * Dropdown only: the text typed in the field itself. When given, the
+   * dropdown shows suggestions for it and has no search box of its own.
+   */
+  externalQuery?: string;
+  /** Where "Choose on map" starts (the field's current value) */
+  currentValue?: LocationData | null;
 }
 
 export default function LocationAutocompleteModal({
@@ -55,8 +66,14 @@ export default function LocationAutocompleteModal({
   initialValue = '',
   variant = 'modal',
   bengaluruOnly = false,
+  externalQuery,
+  currentValue,
 }: LocationAutocompleteModalProps) {
   const isDropdown = variant === 'dropdown';
+  const isControlled = isDropdown && externalQuery !== undefined;
+  const [mapOpen, setMapOpen] = useState(false);
+  const mapOpenRef = useRef(false);
+  mapOpenRef.current = mapOpen;
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState(initialValue);
   const [predictions, setPredictions] = useState<LocationData[]>([]);
@@ -84,7 +101,8 @@ export default function LocationAutocompleteModal({
         }
       });
 
-      // Auto-focus input after mount
+      // Auto-focus input after mount (the field itself has focus when controlled)
+      if (isControlled) return;
       const timer = setTimeout(() => {
         inputRef.current?.focus();
       }, 150);
@@ -136,6 +154,17 @@ export default function LocationAutocompleteModal({
     }, 300);
   };
 
+  // Typing happens in the field: search what it holds (300ms debounce)
+  useEffect(() => {
+    if (!isControlled || !isOpen) return;
+    setQuery(externalQuery ?? '');
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => performSearch(externalQuery ?? ''), 300);
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [externalQuery, isControlled, isOpen, performSearch]);
+
   const handleRetry = () => {
     setSearchError(false);
     performSearch(query);
@@ -171,10 +200,12 @@ export default function LocationAutocompleteModal({
   // Esc closes. Modal: body scroll locked. Dropdown: closes on an outside tap.
   useEffect(() => {
     if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && !mapOpenRef.current && onClose();
     document.addEventListener('keydown', onKey);
     if (isDropdown) {
       const onDown = (e: Event) => {
+        // Taps inside the map picker belong to this dropdown
+        if (mapOpenRef.current) return;
         const target = e.target as HTMLElement | null;
         if (!target || panelRef.current?.contains(target)) return;
         // Tapping a location field just switches the dropdown to that field
@@ -238,8 +269,44 @@ export default function LocationAutocompleteModal({
     </div>
   );
 
+  const mapRow = (
+    <button
+      type="button"
+      onClick={() => setMapOpen(true)}
+      className="group flex w-full items-center gap-3 rounded-2xl border border-brand-100 bg-brand-50/60 px-3 py-2.5 text-left transition hover:border-brand-300 hover:bg-brand-50"
+    >
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
+        <MapIcon className="h-4 w-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-ink group-hover:text-brand-700">Choose on map</span>
+        <span className="block text-xs text-slate-500">Pin your exact location</span>
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+    </button>
+  );
+
+  const mapDialog =
+    mapOpen && typeof document !== 'undefined'
+      ? createPortal(
+          <MapPickerDialog
+            open
+            title={title}
+            initial={currentValue}
+            bengaluruOnly={bengaluruOnly}
+            onClose={() => setMapOpen(false)}
+            onPick={(loc) => {
+              setMapOpen(false);
+              handleSelectLocation(loc);
+            }}
+          />,
+          document.body
+        )
+      : null;
+
   const results = (
     <>
+      {mapRow}
       {query.trim().length >= 2 && (
         <button
           type="button"
@@ -328,6 +395,7 @@ export default function LocationAutocompleteModal({
         ref={panelRef}
         className="absolute inset-x-0 top-[calc(100%+8px)] z-50 animate-pop-in overflow-hidden rounded-3xl border border-sky-100 bg-white shadow-[0_24px_50px_-16px_rgba(15,23,42,0.28),0_0_0_1px_rgba(186,230,253,0.6)] [text-shadow:none]"
       >
+        {mapDialog}
         <div className="flex items-center justify-between gap-2 px-3 pt-3">
           <p className="pl-1 text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">{title}</p>
           <button
@@ -339,7 +407,7 @@ export default function LocationAutocompleteModal({
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
-        <div className="px-3 pt-2">{searchInput}</div>
+        {!isControlled && <div className="px-3 pt-2">{searchInput}</div>}
         <div className="max-h-[300px] space-y-3 overflow-y-auto overscroll-contain px-3 py-3">{results}</div>
       </div>
     );
@@ -348,6 +416,7 @@ export default function LocationAutocompleteModal({
   return (
     <div className="ds-scope fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-labelledby="location-modal-title">
       <div className="absolute inset-0 animate-fade-in bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+      {mapDialog}
 
       <div className="pointer-events-none absolute inset-0 flex items-end justify-center p-3 sm:items-center max-lg:pb-[calc(6rem+env(safe-area-inset-bottom))]">
         <div className="pointer-events-auto flex max-h-[88dvh] w-full animate-drawer-in flex-col overflow-hidden rounded-4xl bg-white shadow-float-lg sm:w-[560px]">

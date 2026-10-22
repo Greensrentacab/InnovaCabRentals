@@ -29,7 +29,7 @@ export default function Logo({ tone = 'light', halo = false, className, title = 
       {/* CABS-only copy underneath: the main logo hides its fill, so only its shadow shows. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/logo-cabs-only.png"
+        src="/logo-cabs-only.webp"
         alt=""
         aria-hidden="true"
         width={1200}
@@ -43,7 +43,7 @@ export default function Logo({ tone = 'light', halo = false, className, title = 
       />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={tone === 'dark' ? '/logo-dark.png' : '/logo-light.png'}
+        src={tone === 'dark' ? '/logo-dark.webp' : '/logo-light.webp'}
         alt={title}
         width={1200}
         height={349}

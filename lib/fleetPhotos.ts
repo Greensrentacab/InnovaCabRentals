@@ -34,7 +34,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
   // Actual photos of our own fleet (Toyota Innova, KA 02 AC 9968)
   innova: [
     {
-      src: '/images/fleet/own/innova-side.jpg',
+      src: '/images/fleet/own/innova-side.webp',
       alt: 'Our silver Toyota Innova with roof carrier, side view',
       label: 'Exterior · side',
       own: true,
@@ -43,7 +43,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       position: 'center 60%',
     },
     {
-      src: '/images/fleet/own/innova-front.jpg',
+      src: '/images/fleet/own/innova-front.webp',
       alt: 'Our silver Toyota Innova, front view',
       label: 'Exterior · front',
       own: true,
@@ -52,7 +52,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       position: 'center 65%',
     },
     {
-      src: '/images/fleet/own/innova-seats-front.jpg',
+      src: '/images/fleet/own/innova-seats-front.webp',
       alt: 'Tan leather front seats in our Toyota Innova',
       label: 'Leather seats · front',
       own: true,
@@ -60,7 +60,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       height: 1600,
     },
     {
-      src: '/images/fleet/own/innova-seats-rear.jpg',
+      src: '/images/fleet/own/innova-seats-rear.webp',
       alt: 'Tan leather second and third row seats in our Toyota Innova',
       label: 'Leather seats · rear rows',
       own: true,
@@ -68,7 +68,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       height: 1200,
     },
     {
-      src: '/images/fleet/own/innova-rear.jpg',
+      src: '/images/fleet/own/innova-rear.webp',
       alt: 'Our silver Toyota Innova, rear view',
       label: 'Exterior · rear',
       own: true,
@@ -80,7 +80,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
   // Actual photos of our own fleet (Toyota Innova Crysta, KA 03 AJ 8559)
   'innova-crysta': [
     {
-      src: '/images/fleet/own/crysta-front.jpg',
+      src: '/images/fleet/own/crysta-front.webp',
       alt: 'Our silver Toyota Innova Crysta, front three-quarter view',
       label: 'Exterior · front',
       own: true,
@@ -89,7 +89,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       position: 'center 62%',
     },
     {
-      src: '/images/fleet/own/crysta-captain-seats.jpg',
+      src: '/images/fleet/own/crysta-captain-seats.webp',
       alt: 'Second-row captain seats in our Toyota Innova Crysta',
       label: 'Captain seats · 2nd row',
       own: true,
@@ -97,7 +97,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       height: 899,
     },
     {
-      src: '/images/fleet/own/crysta-cabin.jpg',
+      src: '/images/fleet/own/crysta-cabin.webp',
       alt: 'Driver cabin and front seats in our Toyota Innova Crysta',
       label: 'Driver cabin',
       own: true,
@@ -105,7 +105,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       height: 1600,
     },
     {
-      src: '/images/fleet/own/crysta-third-row.jpg',
+      src: '/images/fleet/own/crysta-third-row.webp',
       alt: 'Third-row seats and floor mats in our Toyota Innova Crysta',
       label: 'Third row',
       own: true,
@@ -115,7 +115,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
   ],
   ertiga: [
     {
-      src: '/images/fleet/ertiga-front.jpg',
+      src: '/images/fleet/ertiga-front.webp',
       alt: 'White Maruti Suzuki Ertiga, front three-quarter view',
       label: 'Exterior · front',
       author: 'Ramakrishna Mission Vidyapith',
@@ -125,7 +125,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       height: 848,
     },
     {
-      src: '/images/fleet/ertiga-3.jpg',
+      src: '/images/fleet/ertiga-3.webp',
       alt: 'White Maruti Suzuki Ertiga, front view',
       label: 'On the road',
       author: 'Akashpbrahmavar',
@@ -135,7 +135,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       height: 904,
     },
     {
-      src: '/images/fleet/ertiga-side.jpg',
+      src: '/images/fleet/ertiga-side.webp',
       alt: 'Maruti Suzuki Ertiga (previous generation), front three-quarter view',
       label: 'Exterior · side',
       author: 'Akashpbrahmavar',
@@ -145,7 +145,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       height: 720,
     },
     {
-      src: '/images/fleet/ertiga-rear.jpg',
+      src: '/images/fleet/ertiga-rear.webp',
       alt: 'Maruti Suzuki Ertiga (previous generation), rear view',
       label: 'Exterior · rear',
       author: 'Akashpbrahmavar',
@@ -157,7 +157,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
   ],
   'innova-hycross': [
     {
-      src: '/images/fleet/own/hycross-front-side.jpg',
+      src: '/images/fleet/own/hycross-front-side.webp',
       alt: 'Our white Toyota Innova Hycross hybrid, front three-quarter view',
       label: 'Exterior · front',
       own: true,
@@ -166,7 +166,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       position: 'center 55%',
     },
     {
-      src: '/images/fleet/own/hycross-side.jpg',
+      src: '/images/fleet/own/hycross-side.webp',
       alt: 'Our white Toyota Innova Hycross hybrid, side profile',
       label: 'Exterior · side',
       own: true,
@@ -175,7 +175,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       position: 'center 58%',
     },
     {
-      src: '/images/fleet/own/hycross-front.jpg',
+      src: '/images/fleet/own/hycross-front.webp',
       alt: 'Our Toyota Innova Hycross, front view',
       label: 'Exterior · front view',
       own: true,
@@ -184,7 +184,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       position: 'center 55%',
     },
     {
-      src: '/images/fleet/own/hycross-seats-front.jpg',
+      src: '/images/fleet/own/hycross-seats-front.webp',
       alt: 'Front seats with clean white covers in our Innova Hycross',
       label: 'Front cabin',
       own: true,
@@ -192,7 +192,7 @@ export const fleetPhotos: Record<string, FleetPhoto[]> = {
       height: 1600,
     },
     {
-      src: '/images/fleet/own/hycross-seats-rear.jpg',
+      src: '/images/fleet/own/hycross-seats-rear.webp',
       alt: 'Rear seats with white covers, water and snacks in our Innova Hycross',
       label: 'Rear cabin · water & snacks',
       own: true,

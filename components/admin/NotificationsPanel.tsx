@@ -68,7 +68,7 @@ function NotificationPreview({ icon: Icon, title, body }: { icon: React.ElementT
   return (
     <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
-        <img src="/logo-car.png" alt="" className="h-6 w-6 object-contain" />
+        <img src="/logo-car.webp" alt="" className="h-6 w-6 object-contain" />
       </span>
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">

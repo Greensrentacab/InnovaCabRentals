@@ -119,6 +119,44 @@ function buildTimeSlots(dateKey: string, now: Date) {
   return slots;
 }
 
+/**
+ * The location field while the customer is typing: a real text box in the
+ * field's place; suggestions and "Choose on map" show in the dropdown below.
+ */
+function LocationTextBox({
+  query,
+  onQuery,
+  placeholder,
+  className,
+}: {
+  query: string;
+  onQuery?: (text: string) => void;
+  placeholder: string;
+  className?: string;
+}) {
+  return (
+    <input
+      type="text"
+      role="combobox"
+      aria-expanded
+      aria-autocomplete="list"
+      aria-label={placeholder}
+      data-location-trigger
+      autoFocus
+      autoComplete="off"
+      enterKeyHint="search"
+      value={query}
+      onChange={(e) => onQuery?.(e.target.value)}
+      onKeyDown={(e) => {
+        // Enter must not submit the booking form
+        if (e.key === 'Enter') e.preventDefault();
+      }}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+}
+
 function LocationTrigger({
   value,
   placeholder,
@@ -128,6 +166,9 @@ function LocationTrigger({
   onClear,
   clearLabel = 'Clear location',
   label,
+  active,
+  query = '',
+  onQuery,
 }: {
   value: LocationData | null;
   placeholder: string;
@@ -138,6 +179,10 @@ function LocationTrigger({
   clearLabel?: string;
   /** Compact tile with a small label inside (pickup & drop side by side) */
   label?: string;
+  /** Typing mode: the field itself becomes a text box, suggestions show below */
+  active?: boolean;
+  query?: string;
+  onQuery?: (text: string) => void;
 }) {
   const Icon = tone === 'pickup' ? Navigation : MapPin;
   if (label) {
@@ -210,27 +255,36 @@ function LocationTrigger({
         >
           <Icon className="h-3.5 w-3.5" strokeWidth={2.5} />
         </span>
-        <button
-          type="button"
-          role="combobox"
-          data-location-trigger
-          aria-expanded={false}
-          aria-invalid={!!error}
-          onClick={onOpen}
-          className={cn('field block min-h-[52px] pl-12 text-left', value && 'pr-10', error && 'field-error')}
-        >
-          {value ? (
-            <span className="block min-w-0">
-              <span className="block truncate font-semibold">{value.name}</span>
-              {value.address && value.address !== value.name && (
-                <span className="block truncate text-xs font-normal text-slate-500">{value.address}</span>
-              )}
-            </span>
-          ) : (
-            <span className="text-slate-400">{placeholder}</span>
-          )}
-        </button>
-        {value && (
+        {active ? (
+          <LocationTextBox
+            query={query}
+            onQuery={onQuery}
+            placeholder={value?.name ?? placeholder}
+            className={cn('field block min-h-[52px] pl-12 pr-4 text-[16px] font-semibold', error && 'field-error')}
+          />
+        ) : (
+          <button
+            type="button"
+            role="combobox"
+            data-location-trigger
+            aria-expanded={false}
+            aria-invalid={!!error}
+            onClick={onOpen}
+            className={cn('field block min-h-[52px] pl-12 text-left', value && 'pr-10', error && 'field-error')}
+          >
+            {value ? (
+              <span className="block min-w-0">
+                <span className="block truncate font-semibold">{value.name}</span>
+                {value.address && value.address !== value.name && (
+                  <span className="block truncate text-xs font-normal text-slate-500">{value.address}</span>
+                )}
+              </span>
+            ) : (
+              <span className="text-slate-400">{placeholder}</span>
+            )}
+          </button>
+        )}
+        {value && !active && (
           <button
             type="button"
             onClick={onClear}
@@ -262,6 +316,9 @@ function StackRow({
   trailing,
   staticText,
   hint,
+  active,
+  query = '',
+  onQuery,
 }: {
   position: 'top' | 'bottom';
   label: string;
@@ -276,6 +333,10 @@ function StackRow({
   /** Fixed text instead of a location picker (the airport) */
   staticText?: string;
   hint?: string;
+  /** Typing mode: the field itself becomes a text box, suggestions show below */
+  active?: boolean;
+  query?: string;
+  onQuery?: (text: string) => void;
 }) {
   const top = position === 'top';
   const main = staticText ? (
@@ -311,6 +372,13 @@ function StackRow({
         <div className="min-w-0 flex-1">
           {staticText ? (
             main
+          ) : active ? (
+            <LocationTextBox
+              query={query}
+              onQuery={onQuery}
+              placeholder={value?.name ?? placeholder ?? ''}
+              className="block w-full rounded-md bg-transparent text-[16px] font-semibold leading-snug text-ink outline-none placeholder:font-normal placeholder:text-slate-400 sm:text-[17px]"
+            />
           ) : (
             <button
               type="button"
@@ -328,10 +396,10 @@ function StackRow({
         </div>
         {trailing}
       </div>
-      {sub && <span className="mt-0.5 block truncate text-[13px] text-slate-500">{sub}</span>}
+      {sub && !active && <span className="mt-0.5 block truncate text-[13px] text-slate-500">{sub}</span>}
       {error && <span className="mt-1 block text-[12px] font-medium text-rose-600">{error}</span>}
 
-      {!staticText && value && onClear && (
+      {!staticText && value && onClear && !active && (
         <button
           type="button"
           onClick={onClear}
@@ -460,6 +528,12 @@ export default function QuickBookingWidget({
   const [routeSlug, setRouteSlug] = useState<string | undefined>(initialOutstation?.routeSlug);
 
   const [activeModal, setActiveModal] = useState<ModalTarget>(null);
+  // What the customer is typing in the open location field
+  const [locQuery, setLocQuery] = useState('');
+  const activeKey = activeModal ? JSON.stringify(activeModal) : '';
+  useEffect(() => setLocQuery(''), [activeKey]);
+  const typing = (target: NonNullable<ModalTarget>) =>
+    activeKey === JSON.stringify(target) ? { active: true, query: locQuery, onQuery: setLocQuery } : {};
   const [errors, setErrors] = useState<{ pickup?: string; drop?: string; stops?: string }>({});
 
   // Dates depend on the visitor's clock, so they are initialised after mount
@@ -618,6 +692,8 @@ export default function QuickBookingWidget({
             : 'Search area, landmark, street or pincode...'
         }
         initialValue={modalValue?.name || ''}
+        externalQuery={locQuery}
+        currentValue={modalValue}
         onSelect={handleModalSelect}
       />
     ) : null;
@@ -737,6 +813,7 @@ export default function QuickBookingWidget({
       error={airportFirst ? errors.drop : errors.pickup}
       onOpen={() => setActiveModal({ kind: 'city' })}
       onClear={() => setCityLocation(null)}
+      {...typing({ kind: 'city' })}
     />
   );
 
@@ -840,6 +917,7 @@ export default function QuickBookingWidget({
                   error={errors.pickup}
                   onOpen={() => setActiveModal({ kind: 'pickup' })}
                   onClear={() => setOutPickup(null)}
+                  {...typing({ kind: 'pickup' })}
                 />
               }
               bottom={
@@ -854,6 +932,7 @@ export default function QuickBookingWidget({
                     setOutDrop(null);
                     setRouteSlug(undefined);
                   }}
+                  {...typing({ kind: 'drop' })}
                 />
               }
               swapLabel="Swap pickup and destination"
@@ -873,6 +952,7 @@ export default function QuickBookingWidget({
                       onOpen={() => setActiveModal({ kind: 'stop', index: i })}
                       onClear={() => removeStop(i)}
                       clearLabel={`Remove stop ${i + 1}`}
+                      {...typing({ kind: 'stop', index: i })}
                     />
                   ) : null
                 )}
@@ -943,6 +1023,7 @@ export default function QuickBookingWidget({
                 error={errors.pickup}
                 onOpen={() => setActiveModal({ kind: 'city' })}
                 onClear={() => setCityLocation(null)}
+                {...typing({ kind: 'city' })}
               />
               {locationDropdown(activeModal?.kind === 'city')}
             </div>

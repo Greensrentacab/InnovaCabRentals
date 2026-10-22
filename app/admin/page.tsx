@@ -316,7 +316,7 @@ export default function AdminDashboardPage() {
         Notification.permission === 'granted'
       ) {
         try {
-          new Notification(newBookings.length ? 'New booking' : 'New user signed up', { body: message, icon: '/logo-car.png' });
+          new Notification(newBookings.length ? 'New booking' : 'New user signed up', { body: message, icon: '/logo-car.webp' });
         } catch {
           // Android Chrome only allows notifications from a service worker
         }

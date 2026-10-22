@@ -7,7 +7,7 @@ export default function BrandMark({ className }: { className?: string }) {
   // eslint-disable-next-line @next/next/no-img-element
   return (
     <img
-      src="/logo-car.png"
+      src="/logo-car.webp"
       alt={`${siteConfig.brand.name} logo`}
       width={300}
       height={265}

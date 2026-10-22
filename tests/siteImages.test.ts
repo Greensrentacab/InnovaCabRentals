@@ -56,7 +56,7 @@ test('defaults reproduce the pictures the site showed before', () => {
   assert.deepEqual(v.fleet.innova.map((p) => p.src), fleetPhotos.innova.map((p) => p.src));
   assert.equal(v.fleet.ertiga[0].own, false);
   assert.equal(v.fleet.innova[0].label, fleetPhotos.innova[0].label);
-  assert.equal(v.routes.coorg.src, '/images/routes/coorg.jpg');
+  assert.equal(v.routes.coorg.src, '/images/routes/coorg.webp');
   assert.equal(v.routes.coorg.credit?.author, routePhotosByKey.coorg.author);
 });
 
@@ -111,7 +111,7 @@ test('invalid overrides are rejected with readable errors', () => {
 });
 
 test('static sources take size and credit from the catalogue, never from the browser', () => {
-  const tampered = { source: { kind: 'static', src: '/images/routes/coorg.jpg', width: 1, height: 1 }, alt: '', focus: null, credit: null };
+  const tampered = { source: { kind: 'static', src: '/images/routes/coorg.webp', width: 1, height: 1 }, alt: '', focus: null, credit: null };
   const res = parseOverrides({ 'route.coorg': { kind: 'single', desktop: tampered, mobile: null } });
   assert.ok(res.ok);
   const img = (res.value['route.coorg'] as { desktop: PlacedImage }).desktop;

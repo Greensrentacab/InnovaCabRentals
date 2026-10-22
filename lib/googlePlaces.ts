@@ -218,9 +218,28 @@ const MOCK_PLACES: LocationData[] = [
 ];
 
 /**
- * Searches places:
- * - Restricts to India (componentRestrictions: { country: 'in' })
- * - Biases to Bengaluru (50km radius or bounds)
+ * The Places library (Places API (New): AutocompleteSuggestion, Place), or
+ * null when the Google script is not loaded. Google stopped offering the
+ * legacy AutocompleteService / PlacesService to new Cloud projects (March 2025).
+ */
+async function placesLibrary(): Promise<any | null> {
+  const maps = typeof window !== 'undefined' ? window.google?.maps : undefined;
+  if (!maps) return null;
+  if (maps.places?.AutocompleteSuggestion) return maps.places;
+  try {
+    return maps.importLibrary ? await maps.importLibrary('places') : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Suggestions shown by place id, so picking one reuses its search session (one billed session per pick). */
+const predictionsById = new Map<string, any>();
+
+/**
+ * Searches places (Places API (New)):
+ * - Restricts to India
+ * - Bengaluru only (airport / local rides) or biased to 50 km around Bengaluru
  * - Uses sessionToken
  * - Falls back to curated Bangalore data if Google API is offline or key unconfigured
  */
@@ -233,106 +252,70 @@ export async function searchPlaces(
   const trimmed = query.trim();
   if (!trimmed) return [];
 
-  // If real Google Maps Places is available
-  if (typeof window !== 'undefined' && window.google?.maps?.places?.AutocompleteService) {
-    return new Promise((resolve) => {
-      try {
-        const service = new window.google.maps.places.AutocompleteService();
-        
-        // Setup Bengaluru bias using Circle
-        const bengaluruCircle = new window.google.maps.Circle({
-          center: BENGALURU_COORDINATES,
-          radius: 50000, // 50 km bias
-        });
-
-        service.getPlacePredictions(
-          {
-            input: trimmed,
-            componentRestrictions: { country: 'in' }, // Restrict strictly to India
-            ...(bengaluruOnly
-              ? { locationRestriction: BENGALURU_BOUNDS } // Airport / local rides: Bengaluru only
-              : { locationBias: bengaluruCircle.getBounds() }), // Otherwise just bias to Bengaluru
-            sessionToken: sessionToken || undefined,
-          },
-          (predictions: any, status: any) => {
-            if (
-              status === window.google.maps.places.PlacesServiceStatus.OK &&
-              predictions &&
-              predictions.length > 0
-            ) {
-              const dummyDiv = document.createElement('div');
-              const placesService = new window.google.maps.places.PlacesService(dummyDiv);
-
-              // Map predictions to place details promises (or quick prediction format)
-              const inScope = bengaluruOnly ? predictions.filter((p: any) => isBengaluruAddress(p.description)) : predictions;
-              if (inScope.length === 0) {
-                resolve(fallbackSearch(trimmed, bengaluruOnly));
-                return;
-              }
-              const formatted: LocationData[] = inScope.slice(0, 5).map((p: any) => ({
-                name: p.structured_formatting?.main_text || p.description.split(',')[0] || p.description,
-                address: p.description,
-                lat: null, // Will be enriched on selection
-                lng: null,
-                _placeId: p.place_id,
-              } as LocationData & { _placeId?: string }));
-
-              resolve(formatted);
-            } else {
-              // No Google match (or the key is blocked): fall back to the local Bengaluru list
-              resolve(fallbackSearch(trimmed, bengaluruOnly));
-            }
-          }
-        );
-      } catch (err) {
-        console.warn('[googlePlaces] Error executing AutocompleteService:', err);
-        resolve(fallbackSearch(trimmed, bengaluruOnly));
-      }
-    });
-  }
-
+  const places = await placesLibrary();
   // Fallback search when Google script is not present
-  return fallbackSearch(trimmed, bengaluruOnly);
+  if (!places?.AutocompleteSuggestion) return fallbackSearch(trimmed, bengaluruOnly);
+
+  try {
+    const { suggestions } = await places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+      input: trimmed,
+      includedRegionCodes: ['in'], // Restrict strictly to India
+      language: 'en',
+      region: 'in',
+      ...(bengaluruOnly
+        ? { locationRestriction: BENGALURU_BOUNDS } // Airport / local rides: Bengaluru only
+        : { locationBias: { center: BENGALURU_COORDINATES, radius: 50000 } }), // Otherwise just bias to Bengaluru (50 km)
+      ...(sessionToken ? { sessionToken } : {}),
+    });
+
+    const predictions = (suggestions ?? []).map((s: any) => s.placePrediction).filter(Boolean);
+    const inScope = bengaluruOnly ? predictions.filter((p: any) => isBengaluruAddress(p.text?.text)) : predictions;
+    // No Google match: fall back to the local Bengaluru list
+    if (inScope.length === 0) return fallbackSearch(trimmed, bengaluruOnly);
+
+    return inScope.slice(0, 5).map((p: any) => {
+      predictionsById.set(p.placeId, p);
+      const full: string = p.text?.text ?? '';
+      return {
+        name: p.mainText?.text || full.split(',')[0] || full,
+        address: full,
+        lat: null, // Will be enriched on selection
+        lng: null,
+        _placeId: p.placeId,
+      } as LocationData & { _placeId?: string };
+    });
+  } catch (err) {
+    // Key blocked, API not enabled or offline: keep the booking form usable
+    console.warn('[googlePlaces] Place suggestions failed, using the local list:', err);
+    return fallbackSearch(trimmed, bengaluruOnly);
+  }
 }
 
 /**
  * Fetches coordinates and the full formatted address (incl. pincode) for a
- * selected place using Place Details.
+ * selected place using Place Details. The session token travels with the
+ * suggestion (toPlace), which closes the search session.
  */
 export async function getPlaceCoordinates(
   placeId: string,
-  sessionToken?: any
+  _sessionToken?: any
 ): Promise<{ lat: number; lng: number; address?: string } | null> {
-  if (typeof window === 'undefined' || !window.google?.maps?.places?.PlacesService) {
+  const places = await placesLibrary();
+  if (!places?.Place) return null;
+
+  try {
+    const prediction = predictionsById.get(placeId);
+    const place = prediction?.toPlace ? prediction.toPlace() : new places.Place({ id: placeId });
+    await place.fetchFields({ fields: ['location', 'formattedAddress'] });
+    if (!place.location) return null;
+    return {
+      lat: place.location.lat(),
+      lng: place.location.lng(),
+      address: place.formattedAddress || undefined,
+    };
+  } catch {
     return null;
   }
-
-  return new Promise((resolve) => {
-    try {
-      const dummyDiv = document.createElement('div');
-      const service = new window.google.maps.places.PlacesService(dummyDiv);
-      service.getDetails(
-        {
-          placeId,
-          fields: ['geometry', 'formatted_address'],
-          sessionToken,
-        },
-        (place: any, status: any) => {
-          if (status === window.google.maps.places.PlacesServiceStatus.OK && place?.geometry?.location) {
-            resolve({
-              lat: place.geometry.location.lat(),
-              lng: place.geometry.location.lng(),
-              address: place.formatted_address || undefined,
-            });
-          } else {
-            resolve(null);
-          }
-        }
-      );
-    } catch {
-      resolve(null);
-    }
-  });
 }
 
 /** Indian pincode, e.g. "560066" or "560 066" */

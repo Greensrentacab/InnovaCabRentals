@@ -1,5 +1,5 @@
 /**
- * Core Type Definitions for Innova Cab Rentals
+ * Core Type Definitions for Innova Cabs Bangalore
  * Sourced from PROJECT_CONTEXT.md and business requirements.
  */
 

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, Phone } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
-import PageHero from '@/components/ds/PageHero';
+import SimpleHero from '@/components/ds/SimpleHero';
 import CtaBand from '@/components/ds/CtaBand';
 import FaqAccordion from '@/components/home/FaqAccordion';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -28,7 +28,7 @@ const categorizedFaqs = [
     category: 'Booking & Confirmation (Core FAQs)',
     items: [
       {
-        q: 'How do I book an Innova cab with Innova Cab Rentals?',
+        q: 'How do I book an Innova cab with Innova Cabs Bangalore?',
         a: 'You can call us directly or click our WhatsApp button to get an instant quote and booking confirmation. You can also submit the booking request form on our contact page, and our dispatch team will confirm your vehicle via a pre-filled WhatsApp link or call.',
       },
       {
@@ -118,29 +118,11 @@ export default function FaqPage() {
           ),
         }}
       />
-      <PageHero
+      <SimpleHero
         breadcrumbs={[{ label: 'FAQ' }]}
-        eyebrow="Customer Knowledge Base"
         title="Frequently Asked Questions"
-        lead={
-          <>
-            <p className="font-bold text-brand-700">Clear, Honest &amp; Transparent Answers</p>
-            <p className="mt-3">
-              Everything you need to know about our Toyota Innova car rentals in Bangalore — from booking procedures and
-              luggage limits to toll policies and outstation terms.
-            </p>
-          </>
-        }
-      >
-        <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <a href={siteConfig.contact.phone.tel} className="btn-primary">
-            <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}
-          </a>
-          <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
-          </a>
-        </div>
-      </PageHero>
+        lead="Everything you need to know about our Toyota Innova car rentals in Bangalore, from booking procedures and luggage limits to toll policies and outstation terms."
+      />
 
       <section className="section py-12 sm:py-16">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">

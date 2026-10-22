@@ -6,7 +6,7 @@ import { withSeo } from '@/lib/seo';
 
 export const metadata: Metadata = withSeo({
   title: `Sign In | ${siteConfig.brand.name}`,
-  description: 'Sign in to Innova Cab Rentals with Google or email to confirm bookings and track your trips.',
+  description: 'Sign in to Innova Cabs Bangalore with Google or email to confirm bookings and track your trips.',
   alternates: { canonical: '/signin' },
   robots: { index: false, follow: true },
 });

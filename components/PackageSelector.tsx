@@ -36,7 +36,7 @@ export default function PackageSelector({ packages, vehicles, vehiclePhotos }: P
   return (
     <div>
       {/* 1. What kind of rental */}
-      <div role="tablist" aria-label="Rental type" className="mx-auto grid max-w-2xl grid-cols-2 gap-2.5 sm:gap-3">
+      <div role="tablist" aria-label="Rental type" className="grid grid-cols-2 gap-2.5 sm:gap-3">
         {[
           { value: 'packages' as const, icon: Clock, title: '8 Hr & 12 Hr', hint: 'Hourly city packages' },
           { value: 'point-to-point' as const, icon: Navigation, title: 'Point-to-Point', hint: 'One-way city rides' },
@@ -73,7 +73,7 @@ export default function PackageSelector({ packages, vehicles, vehiclePhotos }: P
 
       {/* 2. Which car (packages only) */}
       {activeTab === 'packages' && vehicles.length > 1 && (
-        <div className="mx-auto mt-6 max-w-2xl">
+        <div className="mt-6">
           <p className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Choose your car</p>
           <div role="radiogroup" aria-label="Vehicle" className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
             {vehicles.map((v) => {
@@ -161,7 +161,7 @@ export default function PackageSelector({ packages, vehicles, vehiclePhotos }: P
           })}
         </div>
       ) : (
-        <div key="p2p" className="card-float mx-auto mt-10 max-w-2xl animate-panel-in p-6 text-center sm:p-10">
+        <div key="p2p" className="card-float mt-10 animate-panel-in p-6 text-center sm:p-10">
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-live-500/10 text-live-600">
             <Navigation className="h-6 w-6" />
           </span>

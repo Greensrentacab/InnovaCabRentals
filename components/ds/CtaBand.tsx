@@ -29,15 +29,15 @@ export default function CtaBand({
             <h2 className="text-balance text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h2>
             <p className="mt-2 text-slate-300">{subtitle ?? <>&ldquo;{siteConfig.brand.closingLine}&rdquo;</>}</p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <BookButton service={service} className="btn group bg-white text-ink hover:-translate-y-0.5">
+          <div className="flex flex-col gap-2 sm:flex-row md:grid md:w-[23rem] md:shrink-0 md:grid-cols-2 md:gap-3">
+            <BookButton service={service} className="btn group whitespace-nowrap bg-white text-ink hover:-translate-y-0.5 md:col-span-2 md:h-14 md:text-base md:shadow-[0_12px_30px_-12px_rgba(255,255,255,0.45)]">
               Get instant fare
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </BookButton>
-            <a href={siteConfig.contact.phone.tel} className="btn border border-white/20 bg-white/10 text-white hover:bg-white/15">
+            <a href={siteConfig.contact.phone.tel} className="btn whitespace-nowrap border border-white/25 bg-white/10 text-white hover:bg-white/15 md:h-12">
               <Phone className="h-4 w-4" /> Call 24/7
             </a>
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp whitespace-nowrap md:h-12">
               <WhatsAppIcon className="h-4 w-4" /> WhatsApp
             </a>
           </div>

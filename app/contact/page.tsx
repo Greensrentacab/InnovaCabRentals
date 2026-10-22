@@ -1,7 +1,7 @@
 import { Clock, Mail, MapPin, Phone } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import ContactEnquiryForm from '@/components/ContactEnquiryForm';
-import PageHero from '@/components/ds/PageHero';
+import SimpleHero from '@/components/ds/SimpleHero';
 import { siteConfig } from '@/lib/siteConfig';
 import type { Metadata } from 'next';
 import { withSeo } from '@/lib/seo';
@@ -71,61 +71,60 @@ export default function ContactPage() {
 
   return (
     <div className="bg-porcelain">
-      <PageHero
+      <SimpleHero
         breadcrumbs={[{ label: 'Contact' }]}
-        eyebrow="24/7 Customer Care & Cab Dispatch Desk"
         title="Contact Us & Booking Request"
-        lead={
-          <>
-            <p className="font-bold text-brand-700">{siteConfig.brand.closingLine}</p>
-            <p className="mt-3">
-              Need an instant quote or immediate cab assignment? Call or message our dispatch team directly on WhatsApp, or
-              submit your trip request below.
-            </p>
-          </>
-        }
-        aside={<ContactEnquiryForm />}
-      >
-        <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <a href={siteConfig.contact.phone.tel} className="btn-primary">
-            <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}
-          </a>
-          <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
-            <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
-          </a>
-        </div>
+        lead="Need an instant quote or immediate cab assignment? Call or message our dispatch team directly on WhatsApp, or submit your trip request below."
+      />
 
-        {/* Official business details — NAP must match Google Business Profile */}
-        <div className="card-float mt-8 p-6">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Official business details</p>
-          <h2 className="mt-1 text-lg font-extrabold tracking-tight">Direct Communication</h2>
-          <ul className="mt-4 space-y-4">
-            {rows.map(({ icon: Icon, tile, label, value, hint }) => (
-              <li key={label} className="flex items-start gap-3.5">
-                <span className={`${iconTile} ${tile}`}>
-                  <Icon className="h-5 w-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
-                  {value}
-                  <p className="text-xs text-slate-500">{hint}</p>
-                </div>
-              </li>
-            ))}
-            <li className="flex items-start gap-3.5 border-t border-slate-100 pt-4">
-              <span className={`${iconTile} bg-brand-50 text-brand-700`}>
-                <MapPin className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Dispatch &amp; Garage Address</p>
-                <address className="mt-0.5 text-sm not-italic leading-relaxed text-slate-700">
-                  {siteConfig.contact.address.full}
-                </address>
-              </div>
-            </li>
-          </ul>
+      <section className="section py-10 sm:py-14">
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,460px)] lg:gap-12">
+          <div className="min-w-0">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <a href={siteConfig.contact.phone.tel} className="btn-primary">
+                <Phone className="h-4 w-4" /> Call {siteConfig.contact.phone.display}
+              </a>
+              <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+                <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
+              </a>
+            </div>
+    
+            {/* Official business details — NAP must match Google Business Profile */}
+            <div className="card-float mt-8 p-6">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Official business details</p>
+              <h2 className="mt-1 text-lg font-extrabold tracking-tight">Direct Communication</h2>
+              <ul className="mt-4 space-y-4">
+                {rows.map(({ icon: Icon, tile, label, value, hint }) => (
+                  <li key={label} className="flex items-start gap-3.5">
+                    <span className={`${iconTile} ${tile}`}>
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
+                      {value}
+                      <p className="text-xs text-slate-500">{hint}</p>
+                    </div>
+                  </li>
+                ))}
+                <li className="flex items-start gap-3.5 border-t border-slate-100 pt-4">
+                  <span className={`${iconTile} bg-brand-50 text-brand-700`}>
+                    <MapPin className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Dispatch &amp; Garage Address</p>
+                    <address className="mt-0.5 text-sm not-italic leading-relaxed text-slate-700">
+                      {siteConfig.contact.address.full}
+                    </address>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="min-w-0 lg:sticky lg:top-28">
+            <ContactEnquiryForm />
+          </div>
         </div>
-      </PageHero>
+      </section>
 
       {/* Google Business location placeholder (required label) */}
       <section className="section pb-20 pt-4">

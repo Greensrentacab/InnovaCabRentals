@@ -1,5 +1,5 @@
 /**
- * siteConfig.ts - Single Source of Truth for Innova Cab Rentals.
+ * siteConfig.ts - Single Source of Truth for Innova Cabs Bangalore.
  * 
  * Sourced directly from PROJECT_CONTEXT.md.
  * Every component across the application MUST import and consume contact info,
@@ -23,7 +23,7 @@ export interface Testimonial {
 
 export const siteConfig = {
   brand: {
-    name: 'Innova Cab Rentals',
+    name: 'Innova Cabs Bangalore',
     /** Text beside the logo in the site header (client request) */
     headerName: 'Innova Cabs Bangalore',
     tagline: 'Innova, Innova Crysta, Hycross & Ertiga cab rental in Bangalore',

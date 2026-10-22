@@ -6,7 +6,7 @@ import { withSeo } from '@/lib/seo';
 
 export const metadata: Metadata = withSeo({
   title: `Create Account | ${siteConfig.brand.name}`,
-  description: 'Create your Innova Cab Rentals account with Google or email to book faster and track your trips.',
+  description: 'Create your Innova Cabs Bangalore account with Google or email to book faster and track your trips.',
   alternates: { canonical: '/signup' },
   robots: { index: false, follow: true },
 });

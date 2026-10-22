@@ -1,6 +1,6 @@
 # Design System Specification & Frontend Blueprint
 
-> **Product:** Innova Cab Rentals — premium chauffeur-driven Toyota Innova & Innova Crysta rentals, Bangalore.
+> **Product:** Innova Cabs Bangalore — premium chauffeur-driven Toyota Innova & Innova Crysta rentals, Bangalore.
 > **Stack the spec is written for:** React 18 + TypeScript, Tailwind CSS 3.4, Framer Motion 11, Lucide React icons.
 > **Purpose:** the single source of truth for re-implementing this exact interface in another codebase. Every class string below is copied from the production components. Where a value comes from Tailwind's default theme, its resolved value is given so the design can also be rebuilt without Tailwind.
 
@@ -444,7 +444,7 @@ Sizes: default `px-5 py-3 text-sm`; header compact `px-5 py-2.5`; wide CTA `w-fu
         <!-- Car icon h-5 w-5, strokeWidth 2.2 -->
       </span>
       <span class="leading-none">
-        <span class="block text-[15px] font-extrabold tracking-tight text-ink">Innova Cab Rentals</span>
+        <span class="block text-[15px] font-extrabold tracking-tight text-ink">Innova Cabs Bangalore</span>
         <span class="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-700">
           <!-- Crown h-2.5 w-2.5 --> Premium · Bangalore
         </span>

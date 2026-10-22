@@ -4,7 +4,7 @@ import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
 
 export const metadata = {
-  title: 'Coming Soon | Innova Cab Rentals',
+  title: 'Coming Soon | Innova Cabs Bangalore',
   robots: 'noindex, nofollow',
 };
 

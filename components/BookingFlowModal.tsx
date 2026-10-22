@@ -21,6 +21,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertCircle,
   ArrowLeft,
@@ -79,18 +80,39 @@ export default function BookingFlowModal() {
     setPhone(state.customerPhone || defaultPhone);
   }, [state.customerName, state.customerPhone, state.isOpen, defaultName, defaultPhone]);
 
-  // Esc closes; body scroll locked while open
+  // Desktop: when the page has the hero booking card (#booking-flow-host) the flow opens inside
+  // that card. Phones, and pages without the card, keep the full-screen / popup layout.
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!state.isOpen) {
+      setHost(null);
+      return;
+    }
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const pick = () => setHost(mq.matches ? document.getElementById('booking-flow-host') : null);
+    pick();
+    mq.addEventListener('change', pick);
+    return () => mq.removeEventListener('change', pick);
+  }, [state.isOpen]);
+  const inCard = host !== null;
+
+  // Bring the hero card into view when the flow opens in it
+  useEffect(() => {
+    if (host) host.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [host]);
+
+  // Esc closes; body scroll locked while open as a full-screen popup
   useEffect(() => {
     if (!state.isOpen) return;
     const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    if (!inCard) document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && closeBookingFlow();
     document.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prev;
       document.removeEventListener('keydown', onKey);
     };
-  }, [state.isOpen, closeBookingFlow]);
+  }, [state.isOpen, inCard, closeBookingFlow]);
 
   if (!state.isOpen) return null;
 
@@ -151,9 +173,27 @@ export default function BookingFlowModal() {
     .filter(Boolean)
     .join(' → ');
 
-  return (
-    <div className="ds-scope fixed inset-0 z-[60] bg-porcelain" role="dialog" aria-modal="true" aria-labelledby="booking-flow-title">
-      <div className="mx-auto flex h-full w-full max-w-2xl flex-col bg-white md:border-x md:border-slate-100 md:shadow-float">
+  const content = (
+    <div
+      className={cn(
+        'ds-scope',
+        inCard
+          ? 'absolute inset-x-0 top-4 z-30 h-[max(calc(100%-1rem),640px)]'
+          : 'fixed inset-0 z-[60] bg-porcelain md:flex md:items-center md:justify-center md:bg-slate-950/60 md:p-6 md:backdrop-blur-sm'
+      )}
+      role="dialog"
+      aria-modal={!inCard}
+      aria-labelledby="booking-flow-title"
+    >
+      {/* Desktop hero: fills the booking card. Phones: full screen. Other desktop pages: a centered popup */}
+      <div
+        className={cn(
+          'flex flex-col bg-white',
+          inCard
+            ? 'h-full w-full overflow-hidden rounded-3xl border border-slate-200 shadow-float'
+            : 'mx-auto h-full w-full max-w-2xl md:h-[min(92vh,860px)] md:overflow-hidden md:rounded-3xl md:border md:border-slate-200 md:shadow-2xl'
+        )}
+      >
           {/* Header */}
           <div className="shrink-0 border-b border-slate-100 px-5 pb-4 pt-5 md:px-8">
             <div className="flex items-start justify-between gap-3">
@@ -722,6 +762,8 @@ export default function BookingFlowModal() {
       </div>
     </div>
   );
+
+  return host ? createPortal(content, host) : content;
 }
 
 function SummaryRow({ label, value }: { label: string; value: string }) {

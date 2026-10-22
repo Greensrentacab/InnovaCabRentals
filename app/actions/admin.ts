@@ -3,7 +3,7 @@
 /**
  * admin.ts
  * 
- * Server actions powering the Innova Cab Rentals Admin Console.
+ * Server actions powering the Innova Cabs Bangalore Admin Console.
  * Handles:
  * - Admin Authentication
  * - Dispatch & Bookings Lifecycle (PENDING -> CONFIRMED -> DRIVER_ASSIGNED -> etc.)

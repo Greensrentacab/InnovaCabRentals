@@ -4,8 +4,8 @@ This is a standard Next.js 14 (App Router) app. Vercel detects it automatically.
 
 ## 1. Push the code
 
-Commit and push this folder to GitHub (the repo already has the `origin` remote
-`github.com/rahulskiran/InnovaCabRentals`).
+Commit and push this folder to GitHub (the repo remote
+`github.com/Greensrentacab/InnovaCabRentals`).
 
 ## 2. Import into Vercel
 

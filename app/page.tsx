@@ -188,7 +188,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="relative z-10 -mt-[100px] min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:pt-4">
+          <div id="booking-flow-host" className="relative z-10 -mt-[100px] min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:pt-4">
             <QuickBookingWidget {...widgetData} />
 
           </div>

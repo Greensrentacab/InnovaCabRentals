@@ -45,6 +45,10 @@ export const siteConfig = {
       postalCode: '560077',
       country: 'IN',
       full: '25, 2nd Cross St, Muniyappa Layout, Nagenahalli, Narayanapura, Bengaluru, Karnataka 560077',
+      /** Office pin (client's Google Maps link) */
+      mapUrl: 'https://maps.app.goo.gl/urTUHiz3NyqnTMKAA',
+      lat: 13.074545,
+      lng: 77.644942,
     },
     hours: 'Open 24/7',
   },

@@ -1120,7 +1120,7 @@ export default function QuickBookingWidget({
           <div className={cn('shimmer h-[56px] rounded-2xl', showReturn && 'col-span-2')} />
         )}
 
-        <label className="field relative flex min-h-[56px] cursor-pointer items-center gap-2 px-3.5 py-2 focus-within:border-brand-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-brand-500/10">
+        <label className="field relative flex min-h-[56px] cursor-pointer items-center gap-2 px-3.5 py-2 focus-within:border-slate-300 focus-within:bg-white">
           
           <span className="min-w-0 flex-1 leading-tight">
             <span className="block truncate text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">Pickup time</span>

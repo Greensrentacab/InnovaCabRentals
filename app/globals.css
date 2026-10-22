@@ -28,6 +28,15 @@
   .ds-scope :focus-visible {
     @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white;
   }
+  /* Text boxes show no blue ring or border while typing (buttons and links keep the keyboard ring) */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):focus,
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):focus-visible,
+  textarea:focus,
+  textarea:focus-visible,
+  select:focus,
+  select:focus-visible {
+    @apply outline-none ring-0 ring-offset-0;
+  }
 }
 
 @layer components {
@@ -49,13 +58,13 @@
   .btn-whatsapp { @apply btn bg-whatsapp text-white hover:-translate-y-0.5 hover:brightness-95; }
 
   /* Fields */
-  .field       { @apply w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-ink placeholder:text-slate-400 transition-colors duration-200 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10; }
+  .field       { @apply w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-sm font-medium text-ink placeholder:text-slate-400 transition-colors duration-200 focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-0; }
   .field-error { @apply border-rose-300 bg-rose-50/50 focus:border-rose-400 focus:ring-rose-500/10; }
   .label       { @apply mb-1.5 block text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500; }
 
   /* Admin console */
   .adm-card  { @apply rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)]; }
-  .adm-field { @apply w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm font-medium text-ink placeholder:text-slate-400 transition-colors focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10; }
+  .adm-field { @apply w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm font-medium text-ink placeholder:text-slate-400 transition-colors focus:border-slate-300 focus:bg-white focus:outline-none focus:ring-0; }
   .adm-label { @apply mb-1.5 block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500; }
   .adm-btn   { @apply inline-flex min-h-[44px] select-none items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all duration-200 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 sm:min-h-[40px]; }
   .adm-btn-primary { @apply adm-btn bg-brand-600 text-white shadow-sm hover:bg-brand-700; }

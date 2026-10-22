@@ -1,4 +1,4 @@
-import { Clock, Mail, MapPin, Phone } from 'lucide-react';
+import { Clock, Mail, MapPin, Navigation, Phone } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import ContactEnquiryForm from '@/components/ContactEnquiryForm';
 import SimpleHero from '@/components/ds/SimpleHero';
@@ -126,25 +126,30 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Google Business location placeholder (required label) */}
+      {/* Office location on the map */}
       <section className="section pb-20 pt-4">
-        <div className="card-float overflow-hidden p-6">
-          <div className="flex items-center justify-between gap-3">
+        <div className="card-float overflow-hidden p-4 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="flex items-center gap-2 text-sm font-extrabold">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
                 <MapPin className="h-4 w-4" />
               </span>
-              Google Business Location
+              Our Location
             </p>
-            <span className="pill">Bangalore, KA 560077</span>
+            <a href={siteConfig.contact.address.mapUrl} target="_blank" rel="noopener noreferrer" className="btn-primary px-4 py-2.5 text-sm">
+              <Navigation className="h-4 w-4" /> Get directions
+            </a>
           </div>
-          <div className="relative mt-4 flex h-56 flex-col items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50 p-6 text-center">
-            <div className="pointer-events-none absolute inset-0 bg-grid-slate [background-size:32px_32px]" />
-            <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-glow">
-              <MapPin className="h-6 w-6" />
-            </span>
-            <p className="relative mt-3 text-sm font-bold text-ink">Add map link once the Google Business Profile exists</p>
-            <p className="relative mt-1 max-w-sm text-xs text-slate-500">{siteConfig.contact.address.full}</p>
+          <p className="mt-3 text-sm text-slate-600">{siteConfig.contact.address.full}</p>
+          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-100">
+            <iframe
+              title={`${siteConfig.brand.name} location on Google Maps`}
+              src={`https://maps.google.com/maps?q=${siteConfig.contact.address.lat},${siteConfig.contact.address.lng}&z=16&output=embed`}
+              className="block h-72 w-full sm:h-96"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
           </div>
         </div>
       </section>

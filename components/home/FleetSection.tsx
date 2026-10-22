@@ -47,10 +47,10 @@ export default function FleetSection({ vehicles }: { vehicles: FleetCardData[] }
         </Link>
       </div>
 
-      {/* Phones: compact 2 x 2 cards (same style as the fare results) */}
-      <div className="mt-5 grid grid-cols-2 gap-3 md:hidden">
+      {/* Phones: compact cards (same style as the fare results) in a swipeable horizontal row */}
+      <div className="no-scrollbar -mx-4 mt-5 flex scroll-px-4 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-3 sm:-mx-6 sm:scroll-px-6 sm:px-6 md:hidden">
         {vehicles.map((v) => (
-          <article key={v.id} className="card-float flex min-w-0 flex-col overflow-hidden rounded-3xl">
+          <article key={v.id} className="card-float flex w-[72%] max-w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-3xl">
             {v.photo && (
               <Link href={v.href} className="relative block aspect-[4/3] overflow-hidden bg-slate-100" aria-label={`${v.name} details`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}

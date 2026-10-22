@@ -188,13 +188,22 @@ export default function Footer() {
         </div>
       </nav>
 
-      <div className="section mt-10 border-t border-white/10 pt-6 text-xs text-slate-500">
+      <div className="section mt-3 border-t border-white/10 pt-5 text-xs text-slate-500 md:mt-10 md:pt-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
           <p>
             © {currentYear} {siteConfig.brand.name}. All rights reserved.
           </p>
           <ul className="flex flex-wrap items-center gap-1.5" aria-label="Accepted payments">
             {siteConfig.payments.methods.map((method, i) => {
+              if (method === 'UPI') {
+                // Official UPI logo on a white chip so its dark lettering reads on the dark footer
+                return (
+                  <li key={method} className="inline-flex items-center rounded-full bg-white px-3 py-1">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/images/upi.svg" alt="UPI" width={1024} height={466} className="h-5 w-auto" />
+                  </li>
+                );
+              }
               const Icon = PAYMENT_ICONS[i] ?? Banknote;
               return (
                 <li key={method} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-medium text-slate-300">

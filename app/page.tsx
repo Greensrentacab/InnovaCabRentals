@@ -8,6 +8,10 @@ import {
   ShieldCheck,
   Radar,
   BadgeIndianRupee,
+  Award,
+  Wallet,
+  Car,
+  Clock,
   Star,
   Users,
 } from 'lucide-react';
@@ -120,10 +124,10 @@ export default async function HomePage() {
   const heroAirport = images.hero.airport;
 
   const stats = [
-    { value: `${siteConfig.trustClaims.yearsExperience.value}+ years`, label: 'Of trusted travel' },
-    { value: 'UPI · Cash', label: 'Easy payment options' },
-    { value: '4', label: 'Car models to choose from' },
-    { value: '24/7', label: 'Booking & dispatch' },
+    { icon: Award, value: `${siteConfig.trustClaims.yearsExperience.value}+ years`, label: 'Of trusted travel' },
+    { icon: Wallet, value: 'UPI · Cash', label: 'Easy payment options' },
+    { icon: Car, value: '4', label: 'Car models to choose from' },
+    { icon: Clock, value: '24/7', label: 'Booking & dispatch' },
   ];
   const testimonials = siteConfig.testimonials;
 
@@ -254,11 +258,16 @@ export default async function HomePage() {
               </div>
 
               {/* Stats */}
-              <dl className="mt-4 grid grid-cols-4 gap-1.5 sm:mt-10 sm:gap-4">
-                {stats.map((stat) => (
-                  <div key={stat.label} className="rounded-xl border border-white/10 bg-white/[0.05] px-2 py-2.5 backdrop-blur sm:rounded-2xl sm:p-6">
-                    <dt className="text-lg font-extrabold leading-none tracking-tight text-sky-300 sm:text-5xl">{stat.value}</dt>
-                    <dd className="mt-1 text-[10px] font-medium leading-tight text-slate-300 sm:mt-3 sm:text-sm">{stat.label}</dd>
+              <dl className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-10 sm:gap-4 lg:grid-cols-4">
+                {stats.map(({ icon: Icon, value, label }) => (
+                  <div key={label} className="flex min-w-0 flex-col items-start gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.09] to-white/[0.02] p-3.5 backdrop-blur sm:gap-4 sm:p-6">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-400/15 text-sky-300 ring-1 ring-sky-300/20 sm:h-12 sm:w-12">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <dt className="whitespace-nowrap text-[1.2rem] font-extrabold leading-none tracking-tight text-white min-[400px]:text-[1.4rem] sm:text-4xl lg:text-[2.6rem]">{value}</dt>
+                      <dd className="mt-1.5 text-xs font-medium leading-snug text-slate-300 sm:mt-2 sm:text-sm">{label}</dd>
+                    </div>
                   </div>
                 ))}
               </dl>

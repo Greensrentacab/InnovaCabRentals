@@ -37,7 +37,7 @@ import {
   minFare,
   routeFromFare,
 } from '@/lib/storefrontData';
-import { HeroCover, HeroLead, HeroTitle, HeroTrustList } from '@/components/home/HeroScene';
+import { HeroCover, HeroFeatures, HeroLead, HeroSub, HeroTitle } from '@/components/home/HeroScene';
 
 export const revalidate = 60; // Revalidate dynamic Firestore data every minute
 
@@ -83,8 +83,8 @@ const homeFaqs = [
     a: 'Toyota Innova (7/8 seater), Toyota Innova Crysta (luxury 7 seater with captain seats) and Maruti Suzuki Ertiga (compact 7 seater). Let us know your seating preference when booking.',
   },
   {
-    q: 'Is advance payment required to book a cab?',
-    a: 'No upfront payment or card details are required. Your booking is placed as a request (Status: PENDING) and confirmed directly with our team via a WhatsApp link or phone call.',
+    q: 'How do I pre-book a cab?',
+    a: 'Contact our team on call or WhatsApp to pre-book or reserve your cab in advance. Your booking is placed as a request and confirmed directly by our team.',
   },
   {
     q: 'Are your vehicles and drivers available 24/7 for late-night airport drops?',
@@ -120,8 +120,8 @@ export default async function HomePage() {
   const heroAirport = images.hero.airport;
 
   const stats = [
-    { value: `${siteConfig.trustClaims.yearsExperience.value} yrs`, label: 'Of premium Innova rentals' },
-    { value: '₹0', label: 'Advance payment' },
+    { value: `${siteConfig.trustClaims.yearsExperience.value}+ years`, label: 'Of trusted travel' },
+    { value: 'UPI · Cash', label: 'Easy payment options' },
     { value: '4', label: 'Car models to choose from' },
     { value: '24/7', label: 'Booking & dispatch' },
   ];
@@ -164,25 +164,22 @@ export default async function HomePage() {
                 </h1>
 
                 <span className="mt-3 block h-1 w-12 rounded-full bg-sky-300 lg:hidden" aria-hidden="true" />
-                <p className="mt-3 line-clamp-4 max-w-xl animate-fade-up text-[13px] font-medium leading-snug sm:line-clamp-none text-white [animation-delay:160ms] sm:mt-5 sm:text-lg">
+                <p className="mt-3 max-w-xl animate-fade-up text-[14px] font-semibold leading-snug text-white [animation-delay:160ms] sm:mt-5 sm:text-xl">
                   <HeroLead />
                 </p>
+                <p className="mt-1.5 max-w-xl animate-fade-up text-[12.5px] font-medium leading-snug text-white/85 [animation-delay:200ms] sm:mt-2 sm:text-base">
+                  <HeroSub />
+                </p>
 
-                {/* Phones/tablets: trust points in the hero, two per row */}
-                <HeroTrustList
-                  extraLabel={siteConfig.trustClaims.customersServed.label}
-                  className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 whitespace-nowrap text-[12px] font-semibold text-white sm:max-w-md sm:gap-y-3 sm:text-sm lg:hidden [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_2px_12px_rgba(0,0,0,0.5)]"
-                />
+                {/* Phones/tablets: four highlights for the selected tab */}
+                <HeroFeatures className="mt-4 [text-shadow:0_1px_3px_rgba(0,0,0,0.7)] lg:hidden" />
 
                 {/* Phones/tablets: room for the car in the picture */}
                 <div className="h-36 min-[420px]:h-44 sm:h-60 lg:hidden" aria-hidden="true" />
 
                 {/* Desktop: room for the car in the full-width picture, then the trust points along the bottom */}
                 <div className="hidden lg:block lg:h-[clamp(140px,26vh,300px)]" aria-hidden="true" />
-                <HeroTrustList
-                  extraLabel={siteConfig.trustClaims.customersServed.label}
-                  className="hidden items-center gap-x-6 gap-y-2 whitespace-nowrap text-[13px] font-semibold text-white lg:flex xl:text-sm [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]"
-                />
+                <HeroFeatures className="hidden max-w-2xl [text-shadow:0_1px_6px_rgba(0,0,0,0.6)] lg:grid" />
               </div>
             </div>
           </div>
@@ -341,7 +338,7 @@ export default async function HomePage() {
             <div>
               <h2 className="section-title mt-3 sm:mt-4">Ready when you are — day or night.</h2>
               <p className="mt-2 text-slate-300">
-                {siteConfig.cta.advanceBooking} — ₹0 advance and a verified chauffeur at your door.
+                Reserve your Innova in advance and enjoy comfortable, chauffeur-driven travel across Bangalore. Book your Innova today.
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">

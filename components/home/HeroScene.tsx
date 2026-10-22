@@ -14,7 +14,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { BadgeIndianRupee, Radar, ShieldCheck, Users } from 'lucide-react';
+import { BadgeIndianRupee, Building2, Car, Clock, Landmark, Mountain, Plane, Radar, ShieldCheck, UserRound, Users } from 'lucide-react';
 import { SERVICE_EVENT, type HomeService } from '@/components/home/scrollToBook';
 import { cn } from '@/lib/cn';
 // Type-only: lib/siteImages pulls in zod, which must stay out of the storefront bundle
@@ -240,20 +240,67 @@ export function HeroCover({
   );
 }
 
-const COPY: Record<HomeService, { title: string; lead: string }> = {
+const COPY: Record<HomeService, { title: string; lead: string; sub: string }> = {
   airport: {
     title: 'Innova Airport Taxi',
-    lead: 'Book Bangalore airport transfers with professional drivers and comfortable Ertiga, Innova, Crysta, and Hycross cabs. Reliable airport pickup and drop services.',
+    lead: 'Book Bangalore airport transfers with professional drivers and comfortable Ertiga, Innova, Crysta, and Hycross cabs.',
+    sub: 'Reliable airport pickup and drop services for families, business travellers, and international visitors.',
   },
   outstation: {
     title: 'Innova Outstation Cabs',
-    lead: 'Book outstation round trips from Bangalore with professional drivers and comfortable Ertiga, Innova, Crysta, and Hycross cabs. Reliable trips to hill stations, temples and beyond.',
+    lead: 'Book outstation round trips from Bangalore with professional drivers and comfortable Ertiga, Innova, Crysta, and Hycross cabs.',
+    sub: 'Reliable trips to hill stations, temples and beyond.',
   },
   local: {
     title: 'Innova Local & Hourly Cabs',
-    lead: 'Book local and hourly cab rentals in Bangalore with professional drivers and comfortable Ertiga, Innova, Crysta, and Hycross cabs. Flexible 8 hr, 12 hr and custom packages.',
+    lead: 'Book local and hourly cab rentals in Bangalore with professional drivers and comfortable Ertiga, Innova, Crysta, and Hycross cabs.',
+    sub: 'Flexible 8 hr, 12 hr and custom packages.',
   },
 };
+
+/** Highlight sets: one per service tab, plus `general` for inner pages. */
+export type HeroFeatureSet = HomeService | 'general';
+
+/** Four highlights per tab, shown as blue round icons under the copy. */
+const FEATURES: Record<HeroFeatureSet, { icon: typeof Plane; label: string }[]> = {
+  general: [
+    { icon: Plane, label: 'Airport Transfers' },
+    { icon: Mountain, label: 'Outstation Trips' },
+    { icon: Clock, label: 'Local & Hourly Rentals' },
+    { icon: UserRound, label: 'Professional Drivers' },
+  ],
+  airport: [
+    { icon: Plane, label: 'Airport Pickup & Drop' },
+    { icon: UserRound, label: 'Professional Drivers' },
+    { icon: Car, label: 'Spacious & Comfortable Cabs' },
+    { icon: ShieldCheck, label: 'Safe & Reliable Service' },
+  ],
+  outstation: [
+    { icon: Mountain, label: 'Hill Station Trips' },
+    { icon: Landmark, label: 'Temple Tour Packages' },
+    { icon: Car, label: 'Comfortable Cabs' },
+    { icon: ShieldCheck, label: 'Safe & Reliable Travel' },
+  ],
+  local: [
+    { icon: Building2, label: 'Bangalore City Tour' },
+    { icon: Clock, label: '8 Hr, 12 Hr & Custom Packages' },
+    { icon: UserRound, label: 'Professional Drivers' },
+    { icon: ShieldCheck, label: 'Comfortable & Reliable Cabs' },
+  ],
+};
+
+/** Heading text with "Bangalore" in sky blue, like the homepage heading. */
+export function HeroHeading({ text }: { text: string }) {
+  const i = text.indexOf('Bangalore');
+  if (i < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, i)}
+      <span className="text-sky-300">Bangalore</span>
+      {text.slice(i + 'Bangalore'.length)}
+    </>
+  );
+}
 
 /** Hero heading that follows the tab. Server HTML always has the main (airport) heading for SEO. */
 export function HeroTitle() {
@@ -265,9 +312,32 @@ export function HeroTitle() {
   );
 }
 
-export function HeroLead() {
-  const service = useHeroService();
-  return <>{COPY[service].lead}</>;
+export function HeroLead({ scene }: { scene?: HomeService }) {
+  const tab = useHeroService();
+  return <>{COPY[scene ?? tab].lead}</>;
+}
+
+/** Second, smaller line under the hero lead. */
+export function HeroSub({ scene }: { scene?: HomeService }) {
+  const tab = useHeroService();
+  return <>{COPY[scene ?? tab].sub}</>;
+}
+
+/** Blue round icons with labels (follow the selected tab unless `set` is given). */
+export function HeroFeatures({ className, set }: { className?: string; set?: HeroFeatureSet }) {
+  const tab = useHeroService();
+  return (
+    <ul className={cn('grid grid-cols-4 gap-2 sm:gap-4', className)}>
+      {FEATURES[set ?? tab].map(({ icon: Icon, label }) => (
+        <li key={label} className="flex flex-col items-center gap-1.5 text-center sm:gap-2">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white ring-2 ring-white/25 shadow-[0_6px_16px_-6px_rgba(0,0,0,0.5)] sm:h-14 sm:w-14">
+            <Icon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.2} />
+          </span>
+          <span className="text-[10.5px] font-bold leading-tight text-white sm:text-[13px]">{label}</span>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 /**

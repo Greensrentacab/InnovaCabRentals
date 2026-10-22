@@ -259,7 +259,7 @@ export default function TourEnquiryForm() {
 
           <p className="flex items-center justify-center gap-1.5 text-center text-xs font-medium text-slate-500">
             <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-live-600" />
-            No upfront payment required. Enquiries are saved securely to our dispatch team for custom quote preparation.
+            Enquiries are saved securely to our dispatch team for custom quote preparation.
           </p>
         </form>
       )}

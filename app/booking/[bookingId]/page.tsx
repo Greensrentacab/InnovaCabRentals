@@ -556,7 +556,7 @@ export default function BookingTrackingPage({
                 ))}
               </ul>
             )}
-            <p className="text-[11px] font-semibold text-live-600">No advance payment • Pay chauffeur directly</p>
+            <p className="text-[11px] font-semibold text-live-600">Pay by UPI or cash</p>
           </div>
         </div>
       </div>

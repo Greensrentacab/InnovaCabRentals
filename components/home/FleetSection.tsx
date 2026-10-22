@@ -47,7 +47,67 @@ export default function FleetSection({ vehicles }: { vehicles: FleetCardData[] }
         </Link>
       </div>
 
-      <div className={cn('no-scrollbar -mx-4 mt-5 flex scroll-px-4 snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain [touch-action:pan-x_pan-y] px-4 pb-3 sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:mt-10 md:grid md:grid-cols-2 md:gap-5 md:overflow-y-visible md:overflow-x-visible md:p-0', vehicles.length >= 4 ? 'xl:grid-cols-4' : 'xl:grid-cols-3')}>
+      {/* Phones: compact 2 x 2 cards (same style as the fare results) */}
+      <div className="mt-5 grid grid-cols-2 gap-3 md:hidden">
+        {vehicles.map((v) => (
+          <article key={v.id} className="card-float flex min-w-0 flex-col overflow-hidden rounded-3xl">
+            {v.photo && (
+              <Link href={v.href} className="relative block aspect-[4/3] overflow-hidden bg-slate-100" aria-label={`${v.name} details`}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={v.photo.src}
+                  srcSet={v.photo.srcSet}
+                  sizes="50vw"
+                  alt={v.photo.alt}
+                  width={v.photo.width}
+                  height={v.photo.height}
+                  loading="lazy"
+                  decoding="async"
+                  style={{ objectPosition: v.photo.position }}
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-ink shadow-sm backdrop-blur">
+                  {v.seats} + driver
+                </span>
+              </Link>
+            )}
+            <div className="flex flex-1 flex-col p-3">
+              <h3 className="line-clamp-2 text-[13px] font-extrabold leading-snug tracking-tight">{v.name}</h3>
+              <p className="mt-0.5 truncate text-[10.5px] text-slate-500">{v.type}</p>
+              <p className="mt-1.5 flex items-center gap-2.5 text-[11px] font-semibold text-slate-600">
+                <span className="flex items-center gap-1">
+                  <Users className="h-3.5 w-3.5 text-brand-600" /> {v.seats}+1
+                </span>
+                <span className="flex items-center gap-1">
+                  <Luggage className="h-3.5 w-3.5 text-brand-600" /> {v.luggage} bags
+                </span>
+              </p>
+              <dl className="mt-2 space-y-1 rounded-2xl bg-slate-50 px-2.5 py-2 ring-1 ring-slate-200/70">
+                {v.fares.map((fare, fi) => {
+                  const FareIcon = [Plane, Route, Clock][fi] ?? Clock;
+                  return (
+                    <div key={fare.label} className="flex items-center justify-between gap-1.5">
+                      <dt className="flex min-w-0 items-center gap-1 text-[10px] font-semibold text-slate-500">
+                        <FareIcon className="h-3 w-3 shrink-0 text-brand-600" aria-hidden="true" />
+                        <span className="truncate">{fare.label.replace(/\s*package/i, '')}</span>
+                      </dt>
+                      <dd className="shrink-0 text-[12px] font-extrabold tabular-nums text-ink">{fare.value.replace(/^from\s+/i, '')}</dd>
+                    </div>
+                  );
+                })}
+              </dl>
+              <div className="mt-auto grid gap-1.5 pt-3">
+                <BookButton className="btn-primary w-full !min-h-0 px-2 py-2 text-[12.5px] shadow-[0_8px_18px_-8px_rgba(56,189,248,0.8)]">Book</BookButton>
+                <Link href={v.href} className="btn-ghost w-full !min-h-0 px-2 py-2 text-[12.5px]">
+                  View details
+                </Link>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className={cn('no-scrollbar -mx-4 mt-5 hidden md:flex scroll-px-4 snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain [touch-action:pan-x_pan-y] px-4 pb-3 sm:-mx-6 sm:scroll-px-6 sm:px-6 md:mx-0 md:mt-10 md:grid md:grid-cols-2 md:gap-5 md:overflow-y-visible md:overflow-x-visible md:p-0', vehicles.length >= 4 ? 'xl:grid-cols-4' : 'xl:grid-cols-3')}>
         {vehicles.map((v, i) => (
           <Reveal key={v.id} delay={i * 0.1} className="h-full w-[76%] shrink-0 snap-start max-md:max-w-[300px] md:w-auto">
             <article className="card-float card-float-hover relative max-md:shadow-none flex h-full flex-col overflow-hidden">
@@ -137,7 +197,7 @@ export default function FleetSection({ vehicles }: { vehicles: FleetCardData[] }
                 <thead>
                   <tr>
                     <th className="sticky left-0 z-20 w-[96px] min-w-[96px] border-b border-slate-100 bg-white px-3 py-3 align-bottom text-[10px] font-bold uppercase tracking-wide text-slate-400 md:w-[22%] md:px-4">
-                      Feature
+                      Vehicle types
                     </th>
                     {vehicles.map((v) => (
                       <th key={v.id} className="min-w-[132px] border-b border-slate-100 bg-slate-50/70 px-3 py-3 align-top md:px-4">

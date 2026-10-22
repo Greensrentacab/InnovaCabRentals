@@ -11,7 +11,7 @@ export const metadata: Metadata = withSeo({
   alternates: { canonical: '/ertiga-rental-bangalore' },
   title: 'Ertiga Rental Bangalore | Ertiga Cab with Driver',
   description:
-    'Rent a Maruti Suzuki Ertiga with driver in Bangalore. Economical, comfortable 7 seater for airport transfers, local city hire and outstation round trips. No advance payment; tolls paid by customer.',
+    'Rent a Maruti Suzuki Ertiga with driver in Bangalore. Economical, comfortable 7 seater for airport transfers, local city hire and outstation round trips. Contact our team to pre-book; tolls paid by customer.',
   keywords: [
     'Ertiga Rental Bangalore',
     'Ertiga Cab Bangalore',

@@ -9,8 +9,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { BreadcrumbJsonLd } from '@/components/seo/JsonLd';
-import { HeroCover } from '@/components/home/HeroScene';
-import { ArrowRight, ChevronRight, Clock, MapPin, Phone, Radar, ShieldCheck, Users, BadgeIndianRupee } from 'lucide-react';
+import { HeroCover, HeroFeatures, HeroHeading, HeroLead, HeroSub } from '@/components/home/HeroScene';
+import { ArrowRight, ChevronRight, Clock, MapPin, Phone, ShieldCheck } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import PackageSelector from '@/components/PackageSelector';
 import QuickBookingWidget from '@/components/home/QuickBookingWidget';
@@ -140,7 +140,7 @@ export default async function LandingTemplate({
             {/* Phones/tablets: picture runs edge to edge from the top with the copy on it */}
             <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
               <HeroCover scene={serviceType} images={images.hero} className="lg:hidden" />
-              <div className="relative max-lg:[text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_2px_16px_rgba(0,0,0,0.45)]">
+              <div className="relative [text-shadow:0_1px_3px_rgba(0,0,0,0.65),0_2px_18px_rgba(0,0,0,0.5)]">
                 <BreadcrumbJsonLd items={[{ label: breadcrumb }]} />
                 <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs font-semibold text-white/80 [text-shadow:none]">
                   <Link href="/" className="hover:text-white">
@@ -161,12 +161,15 @@ export default async function LandingTemplate({
                 </span>
 
                 <h1 className="text-balance mt-0 animate-fade-up text-[2.15rem] font-extrabold leading-[1.02] tracking-tight text-white [animation-delay:80ms] sm:mt-6 sm:text-5xl lg:text-[3.25rem]">
-                  {title}
+                  <HeroHeading text={title} />
                 </h1>
 
                 <span className="mt-3 block h-1 w-12 rounded-full bg-sky-300 lg:hidden" aria-hidden="true" />
-                <p className="mt-3 line-clamp-4 max-w-xl animate-fade-up text-[13px] font-medium leading-snug text-white [animation-delay:160ms] sm:mt-5 sm:line-clamp-none sm:text-lg">
-                  {subtitle}
+                <p className="mt-3 max-w-xl animate-fade-up text-[14px] font-semibold leading-snug text-white [animation-delay:160ms] sm:mt-5 sm:text-xl">
+                  <HeroLead scene={serviceType} />
+                </p>
+                <p className="mt-1.5 max-w-xl animate-fade-up text-[12.5px] font-medium leading-snug text-white/85 [animation-delay:200ms] sm:mt-2 sm:text-base">
+                  <HeroSub scene={serviceType} />
                 </p>
 
                 {heroNotice && (
@@ -176,26 +179,15 @@ export default async function LandingTemplate({
                   </p>
                 )}
 
-                {/* Trust points: two per row on phones, one open row on desktop */}
-                <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 whitespace-nowrap text-[12px] font-semibold text-white sm:max-w-md sm:text-sm lg:mt-7 lg:flex lg:max-w-none lg:flex-wrap lg:items-center lg:gap-x-6 lg:gap-y-2 lg:[text-shadow:0_1px_6px_rgba(0,0,0,0.6)] max-lg:[text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_2px_12px_rgba(0,0,0,0.5)]">
-                  {[
-                    { icon: ShieldCheck, tone: 'text-emerald-300', label: 'Verified drivers' },
-                    serviceType === 'airport'
-                      ? { icon: Radar, tone: 'text-sky-300', label: 'Flight tracking' }
-                      : { icon: Clock, tone: 'text-sky-300', label: siteConfig.contact.hours },
-                    { icon: BadgeIndianRupee, tone: 'text-sky-300', label: 'Transparent price' },
-                  ].map(({ icon: Icon, tone, label }) => (
-                    <li key={label} className="flex items-center gap-2">
-                      <Icon className={`h-[18px] w-[18px] shrink-0 ${tone}`} /> {label}
-                    </li>
-                  ))}
-                  <li className="flex items-center gap-2">
-                    <Users className="h-[18px] w-[18px] shrink-0 text-sky-300" /> {siteConfig.trustClaims.customersServed.label}
-                  </li>
-                </ul>
+                {/* Phones/tablets: four highlights for this service */}
+                <HeroFeatures set={serviceType} className="mt-4 [text-shadow:0_1px_3px_rgba(0,0,0,0.7)] lg:hidden" />
 
-                {/* Room for the car in the picture */}
-                <div className="h-12 sm:h-48 lg:h-[clamp(120px,22vh,260px)]" aria-hidden="true" />
+                {/* Phones/tablets: room for the car in the picture */}
+                <div className="h-36 min-[420px]:h-44 sm:h-60 lg:hidden" aria-hidden="true" />
+
+                {/* Desktop: room for the car, then the highlights along the bottom */}
+                <div className="hidden lg:block lg:h-[clamp(140px,26vh,300px)]" aria-hidden="true" />
+                <HeroFeatures set={serviceType} className="hidden max-w-2xl [text-shadow:0_1px_6px_rgba(0,0,0,0.6)] lg:grid" />
               </div>
             </div>
           </div>

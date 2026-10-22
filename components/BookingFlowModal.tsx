@@ -421,7 +421,7 @@ export default function BookingFlowModal() {
                           </p>
                         </div>
                         <span className="inline-flex items-center gap-1 rounded-full bg-live-500/10 px-2.5 py-1 text-[11px] font-bold text-live-600">
-                          <Check className="h-3 w-3" strokeWidth={3} /> ₹0 advance
+                          <Check className="h-3 w-3" strokeWidth={3} /> UPI · Cash
                         </span>
                       </div>
                       {/* How the fare was worked out (same lines the server priced) */}
@@ -512,9 +512,9 @@ export default function BookingFlowModal() {
                   <>
                     <div>
                       <h3 className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
-                        <LockKeyhole className="h-4 w-4 text-brand-600" /> Sign in to confirm
+                        <LockKeyhole className="h-4 w-4 text-brand-600" /> Create an account to confirm
                       </h3>
-                      <p className="text-xs text-slate-500">Your trip is saved. Sign in to send the request and get your receipt.</p>
+                      <p className="text-xs text-slate-500">Your trip is saved. Sign up in a few seconds to send the request and get your receipt. Already have an account? Sign in below.</p>
                     </div>
 
                     {/* Mini trip recap */}
@@ -531,7 +531,7 @@ export default function BookingFlowModal() {
                     </div>
 
                     <div className="rounded-xl border border-slate-200/80 p-3">
-                      <p className="text-xs font-bold text-ink">Why sign in?</p>
+                      <p className="text-xs font-bold text-ink">Why create an account?</p>
                       <ul className="mt-1.5 space-y-1">
                         {[
                           'We email your booking receipt.',
@@ -546,7 +546,7 @@ export default function BookingFlowModal() {
                       </ul>
                     </div>
 
-                    <AuthPanel idPrefix="bf-auth" initialMode="signin" compact />
+                    <AuthPanel idPrefix="bf-auth" initialMode="signup" compact />
                   </>
                 )}
               </div>

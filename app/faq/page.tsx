@@ -40,8 +40,8 @@ const categorizedFaqs = [
         a: 'Yes! Both 7-seater models (featuring plush executive captain chairs in the middle row) and 8-seater models (continuous bench seating) are available. Let us know your seating preference when reserving.',
       },
       {
-        q: 'Is advance payment required to book a cab?',
-        a: 'No upfront payment or credit card details are required. Your booking is placed as a request (Status: PENDING) and confirmed directly with our dispatch manager via WhatsApp or phone.',
+        q: 'How do I pre-book a cab?',
+        a: 'Contact our team on call or WhatsApp to pre-book or reserve your cab in advance. Your booking is placed as a request (Status: PENDING) and confirmed directly with our dispatch manager via WhatsApp or phone.',
       },
       {
         q: 'Are your vehicles and drivers available 24/7 for late-night airport drops?',
@@ -81,7 +81,7 @@ const categorizedFaqs = [
       },
       {
         q: 'What is your cancellation or rescheduling policy?',
-        a: 'We understand travel plans can shift unexpectedly. Please notify us at least 4 hours prior to the scheduled pickup time for free cancellation or rescheduling.',
+        a: 'We understand travel plans can shift unexpectedly. Please contact our team as early as possible before the scheduled pickup. See our Terms & Conditions for cancellation and rescheduling.',
       },
     ],
   },

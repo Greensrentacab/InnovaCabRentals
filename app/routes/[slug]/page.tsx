@@ -8,7 +8,7 @@ import FaqAccordion from '@/components/home/FaqAccordion';
 import Reveal from '@/components/home/Reveal';
 import { BreadcrumbJsonLd } from '@/components/seo/JsonLd';
 import { withSeo } from '@/lib/seo';
-import { HeroCover } from '@/components/home/HeroScene';
+import { HeroCover, HeroFeatures, HeroHeading, HeroLead, HeroSub } from '@/components/home/HeroScene';
 import SectionHeading, { Hairline } from '@/components/ds/SectionHeading';
 import CtaBand from '@/components/ds/CtaBand';
 import { PhotoCredit } from '@/components/ds/VehiclePhotoCard';
@@ -433,7 +433,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
           <div className="relative min-w-0 lg:col-start-1 lg:row-start-1 lg:pt-4">
             <div className="relative -mx-4 px-4 pb-14 pt-[6rem] sm:-mx-6 sm:px-6 sm:pt-28 lg:mx-0 lg:overflow-visible lg:p-0">
               <HeroCover scene={heroScene} images={images.hero} className="lg:hidden" />
-              <div className="relative max-lg:[text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_2px_16px_rgba(0,0,0,0.45)]">
+              <div className="relative [text-shadow:0_1px_3px_rgba(0,0,0,0.65),0_2px_18px_rgba(0,0,0,0.5)]">
                 <BreadcrumbJsonLd items={[{ label: 'Outstation Routes', href: '/routes' }, { label: customDetails.h1 }]} />
                 <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs font-semibold text-white/80 [text-shadow:none]">
                   <Link href="/" className="hover:text-white">Home</Link>
@@ -441,25 +441,20 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
                   <Link href="/routes" className="hover:text-white">Outstation Routes</Link>
                 </nav>
                 <h1 className="text-balance animate-fade-up text-[2.15rem] font-extrabold leading-[1.02] tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">
-                  {customDetails.h1}
+                  <HeroHeading text={customDetails.h1} />
                 </h1>
                 <span className="mt-3 block h-1 w-12 rounded-full bg-sky-300 lg:hidden" aria-hidden="true" />
-                <p className="mt-3 max-w-xl animate-fade-up text-[13px] font-medium leading-snug text-white [animation-delay:160ms] sm:mt-5 sm:text-lg">
-                  {customDetails.tagline}
+                <p className="mt-3 max-w-xl animate-fade-up text-[14px] font-semibold leading-snug text-white [animation-delay:160ms] sm:mt-5 sm:text-xl">
+                  <HeroLead scene={heroScene} />
+                </p>
+                <p className="mt-1.5 max-w-xl animate-fade-up text-[12.5px] font-medium leading-snug text-white/85 [animation-delay:200ms] sm:mt-2 sm:text-base">
+                  <HeroSub scene={heroScene} />
                 </p>
 
-                <div className="h-14 sm:h-56 lg:hidden" aria-hidden="true" />
-                <div className="hidden lg:block lg:h-[clamp(120px,22vh,260px)]" aria-hidden="true" />
-                <ul className="mt-2 hidden max-w-xl grid-cols-3 divide-x divide-white/15 rounded-2xl border border-white/15 bg-white/10 py-3 text-sm font-semibold leading-tight text-white backdrop-blur-md lg:grid">
-                  <li className="flex items-center justify-center gap-1.5 px-2"><ShieldCheck className="h-4 w-4 text-emerald-400" /> Verified drivers</li>
-                  {/* Flight tracking applies to airport trips only */}
-                  {isAirportRoute ? (
-                    <li className="flex items-center justify-center gap-1.5 px-2"><Radar className="h-4 w-4 text-sky-300" /> Flight tracking</li>
-                  ) : (
-                    <li className="flex items-center justify-center gap-1.5 px-2"><Clock className="h-4 w-4 text-sky-300" /> {siteConfig.contact.hours}</li>
-                  )}
-                  <li className="flex items-center justify-center gap-1.5 px-2"><BadgeIndianRupee className="h-4 w-4 text-sky-300" /> Transparent price</li>
-                </ul>
+                <HeroFeatures set={heroScene} className="mt-4 [text-shadow:0_1px_3px_rgba(0,0,0,0.7)] lg:hidden" />
+                <div className="h-36 min-[420px]:h-44 sm:h-60 lg:hidden" aria-hidden="true" />
+                <div className="hidden lg:block lg:h-[clamp(140px,26vh,300px)]" aria-hidden="true" />
+                <HeroFeatures set={heroScene} className="hidden max-w-2xl [text-shadow:0_1px_6px_rgba(0,0,0,0.6)] lg:grid" />
               </div>
             </div>
           </div>

@@ -17,7 +17,7 @@
  *  - Local:      pickup area + 4 / 8 / 12 hour package.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeftRight,
   ArrowDownUp,
@@ -39,7 +39,7 @@ import {
 import LocationAutocompleteModal from '@/components/LocationAutocompleteModal';
 import SegmentedControl from '@/components/home/SegmentedControl';
 import DatePickerField, { addDays, fromDateKey, toDateKey } from '@/components/home/DatePickerField';
-import { BOOK_EVENT, SERVICE_EVENT, type HomeService } from '@/components/home/scrollToBook';
+import { BOOK_EVENT, BOOK_SUBMIT_EVENT, SERVICE_EVENT, type HomeService } from '@/components/home/scrollToBook';
 import { useBookingFlow } from '@/context/BookingFlowContext';
 import { LocationData } from '@/lib/googlePlaces';
 import { cn } from '@/lib/cn';
@@ -418,6 +418,13 @@ function SwapButton({
   );
 }
 
+/** Search button label for each service tab. */
+const SUBMIT_LABEL: Record<HomeService, string> = {
+  airport: 'Get Fare Estimate & Available Cabs',
+  outstation: 'Get Outstation Quote & Available Cabs',
+  local: 'Get Local Cab Quote & Available Cabs',
+};
+
 export default function QuickBookingWidget({
   destinations,
   localPackages,
@@ -477,6 +484,22 @@ export default function QuickBookingWidget({
     };
     window.addEventListener(BOOK_EVENT, onBook);
     return () => window.removeEventListener(BOOK_EVENT, onBook);
+  }, []);
+
+  // Mobile dock "Book Now": with the trip filled in, open the booking request straight away
+  const formRef = useRef<HTMLFormElement>(null);
+  const tripReady = service === 'outstation' ? Boolean(outPickup && outDrop) : Boolean(cityLocation);
+  const tripReadyRef = useRef(tripReady);
+  tripReadyRef.current = tripReady;
+  useEffect(() => {
+    const onDockBook = (e: Event) => {
+      const detail = (e as CustomEvent<{ handled: boolean }>).detail;
+      if (detail.handled || !tripReadyRef.current || !formRef.current) return;
+      detail.handled = true;
+      formRef.current.requestSubmit();
+    };
+    window.addEventListener(BOOK_SUBMIT_EVENT, onDockBook);
+    return () => window.removeEventListener(BOOK_SUBMIT_EVENT, onDockBook);
   }, []);
 
   const today = useMemo(() => (now ? new Date(now.getFullYear(), now.getMonth(), now.getDate()) : null), [now]);
@@ -722,6 +745,7 @@ export default function QuickBookingWidget({
 
   return (
     <form
+      ref={formRef}
       id="book"
       onSubmit={handleSubmit}
       noValidate
@@ -1047,20 +1071,15 @@ export default function QuickBookingWidget({
           </>
         ) : (
           <>
-            See Fares &amp; Available Innovas
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            {SUBMIT_LABEL[service]}
+            <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
           </>
         )}
       </button>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
-        <span className="flex items-center gap-1.5 font-medium text-slate-500">
-          <ShieldCheck className="h-3.5 w-3.5 text-live-600" /> No surge · Tolls paid by customer
-        </span>
-        <span className="font-semibold text-slate-600">
-          Advance <span className="font-extrabold text-ink">₹0</span>
-        </span>
-      </div>
+      <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+        <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-live-600" /> No surge · Doorstep pickup across Bangalore
+      </p>
 
     </form>
   );

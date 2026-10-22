@@ -5,15 +5,15 @@
  * across the site.
  */
 
+import Link from 'next/link';
 import {
   Banknote,
   CalendarClock,
-  CreditCard,
-  Landmark,
+  ChevronRight,
   MapPin,
   PhoneCall,
+  QrCode,
   Radar,
-  Smartphone,
   Tag,
   UserCheck,
   type LucideIcon,
@@ -21,9 +21,7 @@ import {
 import Reveal from '@/components/home/Reveal';
 import { siteConfig } from '@/lib/siteConfig';
 
-const cancelHours = siteConfig.policies.cancellation.match(/(\d+)\s*hours?/i)?.[1];
-
-type Item = { icon: LucideIcon; tone: string; title: string; text: string };
+type Item = { icon: LucideIcon; tone: string; title: string; text: string; href?: string };
 
 const items: Item[] = [
   {
@@ -47,8 +45,9 @@ const items: Item[] = [
   {
     icon: CalendarClock,
     tone: 'bg-live-500/10 text-live-600',
-    title: `Free cancellation${cancelHours ? ` up to ${cancelHours} hrs` : ''}`,
-    text: 'Cancel or reschedule before pickup',
+    title: 'Cancellation policy',
+    text: 'See our Terms & Conditions for cancellation',
+    href: '/terms',
   },
   {
     icon: PhoneCall,
@@ -65,10 +64,8 @@ const items: Item[] = [
 ];
 
 const paymentMethods: { icon: LucideIcon; label: string }[] = [
-  { icon: Smartphone, label: 'UPI' },
+  { icon: QrCode, label: 'UPI' },
   { icon: Banknote, label: 'Cash' },
-  { icon: CreditCard, label: 'Cards' },
-  { icon: Landmark, label: 'NEFT / IMPS' },
 ];
 
 export default function TrustInfoSection() {
@@ -86,11 +83,11 @@ export default function TrustInfoSection() {
             <div className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-white/10" aria-hidden="true" />
             <div className="relative flex items-center gap-3.5 sm:gap-5">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 sm:h-16 sm:w-16">
-                <span className="text-2xl font-extrabold leading-none tracking-tight sm:text-3xl">₹0</span>
+                <QrCode className="h-6 w-6 sm:h-8 sm:w-8" />
               </span>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sky-100 sm:text-[11px]">Advance payment</p>
-                <p className="text-sm font-bold leading-snug sm:text-lg">Pay after the trip. Nothing to pay to book.</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sky-100 sm:text-[11px]">Payment</p>
+                <p className="text-sm font-bold leading-snug sm:text-lg">Pay by UPI or cash. {siteConfig.payments.prebook}</p>
               </div>
             </div>
             <ul className="relative flex flex-wrap gap-1.5 sm:justify-end sm:gap-2">
@@ -104,17 +101,34 @@ export default function TrustInfoSection() {
 
           {/* Trust + policy tiles */}
           <ul className="grid grid-cols-2 gap-px bg-slate-100 lg:grid-cols-3">
-            {items.map((t) => (
-              <li key={t.title} className="flex flex-col items-start gap-2 bg-white p-3.5 sm:flex-row sm:gap-4 sm:p-6">
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11 sm:rounded-2xl ${t.tone}`}>
-                  <t.icon className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
-                </span>
-                <div className="min-w-0">
-                  <h4 className="text-[13px] font-extrabold leading-snug tracking-tight text-ink sm:text-base">{t.title}</h4>
-                  <p className="mt-1 text-[11.5px] leading-snug text-slate-600 sm:text-sm sm:leading-relaxed">{t.text}</p>
-                </div>
-              </li>
-            ))}
+            {items.map((t) => {
+              const body = (
+                <>
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11 sm:rounded-2xl ${t.tone}`}>
+                    <t.icon className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <h4 className="text-[13px] font-extrabold leading-snug tracking-tight text-ink sm:text-base">{t.title}</h4>
+                    <p className={`mt-1 text-[11.5px] leading-snug sm:text-sm sm:leading-relaxed ${t.href ? 'font-semibold text-brand-700' : 'text-slate-600'}`}>
+                      {t.text}
+                      {t.href && <ChevronRight className="ml-0.5 inline h-3.5 w-3.5 align-[-2px]" />}
+                    </p>
+                  </div>
+                </>
+              );
+              const cls = 'flex flex-col items-start gap-2 bg-white p-3.5 sm:flex-row sm:gap-4 sm:p-6';
+              return (
+                <li key={t.title} className="bg-white">
+                  {t.href ? (
+                    <Link href={t.href} className={`${cls} h-full transition hover:bg-brand-50/40`}>
+                      {body}
+                    </Link>
+                  ) : (
+                    <div className={`${cls} h-full`}>{body}</div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       </Reveal>

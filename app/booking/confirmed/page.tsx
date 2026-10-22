@@ -261,7 +261,7 @@ function BookingConfirmedContent() {
                 <IndianRupee className="h-3 w-3" /> Estimated tariff
               </p>
               <p className="mt-1 text-lg font-extrabold text-ink">{fareText}</p>
-              <p className="text-[11px] font-semibold text-live-600">No advance payment • Pay chauffeur directly</p>
+              <p className="text-[11px] font-semibold text-live-600">Pay by UPI or cash</p>
             </div>
           </div>
 

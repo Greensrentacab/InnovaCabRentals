@@ -39,7 +39,7 @@ export default function AuthDialog() {
     <div className="ds-scope fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-labelledby="auth-dialog-title">
       <div className="absolute inset-0 animate-fade-in bg-slate-900/40 backdrop-blur-sm" onClick={closeAuthDialog} />
 
-      <div className="pointer-events-none absolute inset-0 flex items-end justify-center md:items-center md:p-4">
+      <div className="pointer-events-none absolute inset-0 flex items-end justify-center md:items-center md:p-4 max-lg:pb-[calc(6rem+env(safe-area-inset-bottom))]">
         <div className="pointer-events-auto flex max-h-[92dvh] w-full animate-drawer-in flex-col overflow-hidden rounded-t-4xl bg-white shadow-float-lg md:max-w-md md:rounded-4xl">
           <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-5 pb-4 pt-5">
             <div>

@@ -7,6 +7,12 @@
 export type HomeService = 'airport' | 'outstation' | 'local';
 
 export const BOOK_EVENT = 'home:book';
+/**
+ * Fired by the mobile dock's Book Now. A booking widget whose trip is filled in
+ * (pickup + drop) submits itself and sets `detail.handled`, opening the
+ * 4-step booking request; otherwise the dock scrolls to the form.
+ */
+export const BOOK_SUBMIT_EVENT = 'home:book-submit';
 /** Fired by the booking widget whenever its service tab changes (hero scene follows it). */
 export const SERVICE_EVENT = 'home:service';
 const HEADER_OFFSET = 88;

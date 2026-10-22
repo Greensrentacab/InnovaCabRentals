@@ -47,7 +47,7 @@ export default function AboutPage() {
 
   const stats = [
     { value: `${siteConfig.trustClaims.yearsExperience.value} yrs`, label: 'Industry legacy' },
-    { value: '₹0', label: 'Advance payment' },
+    { value: 'UPI · Cash', label: 'Payment options' },
     { value: '4', label: 'Car models' },
     { value: '24/7', label: 'Always dispatched' },
   ];
@@ -98,7 +98,7 @@ export default function AboutPage() {
                 across Karnataka, Tamil Nadu, and Kerala with zero fatigue.
               </p>
               <p>
-                Over the past 15 years, our team has served more than 5,000 satisfied corporate executives, leisure
+                Over the past 15 years, our team has served corporate executives, leisure
                 holidaymakers, and international tourists. Today, we maintain 24/7 dispatch operations with doorstep pickup
                 across every neighborhood in Bengaluru.
               </p>

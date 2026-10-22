@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowUpRight, Clock, HeartHandshake, MapPin, Mountain, Phone, ShieldCheck, Users } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { siteConfig } from '@/lib/siteConfig';
-import PageHero from '@/components/ds/PageHero';
+import SimpleHero from '@/components/ds/SimpleHero';
 import SectionHeading, { Hairline } from '@/components/ds/SectionHeading';
 import CtaBand from '@/components/ds/CtaBand';
 import Reveal from '@/components/home/Reveal';
@@ -54,30 +54,23 @@ export default function AboutPage() {
 
   return (
     <div className="bg-porcelain">
-      <PageHero
+      <SimpleHero
         breadcrumbs={[{ label: 'About Us' }]}
-        eyebrow={siteConfig.trustClaims.yearsExperience.label}
         title={`About ${siteConfig.brand.name}`}
-        lead={
-          <>
-            <p className="font-bold text-brand-700">&ldquo;{siteConfig.brand.closingLine}&rdquo;</p>
-            <p className="mt-3">
-              Headquartered in Bengaluru, Karnataka, we specialize in premium chauffeur-driven Toyota Innova and Innova
-              Crysta rentals for families, corporate teams, and vacation travelers.
-            </p>
-          </>
-        }
-        aside={
-          <div className="card-float grid grid-cols-2 gap-3 p-4 shadow-float-lg sm:p-6">
-            {stats.map((stat) => (
-              <div key={stat.label} className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5">
-                <p className="text-3xl font-extrabold tracking-tight text-brand-700">{stat.value}</p>
-                <p className="mt-1 text-sm font-medium text-slate-600">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        }
+        lead={`Headquartered in Bengaluru, Karnataka, we specialize in premium chauffeur-driven Toyota Innova and Innova Crysta rentals for families, corporate teams, and vacation travelers.`}
       />
+
+      {/* Key numbers (moved out of the header) */}
+      <section className="section pt-8 sm:pt-12">
+        <div className="card-float grid grid-cols-2 gap-3 p-4 shadow-float-lg sm:p-6">
+                    {stats.map((stat) => (
+                      <div key={stat.label} className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5">
+                        <p className="text-3xl font-extrabold tracking-tight text-brand-700">{stat.value}</p>
+                        <p className="mt-1 text-sm font-medium text-slate-600">{stat.label}</p>
+                      </div>
+                    ))}
+                  </div>
+      </section>
 
       {/* Our story */}
       <section className="section py-10 sm:py-20">

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import PageHero from '@/components/ds/PageHero';
+import SimpleHero from '@/components/ds/SimpleHero';
 import CtaBand from '@/components/ds/CtaBand';
 import { FareTermsList, IncludedExcluded, TermsBlocks } from '@/components/policies/PolicyViews';
 import { getPublishedPolicies } from '@/lib/siteContentStore';
@@ -26,14 +26,13 @@ export default async function TermsPage() {
 
   return (
     <div className="ds-scope bg-porcelain">
-      <PageHero
+      <SimpleHero
         breadcrumbs={[{ label: 'Terms & Conditions', href: '/terms' }]}
-        eyebrow="Policies"
         title="Terms & Conditions"
         lead="How booking, fares, payment and cancellation work, and what each type of trip includes."
       />
 
-      <section className="section pb-10 sm:pb-16">
+      <section className="section py-8 sm:py-12">
         <div className="card-float p-5 sm:p-10">
           <TermsBlocks blocks={policies.terms} className="max-w-3xl" />
         </div>

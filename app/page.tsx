@@ -75,7 +75,7 @@ const whyChooseUs = [
 
 const homeFaqs = [
   {
-    q: 'How do I book a cab with Innova Cab Rentals?',
+    q: 'How do I book a cab with Innova Cabs Bangalore?',
     a: 'Enter your trip in the booking widget above and tap "See Fares & Available Innovas". Pick a car and send the details to us on WhatsApp, or submit a booking request — our dispatch team confirms with driver details. You can also call us directly.',
   },
   {
@@ -188,7 +188,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="relative z-10 -mt-[100px] min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:pt-4">
+          <div id="booking-flow-host" className="relative z-10 -mt-[100px] min-w-0 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:pt-4">
             <QuickBookingWidget {...widgetData} />
 
           </div>
@@ -249,28 +249,33 @@ export default async function HomePage() {
             <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-sky-400/15 blur-3xl" aria-hidden="true" />
             <div className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-brand-600/30 blur-3xl" aria-hidden="true" />
 
-            <div className="relative">
+            <div className="relative lg:grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start lg:gap-16">
+              <div className="lg:sticky lg:top-28">
               <div className="max-w-2xl">
                 <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-sky-300">Why choose us</span>
                 <h2 className="text-balance mt-2 text-[1.5rem] font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl">
                   Comfortable cars. Reliable journeys.
                 </h2>
+                <p className="mt-4 hidden max-w-md text-base leading-relaxed text-slate-300 lg:block">
+                  Experienced drivers, clean Innovas and upfront pricing, for airport transfers, city rentals and outstation trips from Bangalore.
+                </p>
               </div>
 
               {/* Stats */}
-              <dl className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-10 sm:gap-4 lg:grid-cols-4">
+              <dl className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-10 sm:gap-4 lg:mt-10 lg:grid-cols-2 lg:gap-x-8 lg:gap-y-8">
                 {stats.map(({ icon: Icon, value, label }) => (
-                  <div key={label} className="flex min-w-0 flex-col items-start gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.09] to-white/[0.02] p-3.5 backdrop-blur sm:gap-4 sm:p-6">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-400/15 text-sky-300 ring-1 ring-sky-300/20 sm:h-12 sm:w-12">
+                  <div key={label} className="flex min-w-0 flex-col items-start gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.09] to-white/[0.02] p-3.5 backdrop-blur sm:gap-4 sm:p-6 lg:gap-0 lg:rounded-none lg:border-0 lg:border-t lg:border-white/20 lg:bg-none lg:p-0 lg:pt-5 lg:backdrop-blur-none">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-400/15 text-sky-300 ring-1 ring-sky-300/20 sm:h-12 sm:w-12 lg:hidden">
                       <Icon className="h-5 w-5" aria-hidden="true" />
                     </span>
                     <div className="min-w-0">
-                      <dt className="whitespace-nowrap text-[1.2rem] font-extrabold leading-none tracking-tight text-white min-[400px]:text-[1.4rem] sm:text-4xl lg:text-[2.6rem]">{value}</dt>
+                      <dt className="whitespace-nowrap text-[1.2rem] font-extrabold leading-none tracking-tight text-white min-[400px]:text-[1.4rem] sm:text-4xl lg:text-[2.4rem] lg:text-sky-300">{value}</dt>
                       <dd className="mt-1.5 text-xs font-medium leading-snug text-slate-300 sm:mt-2 sm:text-sm">{label}</dd>
                     </div>
                   </div>
                 ))}
               </dl>
+              </div>
 
               {testimonials.length > 0 ? (
                 <div className="mt-8 grid gap-4 sm:mt-10 md:grid-cols-2">
@@ -285,13 +290,12 @@ export default async function HomePage() {
                   ))}
                 </div>
               ) : (
-                <ul className="mt-4 grid grid-cols-2 gap-2 sm:mt-8 sm:gap-4 lg:grid-cols-6">
+                <ul className="mt-4 grid grid-cols-2 gap-2 sm:mt-8 sm:gap-4 lg:mt-0 lg:grid-cols-1 lg:gap-0 lg:divide-y lg:divide-white/10 lg:rounded-3xl lg:border lg:border-white/10 lg:bg-white/[0.03] lg:px-8 lg:py-3">
                   {whyChooseUs.map(({ title, desc, icon: WhyIcon }, i) => (
                     <li
                       key={title}
                       className={cn(
-                        'group flex flex-row items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] p-2.5 transition-colors duration-200 hover:border-sky-300/40 hover:bg-white/[0.08] sm:items-start sm:gap-4 sm:rounded-2xl sm:p-6 lg:col-span-2',
-                        i >= 3 && 'lg:col-span-3',
+                        'group flex flex-row items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] p-2.5 transition-colors duration-200 hover:border-sky-300/40 hover:bg-white/[0.08] sm:items-start sm:gap-4 sm:rounded-2xl sm:p-6 lg:col-span-1 lg:rounded-none lg:border-0 lg:bg-transparent lg:px-0 lg:py-6 lg:hover:bg-transparent',
                         i === whyChooseUs.length - 1 && 'max-sm:hidden sm:max-lg:col-span-2'
                       )}
                     >
@@ -350,15 +354,15 @@ export default async function HomePage() {
                 Reserve your Innova in advance and enjoy comfortable, chauffeur-driven travel across Bangalore. Book your Innova today.
               </p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <BookButton className="btn group bg-white text-ink hover:-translate-y-0.5">
+            <div className="flex flex-col gap-2 sm:flex-row md:grid md:w-[23rem] md:shrink-0 md:grid-cols-2 md:gap-3">
+              <BookButton className="btn group whitespace-nowrap bg-white text-ink hover:-translate-y-0.5 md:col-span-2 md:h-14 md:text-base md:shadow-[0_12px_30px_-12px_rgba(255,255,255,0.45)]">
                 Get instant fare
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </BookButton>
-              <a href={siteConfig.contact.phone.tel} className="btn border border-white/20 bg-white/10 text-white hover:bg-white/15">
+              <a href={siteConfig.contact.phone.tel} className="btn whitespace-nowrap border border-white/25 bg-white/10 text-white hover:bg-white/15 md:h-12">
                 <Phone className="h-4 w-4" /> Call 24/7
               </a>
-              <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
+              <a href={siteConfig.contact.phone.whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp whitespace-nowrap md:h-12">
                 <WhatsAppIcon className="h-4 w-4" /> WhatsApp
               </a>
             </div>

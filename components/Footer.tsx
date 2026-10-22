@@ -188,34 +188,50 @@ export default function Footer() {
         </div>
       </nav>
 
-      <div className="section mt-3 border-t border-white/10 pt-5 text-xs text-slate-500 md:mt-10 md:pt-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
-          <p>
-            © {currentYear} {siteConfig.brand.name}. All rights reserved.
-          </p>
-          <ul className="flex flex-wrap items-center gap-1.5" aria-label="Accepted payments">
-            {siteConfig.payments.methods.map((method, i) => {
-              if (method === 'UPI') {
-                // Official UPI logo on a white chip so its dark lettering reads on the dark footer
+      <div className="section mt-3 border-t border-white/10 pt-6 md:mt-10 md:pt-8">
+        <div className="flex flex-col items-center gap-6 text-center md:flex-row md:items-center md:justify-between md:gap-8 md:text-left">
+          {/* Payments: "We accept" label with equal-height chips */}
+          <div className="flex flex-col items-center gap-3 md:order-2 md:flex-row md:gap-4">
+            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">We accept</span>
+            <ul className="flex items-center justify-center gap-2.5" aria-label="Accepted payments">
+              {siteConfig.payments.methods.map((method, i) => {
+                if (method === 'UPI') {
+                  // Official UPI logo on a white chip so its dark lettering reads on the dark footer
+                  return (
+                    <li key={method} className="inline-flex h-10 items-center rounded-xl bg-white px-4 shadow-sm">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/images/upi.svg" alt="UPI" width={1024} height={466} className="h-6 w-auto" />
+                    </li>
+                  );
+                }
+                const Icon = PAYMENT_ICONS[i] ?? Banknote;
                 return (
-                  <li key={method} className="inline-flex items-center rounded-full bg-white px-3 py-1">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/images/upi.svg" alt="UPI" width={1024} height={466} className="h-5 w-auto" />
+                  <li key={method} className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-4 text-sm font-semibold text-slate-200">
+                    <Icon className="h-4 w-4 text-sky-300" aria-hidden="true" /> {method}
                   </li>
                 );
-              }
-              const Icon = PAYMENT_ICONS[i] ?? Banknote;
-              return (
-                <li key={method} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-medium text-slate-300">
-                  <Icon className="h-3.5 w-3.5 text-sky-300" aria-hidden="true" /> {method}
-                </li>
-              );
-            })}
-          </ul>
+              })}
+            </ul>
+          </div>
+
+          {/* Copyright + maintainer */}
+          <div className="space-y-1.5 text-xs text-slate-500 md:order-1">
+            <p>
+              © {currentYear} {siteConfig.brand.name}. All rights reserved.
+            </p>
+            <p className="text-slate-400">
+              Website maintained by{' '}
+              <a
+                href="https://www.greensrentacab.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-white underline-offset-4 transition hover:text-sky-300 hover:underline"
+              >
+                Greens Rent A Cab
+              </a>
+            </p>
+          </div>
         </div>
-        <p className="mt-4 border-t border-white/5 pt-4 text-slate-400">
-          Website maintained by <span className="font-bold text-white">Greens Rent A Cab</span>
-        </p>
       </div>
     </footer>
   );

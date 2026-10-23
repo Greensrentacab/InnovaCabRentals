@@ -31,7 +31,7 @@ const STEPS: { icon: LucideIcon; title: string; desc: string }[] = [
   {
     icon: Wallet,
     title: 'Travel & Pay',
-    desc: 'Pay by UPI or cash. Contact our team to pre-book in advance.',
+    desc: 'Pay by UPI or cash. Contact our team to pre-book your cab.',
   },
 ];
 

@@ -163,7 +163,8 @@ export default function CardGallery({
                 goTo(i);
               }}
               className={cn(
-                'h-1.5 rounded-full shadow-sm transition-all duration-300',
+                // Bigger invisible tap area than the dot itself
+                "relative h-1.5 rounded-full shadow-sm transition-all duration-300 after:absolute after:-inset-x-1 after:-inset-y-3 after:content-['']",
                 i === active ? 'w-5 bg-white' : 'w-1.5 bg-white/60 hover:bg-white/90'
               )}
             />

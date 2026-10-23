@@ -94,8 +94,8 @@ const categorizedFaqs = [
         a: 'Yes, 100% of our drivers undergo criminal background checks, hold valid commercial passenger badges, and have at least 5 to 10 years of experience driving on South Indian highways and mountain ghats.',
       },
       {
-        q: 'Are vehicles sanitized before each journey?',
-        a: 'Every car is thoroughly washed, vacuumed, and sanitized before dispatch. Upholstery, door handles, and air conditioning vents are deep-cleaned.',
+        q: 'Are vehicles sanitised before each journey?',
+        a: 'Every car is thoroughly washed, vacuumed, and sanitised before dispatch. Upholstery, door handles, and air conditioning vents are deep-cleaned.',
       },
     ],
   },

@@ -388,7 +388,7 @@ function StackRow({
               aria-invalid={!!error}
               aria-label={`${label}: ${value?.name ?? placeholder}`}
               onClick={onOpen}
-              className={cn('block w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-600', value && 'pr-8')}
+              className={cn('-my-1.5 block w-full rounded-md py-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-600', value && 'pr-8')}
             >
               {main}
             </button>

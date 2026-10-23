@@ -78,7 +78,7 @@ export default async function VehiclesPage() {
           <>
             <p className="font-bold text-brand-700">{siteConfig.brand.closingLine}</p>
             <p className="mt-3">
-              Choose from the Toyota Innova, Innova Crysta, Innova Hycross and Maruti Suzuki Ertiga. Every car is thoroughly sanitized,
+              Choose from the Toyota Innova, Innova Crysta, Innova Hycross and Maruti Suzuki Ertiga. Every car is thoroughly sanitised,
               air-conditioned, and driven by an experienced highway-tested chauffeur.
             </p>
           </>
@@ -199,7 +199,7 @@ export default async function VehiclesPage() {
                 <div className="card-float p-6 sm:p-8">
                   <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{vehicle.type}</p>
                   <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">{vehicle.name}</h2>
-                  <p className="mt-1 text-sm text-slate-500">Chauffeur-Driven • Sanitized Daily</p>
+                  <p className="mt-1 text-sm text-slate-500">Chauffeur-Driven • Sanitised Daily</p>
 
                   <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
                     <span className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 font-medium text-slate-700">

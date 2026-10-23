@@ -31,7 +31,7 @@ export interface VehicleDetailTemplateProps {
 
 const included = [
   'Experienced, background-verified chauffeur',
-  'Sanitized, air-conditioned vehicle',
+  'Sanitised, air-conditioned vehicle',
   'Doorstep pickup anywhere in Bangalore',
   '24/7 dedicated dispatch support',
 ];
@@ -199,7 +199,7 @@ export default async function VehicleDetailTemplate({
                 </a>
               </div>
               <p className="mt-3 text-center text-[11px] text-slate-500">
-                Submitting reserves your booking request. Contact our team to pre-book in advance.
+                Submitting reserves your booking request. Contact our team to pre-book your cab.
               </p>
             </div>
 

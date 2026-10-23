@@ -56,13 +56,13 @@ export default function TourPackagesPage() {
     {
       name: 'Chikmagalur Coffee Retreat',
       duration: '2N / 3D',
-      highlights: 'Mullayanagiri, Baba Budangiri, Hebbe Falls, Coffee Museum, Belur & Halebeedu',
+      highlights: 'Mullayanagiri, Baba Budangiri, Hebbe Falls, Coffee Museum, Belur & Halebidu',
       routeSlug: 'bangalore-to-chikmagalur',
     },
     {
       name: 'Kodaikanal Lake & Pine',
       duration: '3N / 4D',
-      highlights: 'Kodai Lake, Coaker Walk, Pillar Rocks, Bryant Park, Silver Cascade Falls',
+      highlights: 'Kodai Lake, Coaker’s Walk, Pillar Rocks, Bryant Park, Silver Cascade Falls',
       routeSlug: 'bangalore-to-kodaikanal',
     },
     {
@@ -90,7 +90,7 @@ export default function TourPackagesPage() {
             <p className="font-bold text-brand-700">{siteConfig.brand.closingLine}</p>
             <p className="mt-3">
               Every vacation is unique. Tell us your travel dates, passenger group size, and preferred destination. Our team
-              creates a personalized schedule with transparent pricing and seasoned chauffeurs.
+              creates a personalised schedule with transparent pricing and seasoned chauffeurs.
             </p>
           </>
         }

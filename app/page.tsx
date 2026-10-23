@@ -69,7 +69,7 @@ const whyChooseUs = [
   {
     icon: WhatsAppIcon,
     title: 'Easy Booking by Call or WhatsApp',
-    desc: 'No apps or logins. Reach our dispatch desk directly for instant reservations.',
+    desc: 'No app to download. Reach our dispatch desk directly for instant reservations.',
   },
 ];
 

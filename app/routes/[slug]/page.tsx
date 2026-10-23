@@ -239,7 +239,7 @@ const routeDetailMap: Record<
     },
     highlights: [
       'Quick 4.5-hour expressway drive along NH-75 via Kunigal, Channarayapatna, and Hassan',
-      'Optional en-route cultural detours to Belur Chennakesava and Halebeedu Hoysala temples',
+      'Optional en-route cultural detours to Belur Chennakesava and Halebidu Hoysala temples',
       'Drivers familiar with Mullayanagiri peak roads and secluded coffee estate homestays',
       'Flexible 2N/3D and 3N/4D round-trip holiday itineraries',
     ],
@@ -433,7 +433,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
       `Dedicated chauffeur-driven journey from ${route.origin} to ${route.destination}`,
       `Approximate driving distance of ${route.distanceKm} km each way, around ${route.durationText}`,
       'Round trip with the car and chauffeur at your disposal; add up to 3 stops on the way',
-      'Sanitized, air-conditioned Innova, Crysta or Ertiga with ample luggage space',
+      'Sanitised, air-conditioned Innova, Crysta or Ertiga with ample luggage space',
       'Experienced highway driver with zero surge pricing and transparent billing',
     ],
     faqs: [
@@ -588,7 +588,7 @@ export default async function RouteDetailPage({ params }: RoutePageProps) {
             <SectionHeading
               eyebrow="Highway excellence"
               title={`Why Book ${customDetails.h1} with ${siteConfig.brand.name}`}
-              subtitle="We ensure every kilometer of your highway trip is relaxing, punctual, and safe."
+              subtitle="We ensure every kilometre of your highway trip is relaxing, punctual, and safe."
               centered={false}
             />
             <ul className="mt-8 grid gap-3 md:grid-cols-2">

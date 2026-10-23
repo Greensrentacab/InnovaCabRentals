@@ -60,7 +60,7 @@ export default function TourEnquiryForm() {
 
   const getWhatsAppEnquiryUrl = () => {
     const text = encodeURIComponent(
-      `Hello ${siteConfig.brand.name},\n\nI would like to enquire about a Tour Package:\n• Destination: ${formData.destination}\n• Travel Date: ${formData.travelDate || 'Flexible'}\n• Duration: ${formData.duration}\n• Passengers: ${formData.passengers}\n• Vehicle: ${formData.vehicleModel}\n• Name: ${formData.name || 'Traveler'}\n• Contact: ${formData.phone || ''}\n\nPlease share customized itinerary and quote.`
+      `Hello ${siteConfig.brand.name},\n\nI would like to enquire about a Tour Package:\n• Destination: ${formData.destination}\n• Travel Date: ${formData.travelDate || 'Flexible'}\n• Duration: ${formData.duration}\n• Passengers: ${formData.passengers}\n• Vehicle: ${formData.vehicleModel}\n• Name: ${formData.name || 'Traveller'}\n• Contact: ${formData.phone || ''}\n\nPlease share customised itinerary and quote.`
     );
     return `${siteConfig.contact.phone.whatsappUrl}?text=${text}`;
   };

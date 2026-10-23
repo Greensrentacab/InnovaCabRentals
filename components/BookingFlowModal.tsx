@@ -416,8 +416,8 @@ export default function BookingFlowModal() {
                       </ol>
                     </ReviewSection>
 
-                    {/* When */}
-                    <ReviewSection icon={Calendar} label="When" onEdit={closeBookingFlow}>
+                    {/* Date */}
+                    <ReviewSection icon={Calendar} label="Date" onEdit={closeBookingFlow}>
                       <p className="text-sm font-bold text-ink">
                         {when} <span className="font-semibold text-slate-500">· {formatTime12(state.pickupTime) || 'Time not set'}</span>
                       </p>
@@ -505,7 +505,7 @@ export default function BookingFlowModal() {
                       <p className="text-xs text-slate-500">This trip will be saved to your account.</p>
                     </div>
 
-                    <div className="rounded-3xl border border-brand-500 bg-brand-50/50 p-4 ring-4 ring-brand-500/10">
+                    <div className="rounded-3xl border border-slate-200/80 bg-slate-50/70 p-4">
                       <div className="flex items-center gap-3">
                         <UserAvatar
                           name={profile?.displayName || user.displayName}

@@ -36,11 +36,11 @@ export default async function LocalLanding({ overrides, scrollToId }: { override
   const faqs = [
     {
       q: 'What is included in the 8 Hour / 80 Km local package?',
-      a: 'The package covers 8 continuous hours and up to 80 kilometers of city driving from your scheduled pickup time. Additional kilometers and extra hours are billed at a transparent nominal rate.',
+      a: 'The package covers 8 continuous hours and up to 80 kilometres of city driving from your scheduled pickup time. Additional kilometres and extra hours are billed at a transparent nominal rate.',
     },
     {
       q: 'Can I use the local rental package for Bangalore Airport drops or pickups?',
-      a: 'Yes, local packages can include an airport trip as long as the travel fits within the purchased hours and kilometer limit. Toll charges at the airport trumpet are paid by the customer.',
+      a: 'Yes, local packages can include an airport trip as long as the travel fits within the purchased hours and kilometre limit. Toll charges at the airport trumpet are paid by the customer.',
     },
     {
       q: 'Do you offer point-to-point one-way city transfers within Bangalore?',

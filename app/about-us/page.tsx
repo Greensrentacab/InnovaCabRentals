@@ -31,7 +31,7 @@ export default function AboutPage() {
     {
       icon: ShieldCheck,
       title: 'Rigorous Fleet Hygiene',
-      desc: 'Every Toyota Innova is deep-cleaned and sanitized prior to dispatch. Air conditioning filters, brakes, and tires undergo strict preventive maintenance.',
+      desc: 'Every Toyota Innova is deep-cleaned and sanitised prior to dispatch. Air conditioning filters, brakes, and tires undergo strict preventive maintenance.',
     },
     {
       icon: HeartHandshake,
@@ -46,7 +46,7 @@ export default function AboutPage() {
   ];
 
   const stats = [
-    { value: `${siteConfig.trustClaims.yearsExperience.value} yrs`, label: 'Industry legacy' },
+    { value: `${siteConfig.trustClaims.yearsExperience.value}+ years`, label: 'Of trusted travel' },
     { value: 'UPI · Cash', label: 'Payment options' },
     { value: '4', label: 'Car models' },
     { value: '24/7', label: 'Always dispatched' },
@@ -57,7 +57,7 @@ export default function AboutPage() {
       <SimpleHero
         breadcrumbs={[{ label: 'About Us' }]}
         title={`About ${siteConfig.brand.name}`}
-        lead={`Headquartered in Bengaluru, Karnataka, we specialize in premium chauffeur-driven Toyota Innova and Innova Crysta rentals for families, corporate teams, and vacation travelers.`}
+        lead={`Headquartered in Bengaluru, Karnataka, we specialize in premium chauffeur-driven Toyota Innova and Innova Crysta rentals for families, corporate teams, and vacation travellers.`}
       />
 
       {/* Key numbers (moved out of the header) */}

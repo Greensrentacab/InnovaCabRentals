@@ -53,25 +53,25 @@ export async function sendNewBookingEmail(booking: Booking): Promise<{ success: 
         <div class="container">
           <div class="header">
             <span class="badge">Status: PENDING Approval</span>
-            <h1 class="title">New Booking Request #${booking.bookingId}</h1>
+            <h1 class="title">New Booking Request #${escapeHtml(booking.bookingId)}</h1>
             <p style="margin: 4px 0 0; font-size: 13px; color: #cbd5e1;">Innova Cabs Bangalore Dispatch Notification</p>
           </div>
           <div class="content">
             <div class="card">
               <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 15px; color: #0b1b33;">Passenger Information</h3>
-              <div class="row"><span class="label">Full Name:</span><span class="value">${booking.customerName}</span></div>
+              <div class="row"><span class="label">Full Name:</span><span class="value">${escapeHtml(booking.customerName)}</span></div>
               <div class="row"><span class="label">Mobile Number:</span><span class="value">+91 ${booking.customerPhone}</span></div>
             </div>
 
             <div class="card">
               <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 15px; color: #0b1b33;">Journey Schedule</h3>
               <div class="row"><span class="label">Service Type:</span><span class="value" style="text-transform: uppercase;">${booking.serviceType} (${booking.tripType === 'round' ? 'Round Trip' : 'One Way'})</span></div>
-              <div class="row"><span class="label">Pickup Location:</span><span class="value">${booking.pickupName}</span></div>
-              <div class="row"><span class="label">Drop Location:</span><span class="value">${booking.dropName}</span></div>
-              <div class="row"><span class="label">Date & Time:</span><span class="value">${booking.pickupDate} at ${formatTime12(booking.pickupTime)}</span></div>
-              <div class="row"><span class="label">Vehicle:</span><span class="value">${booking.vehicleName}</span></div>
+              <div class="row"><span class="label">Pickup Location:</span><span class="value">${escapeHtml(booking.pickupName)}</span></div>
+              <div class="row"><span class="label">Drop Location:</span><span class="value">${escapeHtml(booking.dropName)}</span></div>
+              <div class="row"><span class="label">Date & Time:</span><span class="value">${escapeHtml(booking.pickupDate)} at ${escapeHtml(formatTime12(booking.pickupTime))}</span></div>
+              <div class="row"><span class="label">Vehicle:</span><span class="value">${escapeHtml(booking.vehicleName)}</span></div>
               <div class="row"><span class="label">Tariff:</span><span class="value" style="color: #f0562b; font-size: 16px;">${fareDisplay}</span></div>
-              ${booking.notes ? `<div class="row"><span class="label">Special Notes:</span><span class="value">${booking.notes}</span></div>` : ''}
+              ${booking.notes ? `<div class="row"><span class="label">Special Notes:</span><span class="value">${escapeHtml(booking.notes)}</span></div>` : ''}
             </div>
 
             <p style="font-size: 13px; color: #64748b;">
@@ -116,13 +116,15 @@ export async function sendNewBookingEmail(booking: Booking): Promise<{ success: 
   }
 }
 
-const escapeHtml = (value: string | number | null | undefined): string =>
-  String(value ?? '')
+/** Customer-typed text is escaped before it goes into an HTML email. */
+function escapeHtml(value: string | number | null | undefined): string {
+  return String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/+$/, '');
 

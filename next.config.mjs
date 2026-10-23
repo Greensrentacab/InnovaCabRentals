@@ -34,5 +34,20 @@ export default function nextConfig(phase) {
     async redirects() {
       return legacyRedirects;
     },
+    async headers() {
+      return [
+        {
+          source: '/:path*',
+          headers: [
+            // Other sites can't show these pages in a frame (clickjacking)
+            { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+            { key: 'X-Content-Type-Options', value: 'nosniff' },
+            { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+            // Location only for "Use my current location" on this site
+            { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self), payment=()' },
+          ],
+        },
+      ];
+    },
   };
 }

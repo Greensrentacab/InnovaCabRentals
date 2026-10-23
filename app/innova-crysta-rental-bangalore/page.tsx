@@ -52,7 +52,7 @@ export default async function InnovaCrystaRentalBangalorePage() {
       vehicle={vehicle}
       h1="Innova Crysta Rental Bangalore – Luxury Chauffeur Driven MPV"
       tagline="Comfortable Cars. Experienced Drivers. Reliable Journeys."
-      overview="Step into executive comfort with the Toyota Innova Crysta. Designed for travelers who demand the highest tier of ride smoothness, privacy, and refinement, the Crysta features plush middle-row captain recliners, independent digital AC zones, superior noise isolation, and a commanding road presence. It is the premier choice for corporate executives, VIP airport transfers, and luxury family vacations."
+      overview="Step into executive comfort with the Toyota Innova Crysta. Designed for travellers who demand the highest tier of ride smoothness, privacy, and refinement, the Crysta features plush middle-row captain recliners, independent digital AC zones, superior noise isolation, and a commanding road presence. It is the premier choice for corporate executives, VIP airport transfers, and luxury family vacations."
       idealFor={idealFor}
       detailedSpecs={detailedSpecs}
     />

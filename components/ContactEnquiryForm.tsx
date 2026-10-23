@@ -71,7 +71,7 @@ export default function ContactEnquiryForm() {
           <h2 className="text-lg font-extrabold tracking-tight text-ink">Send a Booking Request</h2>
           <p className="mt-0.5 text-xs font-medium text-slate-500">
             Submit your journey details. Our dispatch desk confirms all bookings directly via WhatsApp or phone. Contact our
-            team to pre-book in advance.
+            team to pre-book your cab.
           </p>
         </div>
         <span className="chip-live shrink-0">

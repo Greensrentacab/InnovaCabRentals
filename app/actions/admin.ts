@@ -15,7 +15,8 @@
  */
 
 import { createHmac, timingSafeEqual } from 'crypto';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
+import { checkSharedRateLimit } from '@/lib/rateLimit';
 import { revalidatePath } from 'next/cache';
 import {
   Booking,
@@ -147,6 +148,12 @@ export async function adminLogin(password: string): Promise<{ success: boolean; 
   const secret = sessionSecret();
   if (!expected || !secret) {
     return { success: false, error: 'Admin login is not configured. Set ADMIN_PASSWORD on the server.' };
+  }
+  // Limit password guesses: 10 tries per 15 minutes per connection
+  const forwarded = headers().get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
+  if (!(await checkSharedRateLimit(`admin-login:${ip}`, 10, 15 * 60 * 1000)).allowed) {
+    return { success: false, error: 'Too many sign-in attempts. Please wait 15 minutes and try again.' };
   }
   if (typeof password !== 'string' || !safeEqual(password, expected)) {
     return { success: false, error: 'Invalid admin credentials. Please try again.' };

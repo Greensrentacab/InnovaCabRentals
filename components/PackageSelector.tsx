@@ -24,7 +24,7 @@ interface PackageSelectorProps {
 
 const pointToPointPoints = [
   'Doorstep pickup across all Bangalore localities',
-  'Sanitized, air-conditioned Toyota Innova MPV',
+  'Sanitised, air-conditioned Toyota Innova MPV',
   'Transparent distance-based fare confirmed before dispatch',
 ];
 

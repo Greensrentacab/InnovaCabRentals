@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { calculateServerFare } from '@/lib/fareCalculator';
-import { checkRateLimit } from '@/lib/rateLimit';
+import { checkSharedRateLimit } from '@/lib/rateLimit';
 import { addBooking, generateUniqueBookingId, getBookingById, getUserProfile } from '@/lib/adminStore';
 import { sendCustomerBookingEmail, sendNewBookingEmail } from '@/lib/emailService';
 import { newBookingAlert, sendAdminAlert } from '@/lib/adminPush';
@@ -32,7 +32,8 @@ const createBookingSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, 'Name must be at least 2 characters long'),
+    .min(2, 'Name must be at least 2 characters long')
+    .max(80, 'Name is too long'),
   phone: z
     .string()
     .trim()
@@ -42,29 +43,29 @@ const createBookingSchema = z.object({
     .refine((date) => !isPastDate(date), {
       message: 'Pickup date cannot be in the past',
     }),
-  pickupTime: z.string().min(1, 'Pickup time is required'),
-  pickupName: z.string().min(1, 'Pickup location is required'),
-  pickupAddress: z.string().optional().default(''),
+  pickupTime: z.string().min(1, 'Pickup time is required').max(10),
+  pickupName: z.string().min(1, 'Pickup location is required').max(200),
+  pickupAddress: z.string().max(400).optional().default(''),
   pickupLat: z.number().nullable().optional(),
   pickupLng: z.number().nullable().optional(),
-  dropName: z.string().min(1, 'Drop location is required'),
-  dropAddress: z.string().optional().default(''),
+  dropName: z.string().min(1, 'Drop location is required').max(200),
+  dropAddress: z.string().max(400).optional().default(''),
   dropLat: z.number().nullable().optional(),
   dropLng: z.number().nullable().optional(),
   tripType: z.enum(['oneway', 'round']),
   serviceType: z
     .enum(['airport', 'local', 'outstation', 'tour'])
     .default('outstation'),
-  vehicleId: z.string().min(1, 'Vehicle selection is required'),
-  vehicleName: z.string().min(1, 'Vehicle name is required'),
-  routeSlug: z.string().optional(),
+  vehicleId: z.string().min(1, 'Vehicle selection is required').max(60),
+  vehicleName: z.string().min(1, 'Vehicle name is required').max(80),
+  routeSlug: z.string().max(120).optional(),
   distanceKm: z.number().nullable().optional(),
   returnDate: z.string().nullable().optional(),
   stops: z
     .array(
       z.object({
-        name: z.string().min(1),
-        address: z.string().optional().default(''),
+        name: z.string().min(1).max(200),
+        address: z.string().max(400).optional().default(''),
         lat: z.number().nullable().optional(),
         lng: z.number().nullable().optional(),
       })
@@ -73,7 +74,7 @@ const createBookingSchema = z.object({
     .optional()
     .default([]),
   packageHours: z.number().nullable().optional(),
-  notes: z.string().nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
 });
 
 /**
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
     // 1. IP Rate Limiting (5 requests per 10 minutes)
     const forwarded = req.headers.get('x-forwarded-for');
     const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
-    const rateLimit = checkRateLimit(ip, 5, 600000);
+    const rateLimit = await checkSharedRateLimit(`booking:${ip}`, 5, 600000);
 
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -259,12 +260,38 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Missing booking ID parameter' }, { status: 400 });
   }
 
+  // Booking IDs are short, so slow down anyone trying to guess them
+  const forwarded = req.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
+  if (!(await checkSharedRateLimit(`lookup:${ip}`, 30, 600000)).allowed) {
+    return NextResponse.json({ success: false, error: 'Too many lookups. Please try again in a few minutes.' }, { status: 429 });
+  }
+
   const booking = await getBookingById(id);
   if (!booking) {
     return NextResponse.json({ success: false, error: 'Booking not found' }, { status: 404 });
   }
 
-  // Account identity stays private on this public, ID-only lookup
-  const { userId: _userId, customerEmail: _email, accountName: _accountName, ...publicBooking } = booking;
-  return NextResponse.json({ success: true, booking: publicBooking });
+  // Public, ID-only lookup: no account identity, exact coordinates or notes,
+  // and the mobile number is masked (only the last 4 digits)
+  const {
+    userId: _userId,
+    customerEmail: _email,
+    accountName: _accountName,
+    notes: _notes,
+    pickupLat: _pickupLat,
+    pickupLng: _pickupLng,
+    dropLat: _dropLat,
+    dropLng: _dropLng,
+    driverPhone: _driverPhone,
+    ...publicBooking
+  } = booking;
+  return NextResponse.json({
+    success: true,
+    booking: {
+      ...publicBooking,
+      customerPhone: booking.customerPhone ? `******${booking.customerPhone.slice(-4)}` : '',
+      notes: null,
+    },
+  });
 }

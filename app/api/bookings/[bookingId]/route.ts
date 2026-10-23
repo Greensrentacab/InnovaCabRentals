@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getBookingById } from '@/lib/adminStore';
+import { checkSharedRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,16 @@ export async function GET(
     return NextResponse.json(
       { success: false, error: 'Invalid booking ID format' },
       { status: 400 }
+    );
+  }
+
+  // Booking IDs are short, so slow down anyone trying to guess them
+  const forwarded = req.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
+  if (!(await checkSharedRateLimit(`lookup:${ip}`, 30, 600000)).allowed) {
+    return NextResponse.json(
+      { success: false, error: 'Too many lookups. Please try again in a few minutes.' },
+      { status: 429 }
     );
   }
 

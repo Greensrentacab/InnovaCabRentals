@@ -61,3 +61,47 @@ export function checkRateLimit(
     resetMs: windowMs,
   };
 }
+
+export interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  resetMs: number;
+}
+
+const hasFirestore = () =>
+  Boolean(
+    process.env.FIREBASE_PROJECT_ID &&
+      process.env.FIREBASE_CLIENT_EMAIL &&
+      (process.env.FIREBASE_PRIVATE_KEY_BASE64 || process.env.FIREBASE_PRIVATE_KEY)
+  );
+
+/**
+ * Rate limit shared by every server instance (Vercel runs many copies, each
+ * with its own memory). Counts live in Firestore `rateLimits/{hash}`; the key
+ * (which contains the visitor's IP) is stored only as a SHA-256 hash.
+ * `expiresAt` lets a Firestore TTL policy delete old counters.
+ * Falls back to the in-memory limiter without Firestore or if Firestore fails,
+ * so a database hiccup never blocks a customer.
+ */
+export async function checkSharedRateLimit(key: string, maxRequests: number, windowMs: number): Promise<RateLimitResult> {
+  if (!hasFirestore()) return checkRateLimit(key, maxRequests, windowMs);
+  try {
+    const [{ adminDb }, { createHash }] = await Promise.all([import('@/lib/firebaseAdmin'), import('crypto')]);
+    const ref = adminDb.collection('rateLimits').doc(createHash('sha256').update(key).digest('hex'));
+    return await adminDb.runTransaction(async (tx) => {
+      const now = Date.now();
+      const snap = await tx.get(ref);
+      const stored = snap.exists ? (snap.data()?.hits as number[] | undefined) : undefined;
+      const hits = (stored ?? []).filter((t) => now - t < windowMs);
+      if (hits.length >= maxRequests) {
+        return { allowed: false, remaining: 0, resetMs: Math.max(0, windowMs - (now - hits[0])) };
+      }
+      hits.push(now);
+      tx.set(ref, { hits, expiresAt: new Date(now + windowMs) });
+      return { allowed: true, remaining: maxRequests - hits.length, resetMs: windowMs };
+    });
+  } catch (err) {
+    console.warn('[rateLimit] Shared limiter unavailable, using in-memory limit:', err);
+    return checkRateLimit(key, maxRequests, windowMs);
+  }
+}

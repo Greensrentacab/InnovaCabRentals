@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { calculateServerFare, FareCalculationInput } from '@/lib/fareCalculator';
+import { calculateServerFare, FareCalculationInput, publicFareResponse } from '@/lib/fareCalculator';
 import { ServiceType, TripType } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -34,7 +34,6 @@ export async function POST(req: NextRequest) {
       serviceType,
       tripType,
       routeSlug: body.routeSlug || undefined,
-      distanceKm: body.distanceKm ? Number(body.distanceKm) : undefined,
       pickupLat: body.pickupLat != null ? Number(body.pickupLat) : undefined,
       pickupLng: body.pickupLng != null ? Number(body.pickupLng) : undefined,
       dropLat: body.dropLat != null ? Number(body.dropLat) : undefined,
@@ -53,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     const result = await calculateServerFare(input);
 
-    return NextResponse.json(result, {
+    return NextResponse.json(publicFareResponse(result), {
       status: 200,
       headers: {
         'Cache-Control': 'no-store, max-age=0',
@@ -84,7 +83,6 @@ export async function GET(req: NextRequest) {
   const serviceType = (searchParams.get('serviceType') as ServiceType) || 'outstation';
   const tripType = (searchParams.get('tripType') as TripType) || 'oneway';
   const routeSlug = searchParams.get('routeSlug') || undefined;
-  const distanceKm = searchParams.get('distanceKm') ? Number(searchParams.get('distanceKm')) : undefined;
 
   const pickupLat = searchParams.get('pickupLat') ? Number(searchParams.get('pickupLat')) : undefined;
   const pickupLng = searchParams.get('pickupLng') ? Number(searchParams.get('pickupLng')) : undefined;
@@ -96,7 +94,6 @@ export async function GET(req: NextRequest) {
     serviceType,
     tripType,
     routeSlug,
-    distanceKm,
     pickupLat,
     pickupLng,
     dropLat,
@@ -104,7 +101,7 @@ export async function GET(req: NextRequest) {
     vehicleId,
   });
 
-  return NextResponse.json(result, {
+  return NextResponse.json(publicFareResponse(result), {
     status: 200,
     headers: {
       'Cache-Control': 'no-store, max-age=0',

@@ -58,9 +58,7 @@ export function buildAdminWhatsAppMessage(
     `• ${trip.serviceType === 'local' ? 'Area' : 'Drop / Destination'}: ${placeText(trip.drop)}`,
     `• Pickup date & time: ${formatDateLong(trip.date)} at ${formatTime12(trip.time)}`,
     ...(trip.returnDate ? [`• Return date: ${formatDateLong(trip.returnDate)}`] : []),
-    ...(trip.serviceType === 'outstation' && extra.totalKm
-      ? [`• Estimated distance: ~${extra.totalKm} km round trip, ${extra.days} day${extra.days > 1 ? 's' : ''}`]
-      : []),
+    ...(trip.serviceType === 'outstation' ? [`• Trip length: ${extra.days} day${extra.days > 1 ? 's' : ''}`] : []),
     `• Car: ${car.vehicleName}${car.vehicleType ? ` (${car.vehicleType})` : ''}`,
     `• Estimated fare: ${car.fare !== null ? inr(car.fare) : 'Price on request'} (tolls, parking & permits paid by me)`,
     '',
@@ -73,10 +71,9 @@ export function buildAdminWhatsAppMessage(
 function fareBasis(search: FareSearchState): string | null {
   const trip = search.trip;
   if (!trip) return null;
-  if (trip.serviceType === 'airport' && search.distanceKm !== null)
-    return `for ~${Math.round(search.distanceKm)} km${trip.tripType === 'round' ? ' each way' : ''}`;
-  if (trip.serviceType === 'outstation' && search.totalKm !== null)
-    return `~${Math.round(search.totalKm)} km · ${search.days} day${search.days > 1 ? 's' : ''}`;
+  // Price only: no distance or km working is shown to customers
+  if (trip.serviceType === 'airport') return trip.tripType === 'round' ? 'return trip' : 'one way';
+  if (trip.serviceType === 'outstation') return `round trip · ${search.days} day${search.days > 1 ? 's' : ''}`;
   if (trip.serviceType === 'local' && trip.packageHours) return `${trip.packageHours} hr package`;
   return null;
 }
@@ -202,17 +199,7 @@ function ResultRow({
       >
         <div className="overflow-hidden">
           <div className="mt-3 rounded-xl bg-white px-3 py-2.5 ring-1 ring-slate-200/70">
-            {car.breakdown?.length > 0 && (
-              <ul className="space-y-1 text-xs font-medium tabular-nums text-slate-600">
-                {car.breakdown.map((line) => (
-                  <li key={line} className="flex gap-2">
-                    <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-300" aria-hidden="true" />
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className={cn('flex items-center gap-2', car.breakdown?.length > 0 && 'mt-2.5 border-t border-slate-100 pt-2.5')}>
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 aria-haspopup="dialog"
@@ -248,7 +235,6 @@ function ResultRow({
         title={car.vehicleName}
         subtitle={car.fare !== null ? `Estimated fare ${inr(car.fare)}` : undefined}
         sections={[
-          { title: 'How this fare is worked out', items: car.breakdown ?? [], tone: 'fare' },
           { title: "What's included", items: inclusions, tone: 'included' },
           { title: 'Not included', items: exclusions, tone: 'excluded' },
           { title: 'Terms', items: car.terms, tone: 'terms' },

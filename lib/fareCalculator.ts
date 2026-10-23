@@ -183,6 +183,20 @@ function localQuote(rates: VehicleRates, hours: number, policyTerms: string[]) {
  * Master Server-Side Calculation Function
  * Used by both /api/fare and server-side booking creation.
  */
+/**
+ * What the storefront receives: the price per car only. Distance and the fare
+ * working (km × rate, allowances) stay on the server; bookings keep them for
+ * the admin desk.
+ */
+export function publicFareResponse(result: FareCalculationResponse): FareCalculationResponse {
+  return {
+    ...result,
+    distanceKm: null,
+    totalKm: null,
+    results: result.results.map((r) => ({ ...r, breakdown: [] })),
+  };
+}
+
 export async function calculateServerFare(input: FareCalculationInput): Promise<FareCalculationResponse> {
   const [allRoutes, allVehicles, policies, images] = await Promise.all([getRoutes(), getVehicles(), getPublishedPolicies(), getSiteImages()]);
   const policy = policies.services[policyServiceFor(input.serviceType)];

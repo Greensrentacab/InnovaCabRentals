@@ -61,8 +61,8 @@ export async function GET(
     pickupDate: booking.pickupDate,
     pickupTime: booking.pickupTime,
     vehicleName: booking.vehicleName,
+    // Only the price; distance and fare working stay with the admin desk
     fare: booking.fare,
-    fareBreakdown: booking.fareBreakdown ?? [],
     bookingStatus: booking.bookingStatus,
     // Driver details only when assigned
     ...(booking.bookingStatus !== 'PENDING' &&

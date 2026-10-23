@@ -549,13 +549,6 @@ export default function BookingTrackingPage({
           <div className="rounded-2xl border border-live-500/20 bg-live-500/10 p-4">
             <p className="text-[10px] font-bold uppercase tracking-wide text-live-600">Estimated tariff</p>
             <p className="mt-1 text-lg font-extrabold text-ink">{fareText}</p>
-            {booking.fare != null && (booking.fareBreakdown?.length ?? 0) > 0 && (
-              <ul className="mt-1 space-y-0.5 text-[11px] font-semibold tabular-nums text-slate-600">
-                {booking.fareBreakdown!.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-            )}
             <p className="text-[11px] font-semibold text-live-600">Pay by UPI or cash</p>
           </div>
         </div>

@@ -15,7 +15,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const bookings = await fetchBookingsByUser(user.uid);
+    // Only the price; distance and fare working stay with the admin desk
+    const bookings = (await fetchBookingsByUser(user.uid)).map(
+      ({ fareBreakdown: _fareBreakdown, distanceKm: _distanceKm, ...b }) => ({ ...b, fareBreakdown: [], distanceKm: null })
+    );
     return NextResponse.json({ success: true, bookings });
   } catch (error) {
     console.error('[GET /api/me/bookings] Failed:', error);

@@ -160,7 +160,6 @@ export default function BookingFlowModal() {
 
   const stepNumber = getStepNumber();
   const selectedFare = state.selectedVehicle ? state.faresMap[state.selectedVehicle.id] ?? null : null;
-  const selectedBreakdown = state.selectedVehicle ? state.breakdownMap[state.selectedVehicle.id] ?? [] : [];
   const tripLabel =
     state.serviceType === 'outstation'
       ? 'Round Trip'
@@ -242,7 +241,6 @@ export default function BookingFlowModal() {
                   <p className="truncate text-xs text-slate-500">
                     {formatDateLong(state.pickupDate)} · {formatTime12(state.pickupTime)}
                     {state.returnDate ? ` → ${formatDateLong(state.returnDate)}` : ''}
-                    {state.distanceKm ? ` · ~${Math.round(state.distanceKm)} km` : ''}
                   </p>
                 </div>
                 {state.step === 'vehicle' && (
@@ -395,7 +393,7 @@ export default function BookingFlowModal() {
                     {/* Route */}
                     <ReviewSection
                       icon={MapPin}
-                      label={`${tripLabel}${state.distanceKm ? ` · ~${state.distanceKm} km` : ''}`}
+                      label={tripLabel}
                       onEdit={closeBookingFlow}
                     >
                       <ol className="relative space-y-2 pl-5">
@@ -464,14 +462,6 @@ export default function BookingFlowModal() {
                           <Check className="h-3 w-3" strokeWidth={3} /> UPI · Cash
                         </span>
                       </div>
-                      {/* How the fare was worked out (same lines the server priced) */}
-                      {selectedFare !== null && selectedBreakdown.length > 0 && (
-                        <ul className="mt-2 space-y-0.5 border-t border-slate-200/70 pt-2 text-[11px] font-semibold tabular-nums text-slate-500">
-                          {selectedBreakdown.map((line) => (
-                            <li key={line}>{line}</li>
-                          ))}
-                        </ul>
-                      )}
                     </div>
                   </div>
 

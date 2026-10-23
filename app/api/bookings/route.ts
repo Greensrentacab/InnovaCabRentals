@@ -152,7 +152,6 @@ export async function POST(req: NextRequest) {
       serviceType: data.serviceType as ServiceType,
       tripType: data.tripType as TripType,
       routeSlug: data.routeSlug,
-      distanceKm: data.distanceKm,
       pickupLat: data.pickupLat,
       pickupLng: data.pickupLng,
       dropLat: data.dropLat,
@@ -228,11 +227,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 8. Return the generated ID and booking object
+    // Distance and fare working are kept for the admin desk only
+    const { fareBreakdown: _fareBreakdown, distanceKm: _distanceKm, ...customerBooking } = booking;
     return NextResponse.json(
       {
         success: true,
         bookingId,
-        booking,
+        booking: { ...customerBooking, fareBreakdown: [], distanceKm: null },
       },
       { status: 201 }
     );
@@ -284,6 +285,8 @@ export async function GET(req: NextRequest) {
     dropLat: _dropLat,
     dropLng: _dropLng,
     driverPhone: _driverPhone,
+    fareBreakdown: _fareBreakdown,
+    distanceKm: _distanceKm,
     ...publicBooking
   } = booking;
   return NextResponse.json({

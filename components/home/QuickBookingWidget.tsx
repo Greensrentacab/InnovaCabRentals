@@ -24,6 +24,7 @@ import {
   ArrowRight,
   Check,
   Clock,
+  GripVertical,
   MapPin,
   MountainSnow,
   Navigation,
@@ -414,14 +415,174 @@ function StackRow({
 }
 
 /** Pickup/drop card: two stacked rows, a hairline between them and a swap button on it. */
+/**
+ * Outstation stops, shown between pickup and destination. Each row is typed
+ * into directly (suggestions in the dropdown below it) and can be dragged by
+ * its handle to change the order — the chosen places move with it, nothing
+ * is re-entered. Keyboard: focus the handle and press ↑ / ↓.
+ */
+function StopRows({
+  stops,
+  activeIndex,
+  query,
+  onQuery,
+  onOpen,
+  onRemove,
+  onMove,
+  onDragStart,
+  dropdown,
+}: {
+  stops: (LocationData | null)[];
+  activeIndex: number | null;
+  query: string;
+  onQuery: (text: string) => void;
+  onOpen: (index: number) => void;
+  onRemove: (index: number) => void;
+  onMove: (from: number, to: number) => void;
+  onDragStart: () => void;
+  dropdown: React.ReactNode;
+}) {
+  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const drag = useRef<{ index: number; startY: number; pointerId: number } | null>(null);
+  const [dragging, setDragging] = useState<{ index: number; offset: number } | null>(null);
+
+  const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>, index: number) => {
+    if (stops.length < 2) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    drag.current = { index, startY: e.clientY, pointerId: e.pointerId };
+    onDragStart();
+    setDragging({ index, offset: 0 });
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    if (!d || d.pointerId !== e.pointerId) return;
+    let offset = e.clientY - d.startY;
+    // Past half of the neighbouring row: swap places with it
+    const next = rowRefs.current[d.index + 1];
+    const prev = rowRefs.current[d.index - 1];
+    if (next && offset > next.offsetHeight / 2) {
+      onMove(d.index, d.index + 1);
+      d.startY += next.offsetHeight;
+      d.index += 1;
+    } else if (prev && offset < -prev.offsetHeight / 2) {
+      onMove(d.index, d.index - 1);
+      d.startY -= prev.offsetHeight;
+      d.index -= 1;
+    }
+    offset = e.clientY - d.startY;
+    setDragging({ index: d.index, offset });
+  };
+
+  const endDrag = () => {
+    drag.current = null;
+    setDragging(null);
+  };
+
+  return (
+    <div role="list" aria-label="Stops on the way">
+      {stops.map((stop, i) => {
+        const active = activeIndex === i;
+        const isDragged = dragging?.index === i;
+        return (
+          <div
+            key={i}
+            role="listitem"
+            ref={(el) => {
+              rowRefs.current[i] = el;
+            }}
+            style={isDragged ? { transform: `translateY(${dragging.offset}px)` } : undefined}
+            className={cn(
+              'relative border-t border-slate-200/80 bg-white pb-3 pl-12 pr-[4.75rem] pt-2.5',
+              isDragged && 'z-30 rounded-xl shadow-[0_12px_28px_-10px_rgba(15,23,42,0.35)] ring-1 ring-slate-200'
+            )}
+          >
+            {/* Timeline: dotted line through, small amber dot for the stop */}
+            <span className="pointer-events-none absolute inset-y-0 left-[18px] flex w-5 flex-col items-center" aria-hidden="true">
+              <span className="w-0 flex-1 border-l-2 border-dotted border-slate-300" />
+              <span className="my-1 h-2.5 w-2.5 shrink-0 rounded-full border-2 border-amber-500 bg-white" />
+              <span className="w-0 flex-1 border-l-2 border-dotted border-slate-300" />
+            </span>
+
+            <span className="block text-[12px] font-medium leading-5 text-slate-500">Stop {i + 1}</span>
+            {active ? (
+              <LocationTextBox
+                query={query}
+                onQuery={onQuery}
+                placeholder={stop?.name ?? 'Search a town, place or address'}
+                className="block w-full bg-transparent text-[15px] font-semibold leading-snug text-ink outline-none placeholder:font-normal placeholder:text-slate-400"
+              />
+            ) : (
+              <button
+                type="button"
+                data-location-trigger
+                onClick={() => onOpen(i)}
+                className="-my-1 block w-full truncate rounded-md py-1 text-left text-[15px] leading-snug outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+              >
+                {stop ? (
+                  <span className="font-semibold text-ink">{stop.name}</span>
+                ) : (
+                  <span className="text-slate-400">Add a stop on the way</span>
+                )}
+              </button>
+            )}
+
+            {/* Top of the row, clear of the swap button on the line below */}
+            <div className="absolute right-2 top-1 flex items-center gap-0.5">
+              {stops.length > 1 && (
+                <button
+                  type="button"
+                  aria-label={`Move stop ${i + 1} (drag, or use arrow keys)`}
+                  title="Drag to reorder"
+                  onPointerDown={(e) => onPointerDown(e, i)}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={endDrag}
+                  onPointerCancel={endDrag}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowUp' && i > 0) {
+                      e.preventDefault();
+                      onMove(i, i - 1);
+                    } else if (e.key === 'ArrowDown' && i < stops.length - 1) {
+                      e.preventDefault();
+                      onMove(i, i + 1);
+                    }
+                  }}
+                  className="flex h-8 w-8 cursor-grab touch-none items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:cursor-grabbing"
+                >
+                  <GripVertical className="h-4 w-4" />
+                </button>
+              )}
+              <button
+                type="button"
+                aria-label={`Remove stop ${i + 1}`}
+                onClick={() => onRemove(i)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-rose-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Suggestions under the stop being typed in */}
+            {active && dropdown}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function RouteStack({
   top,
+  middle,
   bottom,
   onSwap,
   swapLabel,
   dropdown,
 }: {
   top: React.ReactNode;
+  /** Rows between the two ends (outstation stops) */
+  middle?: React.ReactNode;
   bottom: React.ReactNode;
   onSwap: () => void;
   swapLabel: string;
@@ -431,6 +592,7 @@ function RouteStack({
     <div className="relative">
       <div className="relative rounded-2xl border border-slate-300/70 bg-white">
         {top}
+        {middle}
         <div className="relative ml-12 mr-16 border-t border-slate-200">
           <button
             type="button"
@@ -623,7 +785,20 @@ export default function QuickBookingWidget({
 
   const removeStop = (index: number) => {
     setOutStops((stops) => stops.filter((_, i) => i !== index));
+    if (activeModal?.kind === 'stop') setActiveModal(null);
     clearError('stops');
+  };
+
+  // Reorder stops (drag handle / arrow keys); the places move with their rows
+  const moveStop = (from: number, to: number) => {
+    setOutStops((stops) => {
+      if (to < 0 || to >= stops.length) return stops;
+      const next = [...stops];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
+    setRouteSlug(undefined);
   };
 
   // Which value the open modal edits
@@ -670,11 +845,8 @@ export default function QuickBookingWidget({
     }
   };
 
-  // Closing the stop picker without choosing removes the empty stop row
-  const handleModalClose = () => {
-    setOutStops((stops) => stops.filter((s) => s !== null));
-    setActiveModal(null);
-  };
+  // Closing the dropdown keeps an empty stop row (fill it later or remove it with ×)
+  const handleModalClose = () => setActiveModal(null);
 
   // Location search as an inline dropdown under the field that opened it
   const locationDropdown = (show: boolean) =>
@@ -935,32 +1107,27 @@ export default function QuickBookingWidget({
                   {...typing({ kind: 'drop' })}
                 />
               }
+              middle={
+                outStops.length > 0 ? (
+                  <StopRows
+                    stops={outStops}
+                    activeIndex={activeModal?.kind === 'stop' ? activeModal.index : null}
+                    query={locQuery}
+                    onQuery={setLocQuery}
+                    onOpen={(index) => setActiveModal({ kind: 'stop', index })}
+                    onRemove={removeStop}
+                    onMove={moveStop}
+                    onDragStart={() => setActiveModal(null)}
+                    dropdown={locationDropdown(activeModal?.kind === 'stop')}
+                  />
+                ) : null
+              }
               swapLabel="Swap pickup and destination"
               onSwap={swapOutstation}
               dropdown={locationDropdown(activeModal?.kind === 'pickup' || activeModal?.kind === 'drop')}
             />
 
-            {outStops.some(Boolean) && (
-              <div className="space-y-2">
-                {outStops.map((stop, i) =>
-                  stop ? (
-                    <LocationTrigger
-                      key={`stop-${i}`}
-                      value={stop}
-                      tone="stop"
-                      placeholder={`Stop ${i + 1}`}
-                      onOpen={() => setActiveModal({ kind: 'stop', index: i })}
-                      onClear={() => removeStop(i)}
-                      clearLabel={`Remove stop ${i + 1}`}
-                      {...typing({ kind: 'stop', index: i })}
-                    />
-                  ) : null
-                )}
-              </div>
-            )}
-
             <div className="relative flex items-center justify-between gap-2">
-              {locationDropdown(activeModal?.kind === 'stop')}
               <button
                 type="button"
                 onClick={addStop}

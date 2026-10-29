@@ -18,6 +18,15 @@ const CONVERSION_LABELS: Record<ConversionEvent, string> = {
   submit_booking_request: 'qANMCL7AnK4dEJ_2x6dB',
 };
 
+/** Booking-flow and sign-up events: Google Analytics only, never reported to Google Ads. */
+export type AnalyticsEvent =
+  | 'sign_up'
+  | 'booking_started'
+  | 'booking_step_vehicle'
+  | 'booking_step_details'
+  | 'booking_step_review'
+  | 'booking_step_signin';
+
 declare global {
   interface Window {
     dataLayer?: unknown[];
@@ -30,4 +39,9 @@ export function trackConversion(event: ConversionEvent) {
   window.gtag('event', 'conversion', { send_to: `${GOOGLE_ADS_ID}/${CONVERSION_LABELS[event]}` });
   // Same action as a named GA4 event, for Analytics reports
   window.gtag('event', event, { send_to: GA_MEASUREMENT_ID });
+}
+
+export function trackAnalyticsEvent(event: AnalyticsEvent, params: Record<string, string> = {}) {
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+  window.gtag('event', event, { ...params, send_to: GA_MEASUREMENT_ID });
 }

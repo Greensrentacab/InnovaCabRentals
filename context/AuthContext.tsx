@@ -28,6 +28,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { UserProfile } from '@/lib/types';
+import { trackAnalyticsEvent } from '@/lib/gtag';
 
 export type AuthMode = 'signin' | 'signup';
 
@@ -238,6 +239,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             switchTo: 'signin',
           });
         }
+        if (intent === 'signup') trackAnalyticsEvent('sign_up', { method: 'google' });
       }),
     [runFlow]
   );
@@ -270,6 +272,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       runFlow(async () => {
         const cred = await createUserWithEmailAndPassword(auth!, email.trim(), password);
         await updateFirebaseProfile(cred.user, { displayName: name.trim() });
+        trackAnalyticsEvent('sign_up', { method: 'email' });
       }),
     [runFlow]
   );

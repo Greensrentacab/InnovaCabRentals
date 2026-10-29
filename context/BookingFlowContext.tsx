@@ -16,7 +16,7 @@
  *     server links it to their account (userId + receipt email).
  */
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { LocationData } from '@/lib/googlePlaces';
 import { Vehicle, ServiceType, TripType, Booking } from '@/lib/types';
 import { formatTime12 } from '@/lib/time';
@@ -24,7 +24,7 @@ import { siteConfig } from '@/lib/siteConfig';
 import { useAuth } from '@/context/AuthContext';
 import type { FleetPhoto } from '@/lib/fleetPhotos';
 import { cheapestByFare, sortByFare } from '@/lib/fareSort';
-import { trackConversion } from '@/lib/gtag';
+import { trackAnalyticsEvent, trackConversion, type AnalyticsEvent } from '@/lib/gtag';
 
 export type BookingStep =
   | 'loading'
@@ -181,6 +181,26 @@ const BookingFlowContext = createContext<BookingFlowContextType | undefined>(und
 
 export function BookingFlowProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<BookingFlowState>(defaultState);
+
+  // Funnel events for Google Analytics: one per step reached while the popup is open
+  const lastStepRef = useRef<BookingStep | null>(null);
+  useEffect(() => {
+    if (!state.isOpen) {
+      lastStepRef.current = null;
+      return;
+    }
+    if (lastStepRef.current === state.step) return;
+    if (lastStepRef.current === null) trackAnalyticsEvent('booking_started');
+    lastStepRef.current = state.step;
+    const stepEvents: Partial<Record<BookingStep, AnalyticsEvent>> = {
+      vehicle: 'booking_step_vehicle',
+      details: 'booking_step_details',
+      review: 'booking_step_review',
+      auth: 'booking_step_signin',
+    };
+    const event = stepEvents[state.step];
+    if (event) trackAnalyticsEvent(event);
+  }, [state.isOpen, state.step]);
   const [search, setSearch] = useState<FareSearchState>(defaultSearch);
   const { getIdToken } = useAuth();
 

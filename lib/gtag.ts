@@ -3,6 +3,7 @@
  * each conversion below reports to its own label from Google Ads (Goals → Conversions).
  */
 export const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || 'AW-17531271967';
+export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-E5PM4NS6TE';
 
 export type ConversionEvent =
   | 'call_click'
@@ -27,4 +28,6 @@ declare global {
 export function trackConversion(event: ConversionEvent) {
   if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
   window.gtag('event', 'conversion', { send_to: `${GOOGLE_ADS_ID}/${CONVERSION_LABELS[event]}` });
+  // Same action as a named GA4 event, for Analytics reports
+  window.gtag('event', event, { send_to: GA_MEASUREMENT_ID });
 }

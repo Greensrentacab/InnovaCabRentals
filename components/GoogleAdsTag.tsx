@@ -3,7 +3,7 @@
 /**
  * GoogleAdsTag.tsx
  *
- * Loads the Google Ads tag on customer pages (not /admin) and reports the
+ * Loads the Google Ads and Google Analytics (GA4) tags on customer pages (not /admin) and reports the
  * Call, WhatsApp and Book Now clicks site-wide with one delegated listener,
  * so individual links need no wiring. Booking submissions are reported from
  * the forms' success handlers via trackConversion().
@@ -12,7 +12,7 @@
 import { useEffect } from 'react';
 import Script from 'next/script';
 import { usePathname } from 'next/navigation';
-import { GOOGLE_ADS_ID, trackConversion } from '@/lib/gtag';
+import { GA_MEASUREMENT_ID, GOOGLE_ADS_ID, trackConversion } from '@/lib/gtag';
 
 const BOOK_CTA = /^\s*book (now|a cab)\s*$/i;
 
@@ -50,7 +50,8 @@ export default function GoogleAdsTag() {
         {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', '${GOOGLE_ADS_ID}');`}
+gtag('config', '${GOOGLE_ADS_ID}');
+gtag('config', '${GA_MEASUREMENT_ID}');`}
       </Script>
     </>
   );

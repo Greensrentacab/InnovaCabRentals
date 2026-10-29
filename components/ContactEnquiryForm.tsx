@@ -10,6 +10,7 @@ import { ArrowRight, Check, Loader2, ShieldCheck } from 'lucide-react';
 import WhatsAppIcon from '@/components/ds/WhatsAppIcon';
 import { submitTourEnquiry } from '@/app/actions/enquiry';
 import { siteConfig } from '@/lib/siteConfig';
+import { trackConversion } from '@/lib/gtag';
 
 export default function ContactEnquiryForm() {
   const [formData, setFormData] = useState({
@@ -46,6 +47,7 @@ export default function ContactEnquiryForm() {
       });
 
       if (res.success) {
+        trackConversion('submit_booking_request');
         setSubmitted(true);
       } else {
         setErrorMessage(res.error || 'Failed to submit enquiry. Please call or WhatsApp us.');

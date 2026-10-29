@@ -24,6 +24,7 @@ import { siteConfig } from '@/lib/siteConfig';
 import { useAuth } from '@/context/AuthContext';
 import type { FleetPhoto } from '@/lib/fleetPhotos';
 import { cheapestByFare, sortByFare } from '@/lib/fareSort';
+import { trackConversion } from '@/lib/gtag';
 
 export type BookingStep =
   | 'loading'
@@ -367,6 +368,7 @@ export function BookingFlowProvider({ children }: { children: React.ReactNode })
           `Hello ${bk.customerName},\n\nThis is ${siteConfig.brand.name}. We have received your booking request #${bk.bookingId}:\n• Route: ${bk.pickupName} ➔ ${bk.dropName}\n• Date & Time: ${bk.pickupDate} at ${formatTime12(bk.pickupTime)}\n• Vehicle: ${bk.vehicleName}\n\nOur operations desk will confirm your vehicle shortly!`
         )}`;
 
+        trackConversion('submit_booking_request');
         setState((prev) => ({ ...prev, step: 'success', confirmedBooking: bk, adminWhatsAppUrl: whatsAppUrl }));
       } else {
         setState((prev) => ({
